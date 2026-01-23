@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Massachusetts Driver's Ed - Ace Your Permit Test!</title>
+    <link rel="stylesheet" href="assets/css/styles.css">
+</head>
+<body>
+    <!-- Main Menu Screen -->
+    <div id="menuScreen" class="screen active">
+        <div class="container">
+            <header class="game-header">
+                <h1 class="game-title">🚗 Massachusetts Driver's Ed</h1>
+                <p class="game-subtitle">Master Your Learner's Permit Test!</p>
+            </header>
+
+            <div class="menu-card">
+                <h2>Choose Your Mode</h2>
+                <div class="mode-grid">
+                    <button class="mode-btn practice-mode" data-mode="practice">
+                        <div class="mode-icon">📚</div>
+                        <h3>Practice Mode</h3>
+                        <p>Learn at your own pace. No time limits, no pressure.</p>
+                    </button>
+
+                    <button class="mode-btn test-mode" data-mode="test">
+                        <div class="mode-icon">📝</div>
+                        <h3>Test Mode</h3>
+                        <p>Simulate the real exam: 25 questions, 25 minutes.</p>
+                    </button>
+
+                    <button class="mode-btn survival-mode" data-mode="survival">
+                        <div class="mode-icon">⚡</div>
+                        <h3>Survival Mode</h3>
+                        <p>How long can you last? 3 lives, no mistakes!</p>
+                    </button>
+                </div>
+            </div>
+
+            <div class="stats-card">
+                <h3>Your Stats</h3>
+                <div class="stats-grid">
+                    <div class="stat-item">
+                        <div class="stat-value" id="gamesPlayed">0</div>
+                        <div class="stat-label">Games Played</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value" id="highScore">0</div>
+                        <div class="stat-label">High Score</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value" id="bestStreak">0</div>
+                        <div class="stat-label">Best Streak</div>
+                    </div>
+                </div>
+                <button id="resetProgress" class="btn-secondary">Reset Progress</button>
+            </div>
+
+            <footer class="game-footer">
+                <p>Based on the official Massachusetts RMV Driver's Manual</p>
+            </footer>
+        </div>
+    </div>
+
+    <!-- Category Selection Screen -->
+    <div id="categoryScreen" class="screen">
+        <div class="container">
+            <header class="game-header">
+                <h1>Choose a Category</h1>
+                <p>Practice specific topics or test yourself on everything</p>
+            </header>
+
+            <div class="category-grid">
+                <button class="category-btn" data-category="all">
+                    <div class="category-icon">🎯</div>
+                    <h3>All Topics</h3>
+                    <p>Random mix of all questions</p>
+                </button>
+
+                <button class="category-btn" data-category="Traffic Signs">
+                    <div class="category-icon">🛑</div>
+                    <h3>Traffic Signs</h3>
+                    <p>Signs, shapes, and meanings</p>
+                </button>
+
+                <button class="category-btn" data-category="Traffic Laws">
+                    <div class="category-icon">⚖️</div>
+                    <h3>Traffic Laws</h3>
+                    <p>Rules of the road</p>
+                </button>
+
+                <button class="category-btn" data-category="Road Markings">
+                    <div class="category-icon">🛣️</div>
+                    <h3>Road Markings</h3>
+                    <p>Lines, lanes, and signals</p>
+                </button>
+
+                <button class="category-btn" data-category="Safe Driving">
+                    <div class="category-icon">🛡️</div>
+                    <h3>Safe Driving</h3>
+                    <p>Safety practices and tips</p>
+                </button>
+
+                <button class="category-btn" data-category="Vehicle Operation">
+                    <div class="category-icon">🔧</div>
+                    <h3>Vehicle Operation</h3>
+                    <p>Controls and maintenance</p>
+                </button>
+            </div>
+
+            <button id="backToMenu" class="btn-secondary">← Back to Menu</button>
+        </div>
+    </div>
+
+    <!-- Game Screen -->
+    <div id="gameScreen" class="screen">
+        <div class="game-container">
+            <!-- Game Header -->
+            <div class="game-top-bar">
+                <div class="game-stats-bar">
+                    <div class="stat-display">
+                        <span class="stat-icon">⭐</span>
+                        <span id="currentScore">0</span>
+                    </div>
+                    <div class="stat-display">
+                        <span class="stat-icon">🔥</span>
+                        <span id="currentStreak">0</span>
+                    </div>
+                    <div class="stat-display">
+                        <span class="stat-icon">🎯</span>
+                        <span id="currentAccuracy">0%</span>
+                    </div>
+                    <div class="stat-display" id="livesDisplay" style="display: none;">
+                        <span id="livesCount"></span>
+                    </div>
+                    <div class="stat-display" id="timerDisplay" style="display: none;">
+                        <span class="stat-icon">⏱️</span>
+                        <span id="timeRemaining">25:00</span>
+                    </div>
+                </div>
+                <button id="quitGame" class="btn-quit">Quit</button>
+            </div>
+
+            <!-- Progress Bar -->
+            <div class="progress-container">
+                <div class="progress-bar" id="progressBar"></div>
+            </div>
+            <div class="question-counter" id="questionNumber">Question 1 of 25</div>
+
+            <!-- Question Card -->
+            <div class="question-card">
+                <div class="question-header">
+                    <span class="badge" id="categoryBadge">Category</span>
+                    <span class="badge" id="difficultyBadge">Difficulty</span>
+                </div>
+
+                <h2 class="question-text" id="questionText">Loading question...</h2>
+
+                <div class="answers-grid">
+                    <button class="answer-btn">Answer 1</button>
+                    <button class="answer-btn">Answer 2</button>
+                    <button class="answer-btn">Answer 3</button>
+                    <button class="answer-btn">Answer 4</button>
+                </div>
+
+                <div id="explanation" class="explanation" style="display: none;"></div>
+
+                <button id="nextBtn" class="btn-primary" style="display: none;">
+                    Next Question →
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Results Screen -->
+    <div id="resultsScreen" class="screen">
+        <div class="container">
+            <header class="results-header">
+                <h1>🎉 Quiz Complete!</h1>
+                <div id="passFailStatus" class="pass-fail" style="display: none;"></div>
+            </header>
+
+            <div class="results-card">
+                <div class="final-score">
+                    <div class="score-label">Final Score</div>
+                    <div class="score-value" id="finalScore">0</div>
+                </div>
+
+                <div class="results-stats">
+                    <div class="result-stat">
+                        <div class="result-icon">📊</div>
+                        <div class="result-details">
+                            <div class="result-value" id="totalQuestions">0</div>
+                            <div class="result-label">Questions Answered</div>
+                        </div>
+                    </div>
+
+                    <div class="result-stat">
+                        <div class="result-icon">✅</div>
+                        <div class="result-details">
+                            <div class="result-value" id="correctCount">0</div>
+                            <div class="result-label">Correct</div>
+                        </div>
+                    </div>
+
+                    <div class="result-stat">
+                        <div class="result-icon">❌</div>
+                        <div class="result-details">
+                            <div class="result-value" id="wrongCount">0</div>
+                            <div class="result-label">Incorrect</div>
+                        </div>
+                    </div>
+
+                    <div class="result-stat">
+                        <div class="result-icon">🎯</div>
+                        <div class="result-details">
+                            <div class="result-value" id="finalAccuracy">0%</div>
+                            <div class="result-label">Accuracy</div>
+                        </div>
+                    </div>
+
+                    <div class="result-stat">
+                        <div class="result-icon">🔥</div>
+                        <div class="result-details">
+                            <div class="result-value" id="finalStreak">0</div>
+                            <div class="result-label">Best Streak</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="performanceMessage" class="performance-message"></div>
+
+                <div id="categoryBreakdown" class="category-breakdown"></div>
+
+                <div class="results-actions">
+                    <button id="playAgain" class="btn-primary">Play Again</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="assets/js/game.js"></script>
+    <script src="assets/js/app.js"></script>
+</body>
+</html>

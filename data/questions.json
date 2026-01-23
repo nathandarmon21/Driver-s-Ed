@@ -1,0 +1,661 @@
+{
+  "questions": [
+    {
+      "id": "ts001",
+      "category": "Traffic Signs",
+      "difficulty": "easy",
+      "question": "What shape is a stop sign?",
+      "options": ["Octagon (8 sides)", "Circle", "Triangle", "Rectangle"],
+      "correctAnswer": 0,
+      "explanation": "A stop sign is the only octagonal (8-sided) traffic sign. This unique shape helps drivers identify it even from behind."
+    },
+    {
+      "id": "ts002",
+      "category": "Traffic Signs",
+      "difficulty": "easy",
+      "question": "What does a yellow traffic sign indicate?",
+      "options": ["Stop", "Warning or caution", "Guide information", "Regulatory requirement"],
+      "correctAnswer": 1,
+      "explanation": "Yellow signs are warning signs that alert drivers to potential hazards ahead, such as curves, intersections, or construction."
+    },
+    {
+      "id": "ts003",
+      "category": "Traffic Signs",
+      "difficulty": "medium",
+      "question": "What does a pennant-shaped sign indicate?",
+      "options": ["No passing zone", "School zone", "Construction ahead", "Merge area"],
+      "correctAnswer": 0,
+      "explanation": "A pennant-shaped (triangular flag) sign marks the beginning of a no passing zone on the left side of the road."
+    },
+    {
+      "id": "ts004",
+      "category": "Traffic Signs",
+      "difficulty": "medium",
+      "question": "What does a round yellow sign with an X and two Rs mean?",
+      "options": ["Rest area ahead", "Railroad crossing ahead", "Road work zone", "Restricted area"],
+      "correctAnswer": 1,
+      "explanation": "This is an advance warning for a railroad crossing. The X symbolizes the crossing and RR stands for railroad."
+    },
+    {
+      "id": "ts005",
+      "category": "Traffic Signs",
+      "difficulty": "hard",
+      "question": "What color are service signs (gas, food, lodging)?",
+      "options": ["Green", "Blue", "Brown", "Orange"],
+      "correctAnswer": 1,
+      "explanation": "Blue signs indicate services such as gas stations, food, lodging, and hospitals are available nearby."
+    },
+    {
+      "id": "tl001",
+      "category": "Traffic Laws",
+      "difficulty": "easy",
+      "question": "What is the speed limit in a school zone in Massachusetts when children are present?",
+      "options": ["15 mph", "20 mph", "25 mph", "30 mph"],
+      "correctAnswer": 1,
+      "explanation": "In Massachusetts, the speed limit in school zones is 20 mph when children are present during arrival and dismissal times."
+    },
+    {
+      "id": "tl002",
+      "category": "Traffic Laws",
+      "difficulty": "medium",
+      "question": "In Massachusetts, who must wear a seat belt?",
+      "options": ["Only the driver", "Driver and front seat passengers", "All passengers", "Only passengers under 18"],
+      "correctAnswer": 2,
+      "explanation": "Massachusetts law requires ALL occupants of a vehicle to wear seat belts, regardless of age or seating position."
+    },
+    {
+      "id": "tl003",
+      "category": "Traffic Laws",
+      "difficulty": "medium",
+      "question": "When are you allowed to use your cell phone while driving in Massachusetts?",
+      "options": ["Never, except hands-free", "Only at red lights", "Only for emergencies", "Only if over 18"],
+      "correctAnswer": 0,
+      "explanation": "Massachusetts has a hands-free law. You can only use your phone with hands-free technology. Handheld use is prohibited for all drivers."
+    },
+    {
+      "id": "tl004",
+      "category": "Traffic Laws",
+      "difficulty": "hard",
+      "question": "How far must you park from a fire hydrant in Massachusetts?",
+      "options": ["5 feet", "10 feet", "15 feet", "20 feet"],
+      "correctAnswer": 1,
+      "explanation": "You must park at least 10 feet away from a fire hydrant to ensure fire department access in emergencies."
+    },
+    {
+      "id": "tl005",
+      "category": "Traffic Laws",
+      "difficulty": "medium",
+      "question": "When a school bus displays flashing red lights and extends its stop sign, you must:",
+      "options": ["Slow down and proceed with caution", "Stop until the lights stop flashing", "Stop only if on the same side of road", "Change lanes to pass"],
+      "correctAnswer": 1,
+      "explanation": "You must stop and remain stopped until the red lights stop flashing and the stop sign is retracted, regardless of which side of the road you're on (unless divided highway)."
+    },
+    {
+      "id": "tl006",
+      "category": "Traffic Laws",
+      "difficulty": "hard",
+      "question": "What is the 'Move Over Law' in Massachusetts?",
+      "options": ["Always use right lane", "Move over for emergency vehicles", "Yield to faster traffic", "Change lanes at intersections"],
+      "correctAnswer": 1,
+      "explanation": "The Move Over Law requires drivers to move over one lane (when safe) or slow down when approaching stopped emergency vehicles with flashing lights."
+    },
+    {
+      "id": "tl007",
+      "category": "Traffic Laws",
+      "difficulty": "easy",
+      "question": "At a four-way stop, who has the right of way?",
+      "options": ["Largest vehicle", "Vehicle that arrived first", "Vehicle on the right", "Vehicle going straight"],
+      "correctAnswer": 1,
+      "explanation": "At a four-way stop, the vehicle that arrives first has the right of way. If two arrive simultaneously, the vehicle on the right goes first."
+    },
+    {
+      "id": "tl008",
+      "category": "Traffic Laws",
+      "difficulty": "medium",
+      "question": "When turning left at an intersection, you must yield to:",
+      "options": ["Oncoming traffic only", "Pedestrians only", "Both oncoming traffic and pedestrians", "No one if you have a green light"],
+      "correctAnswer": 2,
+      "explanation": "When turning left, you must yield to all oncoming traffic and pedestrians crossing the street you're turning into, even with a green light."
+    },
+    {
+      "id": "tl009",
+      "category": "Traffic Laws",
+      "difficulty": "hard",
+      "question": "What is the maximum speed limit on Massachusetts highways unless otherwise posted?",
+      "options": ["55 mph", "60 mph", "65 mph", "70 mph"],
+      "correctAnswer": 2,
+      "explanation": "The maximum speed limit on Massachusetts highways is 65 mph unless signs indicate otherwise. Some areas may have lower limits."
+    },
+    {
+      "id": "tl010",
+      "category": "Traffic Laws",
+      "difficulty": "medium",
+      "question": "In Massachusetts, at what age can a child sit in the front seat?",
+      "options": ["8 years old", "10 years old", "12 years old", "13 years old"],
+      "correctAnswer": 3,
+      "explanation": "Children under 13 should ride in the back seat. Children 12 and under should be in the back seat for safety."
+    },
+    {
+      "id": "rm001",
+      "category": "Road Markings",
+      "difficulty": "easy",
+      "question": "What does a solid yellow line on your side of the road mean?",
+      "options": ["Passing is allowed", "No passing allowed", "Caution area", "Parking zone"],
+      "correctAnswer": 1,
+      "explanation": "A solid yellow line on your side means you cannot pass. You must stay on your side of the line."
+    },
+    {
+      "id": "rm002",
+      "category": "Road Markings",
+      "difficulty": "medium",
+      "question": "What does a double solid white line indicate?",
+      "options": ["Lane changes encouraged", "Lane changes discouraged but legal", "Lane changes prohibited", "HOV lane boundary"],
+      "correctAnswer": 2,
+      "explanation": "Double solid white lines indicate that lane changes are prohibited. These are often used to separate turn lanes from through traffic lanes."
+    },
+    {
+      "id": "rm003",
+      "category": "Road Markings",
+      "difficulty": "easy",
+      "question": "What do white lines separate?",
+      "options": ["Traffic going opposite directions", "Traffic going the same direction", "Parking areas", "Bicycle lanes"],
+      "correctAnswer": 1,
+      "explanation": "White lines separate lanes of traffic moving in the same direction, while yellow lines separate traffic moving in opposite directions."
+    },
+    {
+      "id": "rm004",
+      "category": "Road Markings",
+      "difficulty": "medium",
+      "question": "What does a broken yellow line mean?",
+      "options": ["No passing ever", "Passing allowed when safe", "Caution zone only", "Construction area"],
+      "correctAnswer": 1,
+      "explanation": "A broken (dashed) yellow line means passing is allowed when it is safe to do so and you can see far enough ahead."
+    },
+    {
+      "id": "rm005",
+      "category": "Road Markings",
+      "difficulty": "hard",
+      "question": "What does a white diamond painted on the lane indicate?",
+      "options": ["High-occupancy vehicle (HOV) lane", "Emergency vehicles only", "Bicycle lane", "Bus lane"],
+      "correctAnswer": 0,
+      "explanation": "A white diamond symbol indicates a High-Occupancy Vehicle (HOV) or carpool lane, reserved for vehicles with multiple occupants."
+    },
+    {
+      "id": "rm006",
+      "category": "Road Markings",
+      "difficulty": "medium",
+      "question": "What should you do when you see a stop line at an intersection?",
+      "options": ["Stop before or at the line", "Stop after the line", "Slow down only", "Line is just a suggestion"],
+      "correctAnswer": 0,
+      "explanation": "You must stop at or before the stop line. If there's no line, stop before entering the crosswalk or intersection."
+    },
+    {
+      "id": "sd001",
+      "category": "Safe Driving",
+      "difficulty": "easy",
+      "question": "What is the minimum safe following distance in good conditions?",
+      "options": ["1 second", "2 seconds", "3 seconds", "5 seconds"],
+      "correctAnswer": 2,
+      "explanation": "The 3-second rule is the minimum safe following distance in good conditions. In bad weather, increase this to 4-6 seconds."
+    },
+    {
+      "id": "sd002",
+      "category": "Safe Driving",
+      "difficulty": "medium",
+      "question": "When driving in fog, you should:",
+      "options": ["Use high beams", "Use low beams", "Use parking lights only", "Use hazard lights"],
+      "correctAnswer": 1,
+      "explanation": "Use low beams in fog. High beams reflect off the fog and reduce visibility. Low beams point down and help you see the road."
+    },
+    {
+      "id": "sd003",
+      "category": "Safe Driving",
+      "difficulty": "medium",
+      "question": "What should you do if your brakes fail while driving?",
+      "options": ["Pump the brakes", "Use emergency brake immediately", "Shift to neutral", "Turn off the engine"],
+      "correctAnswer": 0,
+      "explanation": "If brakes fail, pump the brake pedal quickly to build pressure. Downshift to lower gears and use the emergency brake gradually if needed."
+    },
+    {
+      "id": "sd004",
+      "category": "Safe Driving",
+      "difficulty": "hard",
+      "question": "When driving on a slippery road, you should:",
+      "options": ["Brake hard to maintain control", "Accelerate to get through quickly", "Reduce speed and increase following distance", "Use cruise control"],
+      "correctAnswer": 2,
+      "explanation": "On slippery roads, reduce speed, increase following distance to 6-8 seconds, and avoid sudden movements. Never use cruise control."
+    },
+    {
+      "id": "sd005",
+      "category": "Safe Driving",
+      "difficulty": "medium",
+      "question": "Hydroplaning occurs when:",
+      "options": ["Tires lose contact with the road due to water", "Brakes overheat", "Engine floods", "Windshield fogs up"],
+      "correctAnswer": 0,
+      "explanation": "Hydroplaning happens when water builds up between tires and road surface, causing loss of traction. Slow down in heavy rain."
+    },
+    {
+      "id": "sd006",
+      "category": "Safe Driving",
+      "difficulty": "easy",
+      "question": "Before backing up, you should:",
+      "options": ["Just use mirrors", "Look over your shoulder", "Honk your horn", "Turn on hazard lights"],
+      "correctAnswer": 1,
+      "explanation": "Always look over your shoulder and check all mirrors and blind spots before backing up. Walk around the vehicle if needed."
+    },
+    {
+      "id": "sd007",
+      "category": "Safe Driving",
+      "difficulty": "medium",
+      "question": "What is defensive driving?",
+      "options": ["Driving aggressively to defend your position", "Anticipating hazards and driving safely", "Always driving the speed limit", "Using your horn frequently"],
+      "correctAnswer": 1,
+      "explanation": "Defensive driving means anticipating potential hazards, being aware of your surroundings, and making safe choices to avoid accidents."
+    },
+    {
+      "id": "sd008",
+      "category": "Safe Driving",
+      "difficulty": "hard",
+      "question": "If you experience a tire blowout while driving, you should:",
+      "options": ["Brake hard immediately", "Grip steering wheel firmly and ease off gas", "Swerve to the shoulder", "Accelerate to maintain control"],
+      "correctAnswer": 1,
+      "explanation": "During a blowout, grip the wheel firmly, ease off the gas, and steer straight. Don't brake hard. Let the car slow down gradually."
+    },
+    {
+      "id": "sd009",
+      "category": "Safe Driving",
+      "difficulty": "medium",
+      "question": "When approaching a railroad crossing with flashing lights, you must:",
+      "options": ["Slow down and look", "Stop and wait for train to pass", "Proceed if no train is visible", "Honk and cross quickly"],
+      "correctAnswer": 1,
+      "explanation": "You must stop at least 15 feet from the tracks when lights are flashing. Wait until lights stop and it's safe to proceed."
+    },
+    {
+      "id": "sd010",
+      "category": "Safe Driving",
+      "difficulty": "easy",
+      "question": "Where are blind spots located?",
+      "options": ["Only behind your vehicle", "Areas not visible in mirrors", "In front of your hood", "Inside your vehicle"],
+      "correctAnswer": 1,
+      "explanation": "Blind spots are areas around your vehicle that you cannot see in your mirrors, typically to the sides and rear. Always check them before changing lanes."
+    },
+    {
+      "id": "vo001",
+      "category": "Vehicle Operation",
+      "difficulty": "easy",
+      "question": "What should you do if your gas pedal sticks?",
+      "options": ["Shift to neutral", "Turn off engine immediately", "Pump the gas pedal", "Use emergency brake"],
+      "correctAnswer": 0,
+      "explanation": "If the gas pedal sticks, shift to neutral immediately to disengage the engine, then brake normally and pull over safely."
+    },
+    {
+      "id": "vo002",
+      "category": "Vehicle Operation",
+      "difficulty": "medium",
+      "question": "What does the hand signal for a right turn look like?",
+      "options": ["Arm straight out", "Arm bent up at elbow", "Arm bent down at elbow", "Arm pointing right"],
+      "correctAnswer": 1,
+      "explanation": "For a right turn hand signal, extend your left arm out the window and bend it upward at the elbow, forming an 'L' shape."
+    },
+    {
+      "id": "vo003",
+      "category": "Vehicle Operation",
+      "difficulty": "medium",
+      "question": "What does the hand signal for a left turn look like?",
+      "options": ["Arm straight out", "Arm bent up at elbow", "Arm bent down at elbow", "Pointing left"],
+      "correctAnswer": 0,
+      "explanation": "For a left turn, extend your left arm straight out the window parallel to the ground."
+    },
+    {
+      "id": "vo004",
+      "category": "Vehicle Operation",
+      "difficulty": "medium",
+      "question": "What does the hand signal for stopping/slowing look like?",
+      "options": ["Arm straight out", "Arm bent up at elbow", "Arm bent down at elbow", "Arm waving"],
+      "correctAnswer": 2,
+      "explanation": "To signal stopping or slowing down, extend your left arm out and bend it downward at the elbow."
+    },
+    {
+      "id": "vo005",
+      "category": "Vehicle Operation",
+      "difficulty": "easy",
+      "question": "When should you use your headlights in Massachusetts?",
+      "options": ["Only at night", "From sunset to sunrise", "From 30 minutes after sunset to 30 minutes before sunrise", "Anytime it's raining"],
+      "correctAnswer": 2,
+      "explanation": "In Massachusetts, use headlights from 30 minutes after sunset to 30 minutes before sunrise, and whenever wipers are needed due to weather."
+    },
+    {
+      "id": "vo006",
+      "category": "Vehicle Operation",
+      "difficulty": "hard",
+      "question": "What does a red oil pressure warning light indicate?",
+      "options": ["Time for oil change", "Low oil pressure - stop immediately", "Oil filter needs replacement", "Engine running hot"],
+      "correctAnswer": 1,
+      "explanation": "A red oil pressure warning light means dangerously low oil pressure. Stop the engine immediately to prevent serious damage."
+    },
+    {
+      "id": "ts006",
+      "category": "Traffic Signs",
+      "difficulty": "medium",
+      "question": "What does an upside-down triangle sign mean?",
+      "options": ["Stop", "Yield", "Caution", "Do not enter"],
+      "correctAnswer": 1,
+      "explanation": "An upside-down triangle is a yield sign. You must slow down and give right-of-way to other traffic and pedestrians."
+    },
+    {
+      "id": "ts007",
+      "category": "Traffic Signs",
+      "difficulty": "easy",
+      "question": "What does a red circle with a red line through it mean?",
+      "options": ["Parking prohibited", "No entry", "Prohibited action", "Stop required"],
+      "correctAnswer": 2,
+      "explanation": "A red circle with a diagonal line (prohibition sign) means the action shown is not allowed (no U-turn, no parking, etc.)."
+    },
+    {
+      "id": "ts008",
+      "category": "Traffic Signs",
+      "difficulty": "medium",
+      "question": "What does a sign with a truck on a steep grade indicate?",
+      "options": ["Truck route", "Steep hill ahead", "No trucks allowed", "Truck parking"],
+      "correctAnswer": 1,
+      "explanation": "This warning sign indicates a steep hill or grade ahead. Trucks should use lower gears, and all drivers should be cautious."
+    },
+    {
+      "id": "ts009",
+      "category": "Traffic Signs",
+      "difficulty": "hard",
+      "question": "What does a white rectangular sign with black letters typically indicate?",
+      "options": ["Warning", "Regulatory information", "Guide information", "Construction"],
+      "correctAnswer": 1,
+      "explanation": "White rectangular signs with black letters are regulatory signs that tell you about laws and rules you must obey (speed limit, turn restrictions, etc.)."
+    },
+    {
+      "id": "ts010",
+      "category": "Traffic Signs",
+      "difficulty": "medium",
+      "question": "What does a sign with two arrows pointing in opposite directions mean?",
+      "options": ["Two-way traffic ahead", "Divided highway ends", "Keep right or left", "U-turn allowed"],
+      "correctAnswer": 0,
+      "explanation": "This sign warns that you are entering or on a road with two-way traffic. Be prepared for oncoming vehicles."
+    },
+    {
+      "id": "tl011",
+      "category": "Traffic Laws",
+      "difficulty": "medium",
+      "question": "How close to a crosswalk can you legally park?",
+      "options": ["10 feet", "20 feet", "25 feet", "30 feet"],
+      "correctAnswer": 1,
+      "explanation": "You must not park within 20 feet of a crosswalk at an intersection to maintain visibility for pedestrians and drivers."
+    },
+    {
+      "id": "tl012",
+      "category": "Traffic Laws",
+      "difficulty": "hard",
+      "question": "If you are under 18 in Massachusetts, how many passengers under 18 can you have (excluding family)?",
+      "options": ["None for first 6 months", "One at any time", "Two at any time", "As many as seat belts available"],
+      "correctAnswer": 0,
+      "explanation": "Junior operators (under 18) cannot have any passengers under 18 (except family) for the first 6 months. After 6 months, only one passenger under 18 allowed."
+    },
+    {
+      "id": "tl013",
+      "category": "Traffic Laws",
+      "difficulty": "medium",
+      "question": "What is the fine for a first offense of texting while driving in Massachusetts?",
+      "options": ["$100", "$250", "$500", "$1000"],
+      "correctAnswer": 0,
+      "explanation": "The fine for a first offense of texting while driving is $100. Subsequent offenses have higher fines and potential license suspension."
+    },
+    {
+      "id": "tl014",
+      "category": "Traffic Laws",
+      "difficulty": "medium",
+      "question": "When parallel parking, how far from the curb should your vehicle be?",
+      "options": ["6 inches", "12 inches", "18 inches", "24 inches"],
+      "correctAnswer": 1,
+      "explanation": "When parallel parked, your vehicle should be within 12 inches (one foot) of the curb and parallel to it."
+    },
+    {
+      "id": "tl015",
+      "category": "Traffic Laws",
+      "difficulty": "easy",
+      "question": "When must you yield to pedestrians?",
+      "options": ["Only at crosswalks", "Only when they have walk signal", "Always when they're crossing", "Only on residential streets"],
+      "correctAnswer": 2,
+      "explanation": "You must always yield to pedestrians crossing the roadway within a crosswalk or at an intersection, even without a crosswalk."
+    },
+    {
+      "id": "rm007",
+      "category": "Road Markings",
+      "difficulty": "medium",
+      "question": "What do yellow markings on a curb indicate?",
+      "options": ["No parking or stopping", "Loading zone", "Fire zone", "Handicapped parking"],
+      "correctAnswer": 1,
+      "explanation": "Yellow curb markings typically indicate a loading zone where stopping is permitted only for the time necessary to load or unload."
+    },
+    {
+      "id": "rm008",
+      "category": "Road Markings",
+      "difficulty": "medium",
+      "question": "What does a red curb marking mean?",
+      "options": ["Parking allowed", "Loading zone", "No stopping or parking", "Fire lane"],
+      "correctAnswer": 2,
+      "explanation": "A red curb means no stopping, standing, or parking at any time. These are often used at fire hydrants and in fire lanes."
+    },
+    {
+      "id": "sd011",
+      "category": "Safe Driving",
+      "difficulty": "medium",
+      "question": "When should you increase your following distance?",
+      "options": ["Never, keep it constant", "Only in bad weather", "Bad weather, heavy traffic, or following large vehicles", "Only at night"],
+      "correctAnswer": 2,
+      "explanation": "Increase following distance in bad weather, heavy traffic, when following large vehicles that block your view, at night, or when being tailgated."
+    },
+    {
+      "id": "sd012",
+      "category": "Safe Driving",
+      "difficulty": "hard",
+      "question": "What is the correct action if you miss your exit on a highway?",
+      "options": ["Back up on the shoulder", "Stop and reverse", "Continue to the next exit", "Make a U-turn"],
+      "correctAnswer": 2,
+      "explanation": "Never back up, stop, or reverse on a highway. Continue to the next exit and turn around safely. Missing an exit is not worth risking your life."
+    },
+    {
+      "id": "sd013",
+      "category": "Safe Driving",
+      "difficulty": "medium",
+      "question": "When being passed by another vehicle, you should:",
+      "options": ["Speed up to prevent passing", "Maintain speed and position", "Slow down slightly", "Move to the right shoulder"],
+      "correctAnswer": 1,
+      "explanation": "When being passed, maintain your speed and lane position. Do not speed up or slow down unexpectedly. Make it easy for the other driver to pass safely."
+    },
+    {
+      "id": "sd014",
+      "category": "Safe Driving",
+      "difficulty": "hard",
+      "question": "If your vehicle starts to skid, you should:",
+      "options": ["Brake hard", "Accelerate", "Steer in the direction you want to go", "Turn steering wheel away from skid"],
+      "correctAnswer": 2,
+      "explanation": "If you skid, ease off the gas and steer in the direction you want the front of the vehicle to go. Don't brake hard or turn the wheel too sharply."
+    },
+    {
+      "id": "sd015",
+      "category": "Safe Driving",
+      "difficulty": "medium",
+      "question": "What is the safest way to use your cell phone while driving?",
+      "options": ["Hold it with one hand", "Use speakerphone", "Text at red lights only", "Pull over and stop"],
+      "correctAnswer": 3,
+      "explanation": "The safest way to use your phone is to pull over and stop. While hands-free is legal, stopping eliminates all distractions."
+    },
+    {
+      "id": "vo007",
+      "category": "Vehicle Operation",
+      "difficulty": "medium",
+      "question": "Before starting your car, you should:",
+      "options": ["Just turn the key", "Adjust mirrors, seat, and fasten seat belt", "Rev the engine", "Turn on all lights"],
+      "correctAnswer": 1,
+      "explanation": "Before starting, adjust your seat and mirrors for proper visibility, fasten your seat belt, and check that the parking brake is engaged."
+    },
+    {
+      "id": "vo008",
+      "category": "Vehicle Operation",
+      "difficulty": "easy",
+      "question": "What should you do if the CHECK ENGINE light comes on?",
+      "options": ["Ignore it", "Stop immediately", "Have it checked soon", "Add oil"],
+      "correctAnswer": 2,
+      "explanation": "A check engine light indicates an emissions or engine problem. Have it checked by a mechanic soon. If it's flashing, it's more serious."
+    },
+    {
+      "id": "ts011",
+      "category": "Traffic Signs",
+      "difficulty": "medium",
+      "question": "What does a diamond-shaped orange sign indicate?",
+      "options": ["School zone", "Construction or work zone", "Detour", "Railroad crossing"],
+      "correctAnswer": 1,
+      "explanation": "Orange diamond-shaped signs indicate construction or maintenance work zones. Be alert for workers and equipment."
+    },
+    {
+      "id": "ts012",
+      "category": "Traffic Signs",
+      "difficulty": "hard",
+      "question": "What does a brown sign typically indicate?",
+      "options": ["Food services", "Recreation area or point of interest", "Construction zone", "School zone"],
+      "correctAnswer": 1,
+      "explanation": "Brown signs indicate recreational areas, parks, historic sites, and points of interest for travelers."
+    },
+    {
+      "id": "tl016",
+      "category": "Traffic Laws",
+      "difficulty": "medium",
+      "question": "How far ahead must you signal before turning?",
+      "options": ["50 feet", "100 feet", "200 feet", "300 feet"],
+      "correctAnswer": 1,
+      "explanation": "You must signal at least 100 feet before turning or changing lanes to give other drivers adequate warning."
+    },
+    {
+      "id": "tl017",
+      "category": "Traffic Laws",
+      "difficulty": "hard",
+      "question": "What is the BAC (Blood Alcohol Content) limit for drivers under 21 in Massachusetts?",
+      "options": ["0.00%", "0.02%", "0.05%", "0.08%"],
+      "correctAnswer": 1,
+      "explanation": "Massachusetts has a zero-tolerance policy for drivers under 21. A BAC of 0.02% or higher is illegal for underage drivers."
+    },
+    {
+      "id": "tl018",
+      "category": "Traffic Laws",
+      "difficulty": "medium",
+      "question": "What is the standard BAC limit for drivers 21 and over?",
+      "options": ["0.05%", "0.08%", "0.10%", "0.15%"],
+      "correctAnswer": 1,
+      "explanation": "For drivers 21 and over, a BAC of 0.08% or higher is considered legally impaired and is illegal."
+    },
+    {
+      "id": "tl019",
+      "category": "Traffic Laws",
+      "difficulty": "medium",
+      "question": "When emergency vehicles approach with sirens and lights, you must:",
+      "options": ["Speed up to get out of the way", "Stop immediately wherever you are", "Pull to the right and stop", "Continue at same speed"],
+      "correctAnswer": 2,
+      "explanation": "When emergency vehicles approach with lights and sirens, pull to the right side of the road and stop until they pass."
+    },
+    {
+      "id": "sd016",
+      "category": "Safe Driving",
+      "difficulty": "easy",
+      "question": "When is it safe to drive after drinking alcohol?",
+      "options": ["After one hour per drink", "After eating food", "After drinking coffee", "Only when completely sober"],
+      "correctAnswer": 3,
+      "explanation": "The only safe choice is to not drive after drinking any amount of alcohol. Time, food, and coffee don't make you sober - only time without drinking does."
+    },
+    {
+      "id": "sd017",
+      "category": "Safe Driving",
+      "difficulty": "medium",
+      "question": "Most crashes occur:",
+      "options": ["On highways", "In parking lots", "At intersections", "On rural roads"],
+      "correctAnswer": 2,
+      "explanation": "Most crashes occur at or near intersections where multiple streams of traffic meet. Always be extra cautious at intersections."
+    },
+    {
+      "id": "rm009",
+      "category": "Road Markings",
+      "difficulty": "medium",
+      "question": "What does a dashed white line between lanes indicate?",
+      "options": ["No lane changes", "Lane changes discouraged", "Lane changes allowed", "Turn lane only"],
+      "correctAnswer": 2,
+      "explanation": "Dashed (broken) white lines mean you can change lanes when it is safe to do so."
+    },
+    {
+      "id": "vo009",
+      "category": "Vehicle Operation",
+      "difficulty": "medium",
+      "question": "What does ABS stand for and what does it do?",
+      "options": ["Automatic Brake System - brakes for you", "Anti-lock Braking System - prevents wheel lockup", "Advanced Brake Safety - improves brake pads", "Auxiliary Brake Support - helps in emergencies"],
+      "correctAnswer": 1,
+      "explanation": "ABS stands for Anti-lock Braking System. It prevents wheels from locking up during hard braking, allowing you to maintain steering control."
+    },
+    {
+      "id": "tl020",
+      "category": "Traffic Laws",
+      "difficulty": "hard",
+      "question": "In Massachusetts, you must report a crash to the police if:",
+      "options": ["Any damage occurs", "Damage exceeds $500", "Damage exceeds $1000 or injury occurs", "Only if someone is injured"],
+      "correctAnswer": 2,
+      "explanation": "You must report a crash to police if there is property damage over $1,000 (to any one vehicle), injury, or death."
+    },
+    {
+      "id": "ts013",
+      "category": "Traffic Signs",
+      "difficulty": "medium",
+      "question": "What does a sign with a picture of a bicycle indicate?",
+      "options": ["Bike parking only", "Bicycle crossing or bike lane", "No bicycles allowed", "Bike repair shop"],
+      "correctAnswer": 1,
+      "explanation": "A sign with a bicycle warns of a bicycle crossing area or indicates a bicycle lane. Watch for cyclists."
+    },
+    {
+      "id": "sd018",
+      "category": "Safe Driving",
+      "difficulty": "hard",
+      "question": "When driving at night, you should dim your high beams within what distance of an oncoming vehicle?",
+      "options": ["100 feet", "200 feet", "500 feet", "1000 feet"],
+      "correctAnswer": 2,
+      "explanation": "Dim your high beams within 500 feet of oncoming traffic and within 200 feet when following another vehicle."
+    },
+    {
+      "id": "tl021",
+      "category": "Traffic Laws",
+      "difficulty": "medium",
+      "question": "A flashing yellow traffic light means:",
+      "options": ["Stop", "Proceed with caution", "Speed up to clear intersection", "Yield to all traffic"],
+      "correctAnswer": 1,
+      "explanation": "A flashing yellow light means proceed with caution. Slow down and be alert for cross traffic or other hazards."
+    },
+    {
+      "id": "tl022",
+      "category": "Traffic Laws",
+      "difficulty": "medium",
+      "question": "A flashing red traffic light means:",
+      "options": ["Slow down", "Proceed with caution", "Stop, then proceed when safe", "Light is broken, ignore it"],
+      "correctAnswer": 2,
+      "explanation": "A flashing red light means the same as a stop sign: come to a complete stop, then proceed when safe."
+    },
+    {
+      "id": "sd019",
+      "category": "Safe Driving",
+      "difficulty": "medium",
+      "question": "If you are driving and feel drowsy, you should:",
+      "options": ["Open windows", "Turn up radio", "Pull over and rest", "Drink coffee and continue"],
+      "correctAnswer": 2,
+      "explanation": "If you feel drowsy, pull over in a safe place and rest. Opening windows or turning up music are temporary fixes that don't solve the problem."
+    },
+    {
+      "id": "sd020",
+      "category": "Safe Driving",
+      "difficulty": "hard",
+      "question": "When approaching a stopped school bus on a divided highway with a median, you should:",
+      "options": ["Stop regardless of direction", "Stop only if on the same side", "Slow to 10 mph", "Proceed at normal speed"],
+      "correctAnswer": 1,
+      "explanation": "On a divided highway with a median or barrier, only traffic on the same side as the bus must stop. Opposite direction traffic may proceed cautiously."
+    }
+  ]
+}
