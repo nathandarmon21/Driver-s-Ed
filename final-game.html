@@ -33,9 +33,17 @@ body {
 }
 .mode-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    grid-template-columns: repeat(3, 1fr);
     gap: 20px;
     margin: 30px 0;
+    max-width: 900px;
+    margin-left: auto;
+    margin-right: auto;
+}
+@media (max-width: 768px) {
+    .mode-grid {
+        grid-template-columns: 1fr;
+    }
 }
 .mode-card {
     background: linear-gradient(135deg, #667eea, #764ba2);
@@ -356,6 +364,16 @@ body {
                     <div class="stat-card-icon">🔥</div>
                     <div class="stat-card-value" id="bestStreak">0</div>
                     <div class="stat-card-label">Best Streak</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-card-icon">🏆</div>
+                    <div class="stat-card-value" id="perfectRuns">0</div>
+                    <div class="stat-card-label">Perfect Runs</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-card-icon">⚡</div>
+                    <div class="stat-card-value" id="fastestPerfect">--</div>
+                    <div class="stat-card-label">Fastest Perfect</div>
                 </div>
             </div>
             <button class="btn btn-secondary" onclick="resetProgress()">🔄 Reset Progress</button>
@@ -1458,18 +1476,22 @@ const SIMULATOR_SCENARIOS = [
         correctAnswer: 1,
         explanation: "When arriving simultaneously at a 4-way stop, the vehicle on the RIGHT has the right of way.",
         draw: function(ctx) {
+            // Intersection
             ctx.fillStyle = '#888';
             ctx.fillRect(0, 180, 800, 40);
             ctx.fillRect(380, 0, 40, 400);
-            const signs = [[370, 170], [630, 170], [370, 240], [630, 240]];
-            signs.forEach(([x, y]) => {
-                ctx.fillStyle = '#FF0000';
-                ctx.fillRect(x, y, 20, 20);
-            });
+
+            // Draw all 4 stop signs properly
+            DrawHelpers.stopSign(ctx, 340, 165, 25);  // Top-left
+            DrawHelpers.stopSign(ctx, 660, 165, 25);  // Top-right
+            DrawHelpers.stopSign(ctx, 340, 245, 25);  // Bottom-left
+            DrawHelpers.stopSign(ctx, 660, 245, 25);  // Bottom-right
+
+            // Other cars
             ctx.fillStyle = '#4facfe';
-            ctx.fillRect(420, 160, 30, 50);
+            ctx.fillRect(420, 160, 30, 50);  // Right car
             ctx.fillStyle = '#FFD700';
-            ctx.fillRect(350, 160, 30, 50);
+            ctx.fillRect(350, 160, 30, 50);  // Left car
         }
     },
     {
@@ -1599,8 +1621,7 @@ const SIMULATOR_SCENARIOS = [
         correctAnswer: 2,
         explanation: "In wet or icy conditions, increase following distance to 5-6 seconds or more.",
         draw: function(ctx) {
-            ctx.fillStyle = '#87CEEB';
-            ctx.fillRect(0, 0, 800, 400);
+            // Draw snow/rain effect
             ctx.fillStyle = '#FFF';
             for (let i = 0; i < 30; i++) {
                 ctx.beginPath();
@@ -1664,8 +1685,7 @@ const SIMULATOR_SCENARIOS = [
         correctAnswer: 1,
         explanation: "Vehicles already in the traffic circle have the right of way. Yield before entering.",
         draw: function(ctx) {
-            ctx.fillStyle = '#87CEEB';
-            ctx.fillRect(0, 0, 800, 400);
+            // Draw rotary/traffic circle
             ctx.fillStyle = '#555';
             ctx.beginPath();
             ctx.arc(400, 200, 120, 0, Math.PI * 2);
@@ -1769,8 +1789,7 @@ const SIMULATOR_SCENARIOS = [
         correctAnswer: 1,
         explanation: "Turn wheels toward the shoulder so if the car rolls, it goes off the road, not into traffic.",
         draw: function(ctx) {
-            ctx.fillStyle = '#87CEEB';
-            ctx.fillRect(0, 0, 800, 400);
+            // Draw sloped road
             ctx.fillStyle = '#555';
             ctx.beginPath();
             ctx.moveTo(200, 300);
@@ -1780,6 +1799,7 @@ const SIMULATOR_SCENARIOS = [
             ctx.closePath();
             ctx.fill();
             ctx.fillRect(0, 300, 200, 100);
+            // Draw parked car on hill
             ctx.save();
             ctx.translate(300, 220);
             ctx.rotate(-0.3);
@@ -2441,21 +2461,74 @@ let simState = {
     animFrame: null
 };
 
+// Smart scenario selection - prioritizes scenarios user struggles with
+function selectSmartScenarios(count = 10) {
+    const lessons = getLessonsData();
+    const scenariosWithWeights = SIMULATOR_SCENARIOS.map(scenario => {
+        const lessonData = lessons[scenario.id];
+        let weight = 1; // Base weight
+
+        if (lessonData) {
+            const total = lessonData.correct + lessonData.wrong;
+            if (total > 0) {
+                const errorRate = lessonData.wrong / total;
+                // Higher error rate = higher weight (more likely to be selected)
+                // Error rates: 0% = weight 0.5, 50% = weight 1.5, 100% = weight 3
+                weight = 0.5 + (errorRate * 2.5);
+            }
+        }
+
+        return { scenario, weight };
+    });
+
+    // Weighted random selection
+    const selected = [];
+    const available = [...scenariosWithWeights];
+
+    for (let i = 0; i < count && available.length > 0; i++) {
+        const totalWeight = available.reduce((sum, item) => sum + item.weight, 0);
+        let random = Math.random() * totalWeight;
+
+        let selectedIndex = 0;
+        for (let j = 0; j < available.length; j++) {
+            random -= available[j].weight;
+            if (random <= 0) {
+                selectedIndex = j;
+                break;
+            }
+        }
+
+        selected.push(available[selectedIndex].scenario);
+        available.splice(selectedIndex, 1);
+    }
+
+    return shuffleArray(selected); // Shuffle the final selection
+}
+
 function startSimulator() {
     simState = {
         score: 0,
         streak: 0,
         scenarioIndex: 0,
-        scenarios: shuffleArray([...SIMULATOR_SCENARIOS]).slice(0, 10),
+        scenarios: selectSmartScenarios(10),
         roadOffset: 0,
         carX: 400,
         carY: 300,
         timer: 15,
-        answered: false
+        answered: false,
+        startTime: Date.now(), // Track start time for speed runs
+        correctCount: 0 // Track correct answers
     };
     
     showScreen('simulator');
-    startBackgroundMusic();
+    // Ensure AudioContext is resumed before starting music
+    if (audioCtx.state === 'suspended') {
+        audioCtx.resume().then(() => {
+            startBackgroundMusic();
+        });
+    } else {
+        startBackgroundMusic();
+    }
     updateSimUI();
     drawSimulator();
     loadSimScenario();
@@ -2464,11 +2537,11 @@ function startSimulator() {
 function drawSimulator() {
     const canvas = document.getElementById('simulatorCanvas');
     const ctx = canvas.getContext('2d');
-    
-    // Clear
-    ctx.fillStyle = '#87CEEB';
+
+    // Clear canvas with neutral background
+    ctx.fillStyle = '#444';
     ctx.fillRect(0, 0, 800, 400);
-    
+
     // Draw road
     simState.roadOffset += 2;
     if (simState.roadOffset > 40) simState.roadOffset = 0;
@@ -2577,6 +2650,7 @@ function answerSimQuestion(answerIdx) {
         playCorrectSound();
         simState.score += 15;
         simState.streak++;
+        simState.correctCount++;
     } else {
         playWrongSound();
         simState.streak = 0;
@@ -2601,13 +2675,25 @@ function endSimulator() {
     if (simState.animFrame) cancelAnimationFrame(simState.animFrame);
     stopBackgroundMusic();
 
+    const correctCount = simState.correctCount || Math.floor(simState.score / 15);
+    const isPerfect = correctCount === simState.scenarios.length;
+    const timeElapsed = Math.floor((Date.now() - simState.startTime) / 1000); // in seconds
+
     document.getElementById('resultsFinalScore').textContent = simState.score;
     document.getElementById('resultsTotal').textContent = simState.scenarios.length;
-    document.getElementById('resultsCorrect').textContent = Math.floor(simState.score / 15);
-    document.getElementById('resultsAccuracy').textContent = Math.floor((simState.score / 15) / simState.scenarios.length * 100) + '%';
-    document.getElementById('resultsMessage').textContent = `Great driving! You completed ${simState.scenarios.length} scenarios!`;
-    
-    saveStats(simState.score, simState.streak);
+    document.getElementById('resultsCorrect').textContent = correctCount;
+    document.getElementById('resultsAccuracy').textContent = Math.floor((correctCount / simState.scenarios.length) * 100) + '%';
+
+    let message = `Great driving! You completed ${simState.scenarios.length} scenarios in ${timeElapsed}s!`;
+    if (isPerfect) {
+        message = `🏆 PERFECT SCORE! 10/10 in ${timeElapsed} seconds! 🏆`;
+    }
+    document.getElementById('resultsMessage').textContent = message;
+
+    saveStats(simState.score, simState.streak, {
+        isPerfect: isPerfect,
+        timeElapsed: timeElapsed
+    });
     showScreen('results');
 }
 
@@ -2800,20 +2886,40 @@ function shuffleArray(arr) {
     return array;
 }
 
-function saveStats(score, streak) {
+function saveStats(score, streak, gameData = {}) {
     const current = loadStats();
     const stats = {
         gamesPlayed: current.gamesPlayed + 1,
         highScore: Math.max(score, current.highScore),
-        bestStreak: Math.max(streak, current.bestStreak)
+        bestStreak: Math.max(streak, current.bestStreak),
+        perfectRuns: current.perfectRuns || 0,
+        fastestPerfect: current.fastestPerfect || null
     };
+
+    // Check if this was a perfect run (10/10 in simulator)
+    if (gameData.isPerfect) {
+        stats.perfectRuns++;
+        // Track fastest perfect time (in seconds)
+        if (gameData.timeElapsed) {
+            if (!stats.fastestPerfect || gameData.timeElapsed < stats.fastestPerfect) {
+                stats.fastestPerfect = gameData.timeElapsed;
+            }
+        }
+    }
+
     localStorage.setItem('maDriversEdStats', JSON.stringify(stats));
     updateStatsDisplay();
 }
 
 function loadStats() {
     const saved = localStorage.getItem('maDriversEdStats');
-    return saved ? JSON.parse(saved) : { gamesPlayed: 0, highScore: 0, bestStreak: 0 };
+    return saved ? JSON.parse(saved) : {
+        gamesPlayed: 0,
+        highScore: 0,
+        bestStreak: 0,
+        perfectRuns: 0,
+        fastestPerfect: null
+    };
 }
 
 function updateStatsDisplay() {
@@ -2821,6 +2927,17 @@ function updateStatsDisplay() {
     document.getElementById('gamesPlayed').textContent = stats.gamesPlayed;
     document.getElementById('highScore').textContent = stats.highScore;
     document.getElementById('bestStreak').textContent = stats.bestStreak;
+    document.getElementById('perfectRuns').textContent = stats.perfectRuns || 0;
+
+    // Format fastest perfect time
+    if (stats.fastestPerfect) {
+        const minutes = Math.floor(stats.fastestPerfect / 60);
+        const seconds = stats.fastestPerfect % 60;
+        document.getElementById('fastestPerfect').textContent =
+            minutes > 0 ? `${minutes}m ${seconds}s` : `${seconds}s`;
+    } else {
+        document.getElementById('fastestPerfect').textContent = '--';
+    }
 }
 
 function resetProgress() {
