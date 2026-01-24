@@ -1,166 +1,191 @@
-# 🚗 Massachusetts Driver's Ed Quiz Game
+# 🚗 Massachusetts Driver's Ed - Interactive Quiz & Simulator
 
-An interactive, video-game-style quiz application to help you ace the Massachusetts Learner's Permit Test!
+## ⚠️ IMPORTANT: WHICH FILE TO OPEN?
 
-## 🎮 Features
+### ✅ **OPEN THIS FILE: `final-game.html`**
 
-- **3 Game Modes:**
-  - 🟢 **Practice Mode** - Learn at your own pace with unlimited questions
-  - 🟠 **Test Mode** - Simulate the real MA RMV test (25 questions, 25 minutes)
-  - 🔴 **Survival Mode** - See how long you can last with only 3 lives!
+This is the **ONLY** file you need! It has ALL the latest features.
 
-- **80+ Real Questions** covering all Massachusetts test topics:
-  - Traffic Signs
-  - Traffic Laws & Rules
-  - Road Markings & Signals
-  - Safe Driving Practices
-  - Vehicle Operation
+### ❌ **IGNORE: `index.html`** (old version)
 
-- **Engaging Features:**
-  - Real-time scoring and streak tracking
-  - Instant feedback with detailed explanations
-  - Achievement system
-  - Progress tracking and statistics
-  - Category-specific practice
-  - Beautiful animations and visual effects
-  - Mobile-responsive design
+---
 
-## 🚀 How to Run
+## 🎯 What's Inside?
 
-### Option 1: Double-Click (Easiest!)
-1. Simply open `index.html` in your web browser (Chrome, Firefox, Safari, or Edge)
-2. That's it! Start playing!
+### 5 Game Modes:
+1. **🎮 Drive Simulator** - 10 visual scenarios from 70+ total (SMART selection!)
+2. **📖 Lessons Learned** - Review what you struggle with
+3. **📚 Practice Mode** - Timed questions with feedback
+4. **📝 Test Mode** - 25 questions, pass at 72%
+5. **⚡ Survival Mode** - 3 lives challenge
 
-### Option 2: Local Server (Recommended)
-If you encounter any issues with loading data, run a local server:
+### New Smart Features 🧠:
+- **Adaptive Learning** - Shows scenarios you struggle with more often
+- **Performance Tracking** - Identifies your weak areas automatically
+- **Competitive Stats** - Track perfect runs and speed records
 
-**Using Python 3:**
-```bash
-python3 -m http.server 8000
-```
+### Competitive Tracking 🏆:
+- **Perfect Runs** - Count of 10/10 sessions
+- **Fastest Perfect** - Your speed record
+- **High Score** - Your best score ever
+- **Best Streak** - Longest correct streak
 
-**Using Python 2:**
-```bash
-python -m SimpleHTTPServer 8000
-```
+---
 
-**Using Node.js (with npx):**
-```bash
-npx serve
-```
+## 🚀 How to Play:
 
-Then open your browser and go to:
-- `http://localhost:8000` (Python)
-- `http://localhost:3000` (npx serve)
+1. **Double-click `final-game.html`** to open in your browser
+2. Choose a game mode (try **Drive Simulator** first!)
+3. Answer questions - scenarios appear based on your weak areas
+4. Track your stats on the home page
+5. Use **🏠 Home button** (top-left) to navigate anytime
 
-## 📖 How to Play
+---
 
-### Main Menu
-1. Choose your game mode
-2. View your stats and achievements
-3. Track your progress over time
+## 🌟 Key Features:
 
-### Practice Mode
-- Select a specific category or practice all topics
-- No time limits or lives
-- Perfect for learning and building confidence
+### Drive Simulator (Recommended!)
+- **70+ Unique Scenarios** covering:
+  - Traffic signs (stop, yield, speed limits)
+  - Road markings (yellow lines, white lines)
+  - Intersections and right-of-way
+  - Parking rules
+  - Emergency vehicles
+  - Special conditions (rain, night, fog)
+  - And much more!
 
-### Test Mode
-- Simulates the actual MA RMV permit test
-- 25 random questions
-- 25-minute time limit
-- Need 72% (18/25) to pass
-- Great for final preparation!
+- **Smart Selection** - The more you play, the smarter it gets:
+  - Scenarios you miss often appear more frequently
+  - New scenarios appear at normal rate
+  - Scenarios you master appear less often
 
-### Survival Mode
-- Start with 3 lives (hearts)
-- One wrong answer = lose a life
-- Game over when you run out of lives
-- Challenge yourself to beat your high score!
+- **Visual Learning** - See realistic driving situations
+- **15-Second Timer** - Simulates real test pressure
+- **Background Music** - Ambient music for immersion
+- **Instant Feedback** - Learn from mistakes immediately
 
-### During the Quiz
-- Read each question carefully
-- Click your answer choice
-- Get instant feedback (correct ✓ or incorrect ✗)
-- Read the explanation to understand why
-- Click "Next Question" to continue
-- Watch your score, streak, and accuracy!
+### Lessons Learned
+- **Priority System**:
+  - 🔴 High Priority - You miss these >70% of time
+  - 🟠 Medium Priority - You miss these 40-70%
+  - 🔵 Low Priority - You're doing well
+- **Detailed Stats** - See exact error rates
+- **Always Accessible** - Available from main menu
 
-## 📊 Scoring System
+---
 
-- **Easy Questions:** 10 points
-- **Medium Questions:** 15 points
-- **Hard Questions:** 25 points
-- **Streak Bonuses:**
-  - 3+ streak: 1.5x points
-  - 5+ streak: 2x points
+## 🎮 How to Use Each Mode:
 
-## 🏆 Achievements
+### 🎮 Drive Simulator (BEST FOR LEARNING)
+1. Click "Drive Simulator"
+2. See a driving scenario with visuals
+3. Answer the question in 15 seconds
+4. Get instant feedback with explanation
+5. Complete 10 scenarios
+6. Try to get a perfect 10/10!
 
-Unlock achievements as you play:
-- **First Blood** - Answer your first question correctly
-- **Hot Streak** - Get 5 correct answers in a row
-- **On Fire!** - Get 10 correct answers in a row
-- **Perfect Driver** - Score 100% on Test Mode
-- **Survivor** - Answer 20 questions in Survival Mode
+### 📖 Lessons Learned
+1. Click "Lessons Learned"
+2. See all questions sorted by your error rate
+3. Review HIGH priority items first
+4. Read explanations carefully
+5. Click "Back to Home" when done
 
-## 💾 Progress Tracking
+### 📚 Practice Mode / 📝 Test Mode / ⚡ Survival Mode
+1. Click the mode you want
+2. Answer timed questions
+3. Get feedback after each answer
+4. Complete all questions
+5. See your results and stats
 
-Your progress is automatically saved in your browser:
-- Total games played
-- High score
-- Best streak
-- Category performance statistics
-- Unlocked achievements
+---
 
-## 📱 Mobile Friendly
+## 📊 Your Stats (Home Page):
 
-The game works great on:
-- 📱 Smartphones (iPhone, Android)
-- 📱 Tablets (iPad, etc.)
-- 💻 Desktops and Laptops
-- All modern web browsers
+Track your progress:
+- **🎮 Games Played** - Total sessions completed
+- **⭐ High Score** - Your best score ever
+- **🔥 Best Streak** - Longest correct answer streak
+- **🏆 Perfect Runs** - How many 10/10 sessions ✨ NEW!
+- **⚡ Fastest Perfect** - Your speed record ✨ NEW!
 
-## 🎯 Study Tips
+Challenge yourself:
+- Can you get a perfect 10/10?
+- Can you beat your fastest time?
+- Can you improve your accuracy?
 
-1. **Start with Practice Mode** - Get familiar with all question types
-2. **Focus on Weak Areas** - Use category-specific practice
-3. **Read Explanations** - Understanding is more important than memorizing
-4. **Take Test Mode** - Simulate real test conditions before your exam
-5. **Aim for 80%+** - The real test requires 72%, but aiming higher ensures success
+---
 
-## 📚 Based on Official MA RMV Material
+## 💡 Pro Tips:
 
-All questions are based on the official Massachusetts Registry of Motor Vehicles (RMV) Driver's Manual. For additional study, visit:
+1. **Play the Simulator Multiple Times** - You'll get different scenarios each time
+2. **Focus on Lessons Learned** - Study your HIGH priority items
+3. **Try for Perfect Runs** - Challenge yourself to get 10/10
+4. **Beat Your Speed Record** - How fast can you get perfect?
+5. **Use Sound** - Background music helps with focus (toggle with 🔊)
+6. **Read Explanations** - Understanding beats memorizing
+
+---
+
+## 🎯 Based on Official MA RMV Manual
+
+All 70+ scenarios are based on the official Massachusetts Registry of Motor Vehicles (RMV) Driver's Manual.
+
+Additional study resources:
 - [MA RMV Driver's Manual](https://www.mass.gov/info-details/drivers-manual)
 
-## 🛠️ Technical Details
+---
 
-- **No Installation Required** - Runs entirely in your web browser
-- **No Internet Required** - Works offline once loaded
-- **No Account Needed** - Progress saved locally
-- **Privacy Friendly** - No data collection or tracking
+## 🛠️ Technical Details:
 
-## 🐛 Troubleshooting
+- **No Installation** - Just open the HTML file
+- **No Internet** - Works offline
+- **No Account** - Progress saved locally in browser
+- **Privacy Friendly** - No data collection
+- **Modern Browsers** - Chrome, Firefox, Safari, Edge
 
-**Questions not loading?**
-- Make sure you're running from a local server (see "How to Run" above)
-- Check that the `data/questions.json` file exists
-- Try a different browser
+---
 
-**Progress not saving?**
-- Make sure browser cookies/localStorage are enabled
-- Don't use private/incognito mode if you want progress saved
+## 🐛 Troubleshooting:
 
-**Display issues?**
-- Try refreshing the page (F5)
-- Clear your browser cache
-- Update your browser to the latest version
+**No sound?**
+- Click anywhere on the page to enable audio
+- Check the 🔊 button (bottom-right) is ON
+- Make sure browser sound isn't muted
 
-## 📝 License
+**Seeing old version?**
+- Make sure you opened `final-game.html` (NOT index.html)
+- Refresh the page (F5 or Ctrl+R)
+- Clear browser cache if needed
 
-Created for educational purposes. Study hard and drive safe! 🚗💨
+**Stats not saving?**
+- Enable cookies/localStorage in browser
+- Don't use private/incognito mode
 
-## 🙏 Good Luck!
+**Visuals look wrong?**
+- Refresh the page
+- Make sure you're using a modern browser
+- Update your browser to latest version
 
-You've got this! With practice and dedication, you'll ace that permit test. Safe driving starts with knowledge! 🎓🚦
+---
+
+## 📝 File Structure:
+
+- **`final-game.html`** ✅ - The game (OPEN THIS!)
+- `index.html` ❌ - Old version (ignore)
+- `START-HERE.md` - Detailed feature guide
+- `CLAUDE.md` - Development guide
+- `README.md` - This file
+
+---
+
+## 🎓 Ready to Play!
+
+Open **`final-game.html`** and start mastering your permit test!
+
+Good luck! 🚗💨
+
+---
+
+**Last Updated:** January 24, 2026
+**Version:** Complete Enhanced Edition with Smart Learning
