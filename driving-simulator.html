@@ -1,0 +1,3436 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MA Driving Simulator - Learn to Drive</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            background: #1a1a2e;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            overflow: hidden;
+            color: #fff;
+        }
+
+        #gameContainer {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        #gameCanvas {
+            border: 4px solid #333;
+            border-radius: 8px;
+            box-shadow: 0 0 50px rgba(0, 150, 255, 0.3);
+        }
+
+        /* HUD Overlay */
+        #hud {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            pointer-events: none;
+            font-family: 'Courier New', monospace;
+        }
+
+        .hud-panel {
+            position: absolute;
+            background: rgba(0, 0, 0, 0.75);
+            border: 2px solid #444;
+            border-radius: 10px;
+            padding: 15px;
+            backdrop-filter: blur(5px);
+        }
+
+        /* Top left - Score and streak */
+        #scorePanel {
+            top: 20px;
+            left: 20px;
+        }
+
+        .score-value {
+            font-size: 2.5rem;
+            font-weight: bold;
+            color: #ffd700;
+            text-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+        }
+
+        .streak-value {
+            font-size: 1.5rem;
+            color: #ff6b6b;
+        }
+
+        .streak-value.hot {
+            color: #ff4500;
+            animation: pulse 0.5s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+
+        /* Top right - Speed and limits */
+        #speedPanel {
+            top: 20px;
+            right: 20px;
+            text-align: right;
+        }
+
+        .speedometer {
+            font-size: 3rem;
+            font-weight: bold;
+        }
+
+        .speed-ok { color: #4ade80; }
+        .speed-warning { color: #fbbf24; }
+        .speed-danger { color: #ef4444; animation: flash 0.3s infinite; }
+
+        @keyframes flash {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .speed-limit {
+            font-size: 1.2rem;
+            color: #ccc;
+            margin-top: 5px;
+        }
+
+        .speed-limit-sign {
+            display: inline-block;
+            background: #fff;
+            color: #000;
+            border: 3px solid #000;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            line-height: 44px;
+            text-align: center;
+            font-weight: bold;
+            font-size: 1.2rem;
+            margin-left: 10px;
+        }
+
+        /* Bottom left - Controls hint */
+        #controlsPanel {
+            bottom: 20px;
+            left: 20px;
+            font-size: 0.85rem;
+            color: #888;
+        }
+
+        #controlsPanel kbd {
+            background: #333;
+            border: 1px solid #555;
+            border-radius: 4px;
+            padding: 2px 6px;
+            margin: 0 2px;
+        }
+
+        /* Bottom center - Current action/mission */
+        #missionPanel {
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            text-align: center;
+            max-width: 500px;
+        }
+
+        .mission-text {
+            font-size: 1.1rem;
+            color: #4ade80;
+        }
+
+        .mission-objective {
+            font-size: 0.9rem;
+            color: #888;
+            margin-top: 5px;
+        }
+
+        /* Center - Violation/Rule popup */
+        #violationPopup {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(220, 38, 38, 0.95);
+            border: 3px solid #fff;
+            border-radius: 15px;
+            padding: 20px 40px;
+            text-align: center;
+            opacity: 0;
+            transition: opacity 0.3s;
+            pointer-events: none;
+            z-index: 100;
+        }
+
+        #violationPopup.show {
+            opacity: 1;
+        }
+
+        #violationPopup.correct {
+            background: rgba(34, 197, 94, 0.95);
+        }
+
+        .violation-title {
+            font-size: 1.5rem;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .violation-text {
+            font-size: 1rem;
+            line-height: 1.4;
+        }
+
+        .points-change {
+            font-size: 2rem;
+            font-weight: bold;
+            margin-top: 10px;
+        }
+
+        /* Right side - Current sign to follow */
+        #signPanel {
+            top: 50%;
+            right: 20px;
+            transform: translateY(-50%);
+            text-align: center;
+        }
+
+        .current-sign {
+            width: 100px;
+            height: 100px;
+            margin: 0 auto 10px;
+        }
+
+        .sign-instruction {
+            font-size: 0.9rem;
+            color: #ccc;
+        }
+
+        /* Menu screens */
+        .menu-screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 200;
+            transition: opacity 0.5s;
+        }
+
+        .menu-screen.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .menu-title {
+            font-size: 4rem;
+            font-weight: bold;
+            margin-bottom: 10px;
+            background: linear-gradient(45deg, #4ade80, #22d3ee);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-shadow: none;
+        }
+
+        .menu-subtitle {
+            font-size: 1.5rem;
+            color: #888;
+            margin-bottom: 40px;
+        }
+
+        .menu-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .menu-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            border-radius: 12px;
+            padding: 20px 60px;
+            font-size: 1.3rem;
+            font-weight: bold;
+            color: #fff;
+            cursor: pointer;
+            transition: all 0.3s;
+            min-width: 300px;
+        }
+
+        .menu-btn:hover {
+            transform: translateY(-3px) scale(1.02);
+            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4);
+        }
+
+        .menu-btn.free-roam {
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+        }
+
+        .menu-btn.missions {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        }
+
+        .menu-btn.practice {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        }
+
+        .menu-stats {
+            margin-top: 40px;
+            text-align: center;
+            color: #666;
+        }
+
+        .menu-stats h3 {
+            color: #888;
+            margin-bottom: 15px;
+        }
+
+        .stat-row {
+            display: flex;
+            gap: 30px;
+            justify-content: center;
+        }
+
+        .stat-item {
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #ffd700;
+        }
+
+        .stat-label {
+            font-size: 0.9rem;
+            color: #666;
+        }
+
+        /* Pause overlay */
+        #pauseOverlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.8);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 150;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s;
+        }
+
+        #pauseOverlay.show {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .pause-title {
+            font-size: 3rem;
+            margin-bottom: 30px;
+        }
+
+        /* Mini-map */
+        #miniMap {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            width: 150px;
+            height: 150px;
+            background: rgba(0, 0, 0, 0.7);
+            border: 2px solid #444;
+            border-radius: 10px;
+        }
+
+        /* Turn signals indicator */
+        #turnSignals {
+            position: absolute;
+            top: 120px;
+            right: 20px;
+            display: flex;
+            gap: 20px;
+        }
+
+        .signal {
+            width: 40px;
+            height: 40px;
+            background: #333;
+            border: 2px solid #555;
+            border-radius: 5px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 1.5rem;
+            opacity: 0.3;
+        }
+
+        .signal.active {
+            background: #fbbf24;
+            opacity: 1;
+            animation: blink 0.5s infinite;
+        }
+
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.3; }
+        }
+
+        /* Gear indicator */
+        #gearIndicator {
+            position: absolute;
+            top: 180px;
+            right: 30px;
+            font-size: 1.5rem;
+            color: #4ade80;
+        }
+    </style>
+</head>
+<body>
+    <div id="gameContainer">
+        <canvas id="gameCanvas"></canvas>
+
+        <!-- HUD Overlay -->
+        <div id="hud">
+            <!-- Score Panel -->
+            <div id="scorePanel" class="hud-panel">
+                <div>SCORE</div>
+                <div class="score-value" id="scoreValue">0</div>
+                <div>STREAK</div>
+                <div class="streak-value" id="streakValue">0x</div>
+            </div>
+
+            <!-- Speed Panel -->
+            <div id="speedPanel" class="hud-panel">
+                <div class="speedometer">
+                    <span id="currentSpeed" class="speed-ok">0</span>
+                    <span style="font-size: 1rem;">MPH</span>
+                </div>
+                <div class="speed-limit">
+                    LIMIT: <span class="speed-limit-sign" id="speedLimitSign">25</span>
+                </div>
+            </div>
+
+            <!-- Turn Signals -->
+            <div id="turnSignals">
+                <div class="signal" id="leftSignal">&#9664;</div>
+                <div class="signal" id="rightSignal">&#9654;</div>
+            </div>
+
+            <!-- Gear Indicator -->
+            <div id="gearIndicator">D</div>
+
+            <!-- Controls Panel -->
+            <div id="controlsPanel" class="hud-panel">
+                <div><kbd>W</kbd>/<kbd>&#8593;</kbd> Accelerate</div>
+                <div><kbd>S</kbd>/<kbd>&#8595;</kbd> Brake/Reverse</div>
+                <div><kbd>A</kbd>/<kbd>&#8592;</kbd> <kbd>D</kbd>/<kbd>&#8594;</kbd> Steer</div>
+                <div><kbd>Q</kbd>/<kbd>E</kbd> Turn Signals</div>
+                <div><kbd>H</kbd> Horn | <kbd>P</kbd> Pause</div>
+            </div>
+
+            <!-- Mission Panel -->
+            <div id="missionPanel" class="hud-panel">
+                <div class="mission-text" id="missionText">Free Roam Mode</div>
+                <div class="mission-objective" id="missionObjective">Drive safely and follow all traffic rules</div>
+            </div>
+
+            <!-- Mini-map -->
+            <canvas id="miniMap" width="150" height="150"></canvas>
+        </div>
+
+        <!-- Violation Popup -->
+        <div id="violationPopup">
+            <div class="violation-title" id="violationTitle">VIOLATION!</div>
+            <div class="violation-text" id="violationText"></div>
+            <div class="points-change" id="pointsChange">-50</div>
+        </div>
+
+        <!-- Main Menu -->
+        <div id="mainMenu" class="menu-screen">
+            <div class="menu-title">MA Driving Simulator</div>
+            <div class="menu-subtitle">Learn Massachusetts Traffic Laws</div>
+
+            <div class="menu-buttons">
+                <button class="menu-btn free-roam" onclick="startGame('freeRoam')">
+                    Free Roam
+                </button>
+                <button class="menu-btn missions" onclick="startGame('missions')">
+                    Mission Mode
+                </button>
+                <button class="menu-btn practice" onclick="startGame('signPractice')">
+                    Sign Recognition
+                </button>
+            </div>
+
+            <div class="menu-stats">
+                <h3>Your Progress</h3>
+                <div class="stat-row">
+                    <div class="stat-item">
+                        <div class="stat-value" id="menuHighScore">0</div>
+                        <div class="stat-label">High Score</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value" id="menuMissionsComplete">0</div>
+                        <div class="stat-label">Missions</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value" id="menuAccuracy">0%</div>
+                        <div class="stat-label">Accuracy</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Pause Overlay -->
+        <div id="pauseOverlay">
+            <div class="pause-title">PAUSED</div>
+            <div class="menu-buttons">
+                <button class="menu-btn" onclick="resumeGame()">Resume</button>
+                <button class="menu-btn" onclick="returnToMenu()">Main Menu</button>
+            </div>
+        </div>
+    </div>
+
+<script>
+// ============================================
+// MA DRIVING SIMULATOR - GAME ENGINE
+// ============================================
+
+// Canvas setup
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+const miniMapCanvas = document.getElementById('miniMap');
+const miniCtx = miniMapCanvas.getContext('2d');
+
+// Set canvas size
+function resizeCanvas() {
+    const maxWidth = window.innerWidth - 40;
+    const maxHeight = window.innerHeight - 40;
+    const aspectRatio = 16 / 9;
+
+    if (maxWidth / maxHeight > aspectRatio) {
+        canvas.height = maxHeight;
+        canvas.width = maxHeight * aspectRatio;
+    } else {
+        canvas.width = maxWidth;
+        canvas.height = maxWidth / aspectRatio;
+    }
+}
+resizeCanvas();
+window.addEventListener('resize', resizeCanvas);
+
+// ============================================
+// GAME STATE
+// ============================================
+const gameState = {
+    mode: 'menu', // menu, freeRoam, missions, signPractice, paused
+    previousMode: null,
+
+    // Player car
+    player: {
+        x: 0,           // World X position
+        z: 0,           // World Z position (forward)
+        speed: 0,       // Current speed (mph)
+        maxSpeed: 80,   // Max speed
+        acceleration: 0.15,
+        braking: 0.3,
+        friction: 0.02,
+        angle: 0,       // Rotation angle
+        steerAngle: 0,  // Current steering
+        turnSignal: 0,  // -1 left, 0 off, 1 right
+        gear: 'D',      // D, R, P
+        lane: 0,        // Current lane (-1 left, 0 center, 1 right)
+    },
+
+    // Camera
+    camera: {
+        height: 1000,
+        depth: 0.84,
+        fieldOfView: 100,
+    },
+
+    // Road segments
+    road: {
+        segments: [],
+        segmentLength: 200,
+        rumbleLength: 3,
+        lanes: 2,
+        roadWidth: 2000,
+        shoulderWidth: 200,
+        trackLength: null,
+    },
+
+    // Traffic
+    traffic: [],
+    pedestrians: [],
+
+    // Road signs and events
+    signs: [],
+    events: [],
+    activeEvent: null,
+
+    // Scoring
+    score: 0,
+    streak: 0,
+    violations: 0,
+    correctActions: 0,
+
+    // Current zone
+    currentZone: {
+        type: 'residential',
+        speedLimit: 25,
+        name: 'Residential Area'
+    },
+
+    // Missions
+    currentMission: null,
+    missionsCompleted: 0,
+
+    // Timing
+    lastTime: 0,
+    deltaTime: 0,
+};
+
+// ============================================
+// ROAD SEGMENT GENERATION
+// ============================================
+const ROAD = {
+    LENGTH: { NONE: 0, SHORT: 25, MEDIUM: 50, LONG: 100 },
+    CURVE: { NONE: 0, EASY: 2, MEDIUM: 4, HARD: 6 },
+    HILL: { NONE: 0, LOW: 20, MEDIUM: 40, HIGH: 60 },
+};
+
+const ZONES = {
+    residential: { speedLimit: 25, color: '#4a5568', name: 'Residential Area' },
+    downtown: { speedLimit: 30, color: '#2d3748', name: 'Downtown' },
+    school: { speedLimit: 20, color: '#f6e05e', name: 'School Zone' },
+    highway: { speedLimit: 65, color: '#1a202c', name: 'Highway' },
+    construction: { speedLimit: 15, color: '#ed8936', name: 'Construction Zone' },
+};
+
+// Road colors
+const COLORS = {
+    SKY: '#72c5e4',
+    TREE: '#005108',
+    FOG: '#d3d3d3',
+    LIGHT: { road: '#6b6b6b', grass: '#10aa10', rumble: '#555555', lane: '#cccccc' },
+    DARK: { road: '#696969', grass: '#009a00', rumble: '#bbbbbb', lane: '#696969' },
+    START: { road: '#fff', grass: '#fff', rumble: '#fff' },
+    FINISH: { road: '#000', grass: '#000', rumble: '#000' },
+};
+
+// Sign definitions
+const SIGNS = {
+    stop: {
+        type: 'stop',
+        shape: 'octagon',
+        color: '#dc2626',
+        text: 'STOP',
+        action: 'must_stop',
+        points: 100,
+        penalty: -150,
+        explanation: 'You must come to a COMPLETE stop at stop signs in Massachusetts.',
+    },
+    yield: {
+        type: 'yield',
+        shape: 'triangle',
+        color: '#dc2626',
+        text: 'YIELD',
+        action: 'must_yield',
+        points: 75,
+        penalty: -100,
+        explanation: 'Yield means slow down and give right-of-way to other traffic.',
+    },
+    speedLimit25: {
+        type: 'speedLimit',
+        shape: 'rectangle',
+        color: '#ffffff',
+        text: '25',
+        limit: 25,
+        action: 'speed_limit',
+        points: 50,
+        penalty: -100,
+        explanation: 'Speed limit is 25 MPH in residential areas.',
+    },
+    speedLimit30: {
+        type: 'speedLimit',
+        shape: 'rectangle',
+        color: '#ffffff',
+        text: '30',
+        limit: 30,
+        action: 'speed_limit',
+        points: 50,
+        penalty: -100,
+        explanation: 'Speed limit is 30 MPH in business/downtown areas.',
+    },
+    speedLimit65: {
+        type: 'speedLimit',
+        shape: 'rectangle',
+        color: '#ffffff',
+        text: '65',
+        limit: 65,
+        action: 'speed_limit',
+        points: 50,
+        penalty: -75,
+        explanation: 'Maximum highway speed in MA is 65 MPH unless posted otherwise.',
+    },
+    schoolZone: {
+        type: 'schoolZone',
+        shape: 'pentagon',
+        color: '#fbbf24',
+        text: 'SCHOOL',
+        limit: 20,
+        action: 'school_zone',
+        points: 100,
+        penalty: -200,
+        explanation: 'School zone speed is 20 MPH when children are present.',
+    },
+    noRightOnRed: {
+        type: 'noRightOnRed',
+        shape: 'rectangle',
+        color: '#ffffff',
+        text: 'NO TURN\nON RED',
+        action: 'no_right_red',
+        points: 75,
+        penalty: -150,
+        explanation: 'When this sign is posted, you cannot turn right on a red light.',
+    },
+    pedestrianCrossing: {
+        type: 'pedestrianCrossing',
+        shape: 'diamond',
+        color: '#fbbf24',
+        text: 'PED',
+        action: 'ped_xing',
+        points: 100,
+        penalty: -200,
+        explanation: 'You MUST yield to pedestrians in crosswalks.',
+    },
+    rightOfWay: {
+        type: 'rightOfWay',
+        shape: 'diamond',
+        color: '#fbbf24',
+        text: 'YIELD\nRIGHT',
+        action: 'yield_right',
+        points: 100,
+        penalty: -150,
+        explanation: 'At unmarked intersections, yield to vehicles on your RIGHT.',
+    },
+    railroad: {
+        type: 'railroad',
+        shape: 'circle',
+        color: '#fbbf24',
+        text: 'RR',
+        action: 'railroad',
+        points: 100,
+        penalty: -200,
+        explanation: 'Always slow down and look both ways at railroad crossings.',
+    },
+    doNotPass: {
+        type: 'doNotPass',
+        shape: 'rectangle',
+        color: '#ffffff',
+        text: 'DO NOT\nPASS',
+        action: 'no_pass',
+        points: 75,
+        penalty: -100,
+        explanation: 'Do not pass other vehicles in this zone.',
+    },
+    mergeRight: {
+        type: 'mergeRight',
+        shape: 'diamond',
+        color: '#fbbf24',
+        text: 'MERGE',
+        action: 'merge',
+        points: 50,
+        penalty: -75,
+        explanation: 'Traffic is merging - adjust speed and position.',
+    },
+    oneWay: {
+        type: 'oneWay',
+        shape: 'rectangle',
+        color: '#000000',
+        bgColor: '#ffffff',
+        text: 'ONE WAY',
+        action: 'one_way',
+        points: 75,
+        penalty: -200,
+        explanation: 'This is a one-way street. Do not enter from the wrong direction.',
+    },
+    noUTurn: {
+        type: 'noUTurn',
+        shape: 'rectangle',
+        color: '#dc2626',
+        text: 'NO U',
+        action: 'no_u_turn',
+        points: 50,
+        penalty: -100,
+        explanation: 'U-turns are prohibited at this location.',
+    },
+    fireHydrant: {
+        type: 'fireHydrant',
+        shape: 'rectangle',
+        color: '#dc2626',
+        text: '10 FT',
+        action: 'no_park_hydrant',
+        points: 50,
+        penalty: -100,
+        explanation: 'No parking within 10 feet of a fire hydrant.',
+    },
+    crosswalk: {
+        type: 'crosswalk',
+        shape: 'rectangle',
+        color: '#fbbf24',
+        text: 'XWALK',
+        action: 'crosswalk',
+        points: 75,
+        penalty: -150,
+        explanation: 'No parking within 20 feet of a crosswalk.',
+    }
+};
+
+// Traffic light states
+const TRAFFIC_LIGHTS = {
+    green: { color: '#22c55e', action: 'proceed' },
+    yellow: { color: '#eab308', action: 'prepare_stop' },
+    red: { color: '#ef4444', action: 'must_stop' },
+};
+
+// Massachusetts-specific rules database
+const MA_RULES = {
+    rightOnRed: "In MA, you CAN turn right on red AFTER stopping, unless a sign prohibits it.",
+    fourWayStop: "At a 4-way stop, the vehicle that arrived FIRST goes first. If tied, yield to the RIGHT.",
+    schoolBus: "You MUST stop for a school bus with flashing red lights. Violation = $250 fine + license suspension.",
+    pedestrians: "Pedestrians in crosswalks ALWAYS have right-of-way. Yield completely.",
+    emergency: "Move over or slow down for emergency vehicles. It's the law.",
+    bicycle: "Pass bicycles with at least 3 feet of space when possible.",
+    rotary: "Traffic IN the rotary has right-of-way. Yield before entering.",
+    speedZones: {
+        residential: "25 mph in residential areas unless posted otherwise.",
+        school: "20 mph in school zones when children are present.",
+        highway: "65 mph max on highways unless posted otherwise.",
+        downtown: "30 mph in business districts unless posted otherwise.",
+    },
+    parking: {
+        hydrant: "No parking within 10 feet of a fire hydrant.",
+        crosswalk: "No parking within 20 feet of a crosswalk.",
+        intersection: "No parking within 20 feet of an intersection.",
+        driveway: "No parking in front of a driveway.",
+    }
+};
+
+// Traffic vehicle types
+const VEHICLE_TYPES = {
+    car: { width: 80, height: 100, color: '#3b82f6', speed: 25, name: 'Car' },
+    truck: { width: 90, height: 140, color: '#64748b', speed: 20, name: 'Truck' },
+    schoolBus: { width: 100, height: 160, color: '#fbbf24', speed: 15, name: 'School Bus', special: 'school_bus' },
+    emergency: { width: 85, height: 110, color: '#dc2626', speed: 40, name: 'Emergency', special: 'emergency' },
+    bicycle: { width: 30, height: 50, color: '#22c55e', speed: 12, name: 'Bicycle', special: 'bicycle' },
+};
+
+// Mission definitions
+const MISSIONS = [
+    {
+        id: 'school_run',
+        name: 'School Safety Run',
+        description: 'Navigate through the school zone without any violations',
+        objectives: [
+            { type: 'reach_zone', zone: 'school', description: 'Reach the school zone' },
+            { type: 'no_violations', count: 0, description: 'No speeding in school zone' },
+            { type: 'stop_for_pedestrian', count: 1, description: 'Yield to pedestrians' },
+        ],
+        reward: 500,
+        timeLimit: 120,
+    },
+    {
+        id: 'highway_merge',
+        name: 'Highway Journey',
+        description: 'Safely merge onto the highway and maintain proper speed',
+        objectives: [
+            { type: 'reach_zone', zone: 'highway', description: 'Reach the highway' },
+            { type: 'maintain_speed', min: 55, max: 65, duration: 15, description: 'Maintain highway speed for 15 seconds' },
+        ],
+        reward: 400,
+        timeLimit: 90,
+    },
+    {
+        id: 'downtown_navigation',
+        name: 'Downtown Navigation',
+        description: 'Navigate busy downtown streets following all traffic rules',
+        objectives: [
+            { type: 'reach_zone', zone: 'downtown', description: 'Enter downtown' },
+            { type: 'complete_stops', count: 2, description: 'Complete 2 proper stops' },
+            { type: 'correct_yields', count: 1, description: 'Yield correctly at intersection' },
+        ],
+        reward: 450,
+        timeLimit: 150,
+    },
+    {
+        id: 'sign_master',
+        name: 'Sign Recognition Master',
+        description: 'Correctly respond to 10 different road signs',
+        objectives: [
+            { type: 'correct_sign_responses', count: 10, description: 'Respond correctly to 10 signs' },
+        ],
+        reward: 600,
+        timeLimit: 180,
+    },
+    {
+        id: 'perfect_driver',
+        name: 'Perfect Driver',
+        description: 'Complete a full lap with no violations and a 10+ streak',
+        objectives: [
+            { type: 'no_violations', count: 0, description: 'Zero violations' },
+            { type: 'streak', count: 10, description: 'Achieve 10+ streak' },
+        ],
+        reward: 1000,
+        timeLimit: 300,
+    },
+    {
+        id: 'emergency_response',
+        name: 'Emergency Response',
+        description: 'Properly respond to emergency vehicles',
+        objectives: [
+            { type: 'yield_emergency', count: 2, description: 'Yield to 2 emergency vehicles' },
+        ],
+        reward: 350,
+        timeLimit: 120,
+    },
+];
+
+// ============================================
+// INITIALIZE ROAD
+// ============================================
+function initRoad() {
+    gameState.road.segments = [];
+
+    // Create a varied road with different zones
+    addStraight(ROAD.LENGTH.SHORT, 'residential');
+    addSign('speedLimit25', 20);
+    addStraight(ROAD.LENGTH.MEDIUM, 'residential');
+    addSign('stop', 40);
+    addStraight(ROAD.LENGTH.SHORT, 'residential');
+    addCurve(ROAD.LENGTH.MEDIUM, ROAD.CURVE.EASY, 'residential');
+    addSign('pedestrianCrossing', 60);
+    addStraight(ROAD.LENGTH.SHORT, 'residential');
+
+    // School zone
+    addSign('schoolZone', 80);
+    addStraight(ROAD.LENGTH.MEDIUM, 'school');
+    addSign('pedestrianCrossing', 100);
+    addStraight(ROAD.LENGTH.SHORT, 'school');
+
+    // Downtown
+    addSign('speedLimit30', 130);
+    addStraight(ROAD.LENGTH.MEDIUM, 'downtown');
+    addCurve(ROAD.LENGTH.SHORT, ROAD.CURVE.MEDIUM, 'downtown');
+    addSign('rightOfWay', 160);
+    addStraight(ROAD.LENGTH.SHORT, 'downtown');
+    addSign('yield', 180);
+    addCurve(ROAD.LENGTH.MEDIUM, -ROAD.CURVE.EASY, 'downtown');
+    addSign('noRightOnRed', 210);
+    addStraight(ROAD.LENGTH.MEDIUM, 'downtown');
+
+    // Highway entrance
+    addSign('mergeRight', 250);
+    addHill(ROAD.LENGTH.SHORT, ROAD.HILL.MEDIUM);
+    addSign('speedLimit65', 270);
+    addStraight(ROAD.LENGTH.LONG, 'highway');
+    addCurve(ROAD.LENGTH.LONG, ROAD.CURVE.EASY, 'highway');
+    addSign('doNotPass', 330);
+    addStraight(ROAD.LENGTH.MEDIUM, 'highway');
+    addCurve(ROAD.LENGTH.MEDIUM, -ROAD.CURVE.MEDIUM, 'highway');
+    addSign('railroad', 380);
+    addStraight(ROAD.LENGTH.SHORT, 'highway');
+
+    // Construction zone
+    addSign('speedLimit25', 400);
+    addStraight(ROAD.LENGTH.MEDIUM, 'construction');
+    addCurve(ROAD.LENGTH.SHORT, ROAD.CURVE.HARD, 'construction');
+    addStraight(ROAD.LENGTH.SHORT, 'construction');
+
+    // Back to residential (loop)
+    addHill(ROAD.LENGTH.MEDIUM, -ROAD.HILL.LOW);
+    addSign('speedLimit25', 450);
+    addStraight(ROAD.LENGTH.LONG, 'residential');
+
+    gameState.road.trackLength = gameState.road.segments.length * gameState.road.segmentLength;
+}
+
+function addSegment(curve, y, zone) {
+    const n = gameState.road.segments.length;
+    const zoneData = ZONES[zone] || ZONES.residential;
+
+    gameState.road.segments.push({
+        index: n,
+        p1: { world: { y: lastY(), z: n * gameState.road.segmentLength }, camera: {}, screen: {} },
+        p2: { world: { y: y, z: (n + 1) * gameState.road.segmentLength }, camera: {}, screen: {} },
+        curve: curve,
+        zone: zone,
+        speedLimit: zoneData.speedLimit,
+        signs: [],
+        sprites: [],
+        traffic: [],
+        color: Math.floor(n / gameState.road.rumbleLength) % 2 ? COLORS.DARK : COLORS.LIGHT,
+    });
+}
+
+function lastY() {
+    return gameState.road.segments.length === 0 ? 0 : gameState.road.segments[gameState.road.segments.length - 1].p2.world.y;
+}
+
+function addStraight(num, zone) {
+    for (let i = 0; i < num; i++) {
+        addSegment(0, lastY(), zone);
+    }
+}
+
+function addCurve(num, curve, zone) {
+    for (let i = 0; i < num; i++) {
+        addSegment(curve, lastY(), zone);
+    }
+}
+
+function addHill(num, height) {
+    const zone = gameState.road.segments.length > 0 ?
+        gameState.road.segments[gameState.road.segments.length - 1].zone : 'residential';
+    for (let i = 0; i < num; i++) {
+        addSegment(0, lastY() + height / num, zone);
+    }
+}
+
+function addSign(signType, segmentIndex) {
+    if (segmentIndex < gameState.road.segments.length && SIGNS[signType]) {
+        gameState.road.segments[segmentIndex].signs.push({
+            ...SIGNS[signType],
+            triggered: false,
+            handled: false,
+        });
+    }
+}
+
+// ============================================
+// INPUT HANDLING
+// ============================================
+const keys = {
+    left: false,
+    right: false,
+    up: false,
+    down: false,
+    signalLeft: false,
+    signalRight: false,
+    horn: false,
+    pause: false,
+};
+
+document.addEventListener('keydown', (e) => {
+    switch(e.key.toLowerCase()) {
+        case 'arrowleft':
+        case 'a':
+            keys.left = true;
+            break;
+        case 'arrowright':
+        case 'd':
+            keys.right = true;
+            break;
+        case 'arrowup':
+        case 'w':
+            keys.up = true;
+            break;
+        case 'arrowdown':
+        case 's':
+            keys.down = true;
+            break;
+        case 'q':
+            toggleTurnSignal(-1);
+            break;
+        case 'e':
+            toggleTurnSignal(1);
+            break;
+        case 'h':
+            playHorn();
+            break;
+        case 'p':
+        case 'escape':
+            togglePause();
+            break;
+    }
+});
+
+document.addEventListener('keyup', (e) => {
+    switch(e.key.toLowerCase()) {
+        case 'arrowleft':
+        case 'a':
+            keys.left = false;
+            break;
+        case 'arrowright':
+        case 'd':
+            keys.right = false;
+            break;
+        case 'arrowup':
+        case 'w':
+            keys.up = false;
+            break;
+        case 'arrowdown':
+        case 's':
+            keys.down = false;
+            break;
+    }
+});
+
+function toggleTurnSignal(direction) {
+    const player = gameState.player;
+    if (player.turnSignal === direction) {
+        player.turnSignal = 0;
+    } else {
+        player.turnSignal = direction;
+    }
+    updateTurnSignalUI();
+}
+
+function updateTurnSignalUI() {
+    const leftSignal = document.getElementById('leftSignal');
+    const rightSignal = document.getElementById('rightSignal');
+
+    leftSignal.classList.toggle('active', gameState.player.turnSignal === -1);
+    rightSignal.classList.toggle('active', gameState.player.turnSignal === 1);
+}
+
+function playHorn() {
+    playSound('horn');
+}
+
+// ============================================
+// GAME LOGIC UPDATE
+// ============================================
+function update(dt) {
+    if (gameState.mode === 'menu' || gameState.mode === 'paused') return;
+
+    const player = gameState.player;
+    const road = gameState.road;
+
+    // Update position on track
+    const oldZ = player.z;
+
+    // Acceleration/braking
+    if (keys.up) {
+        player.speed += player.acceleration * dt * 60;
+    } else if (keys.down) {
+        if (player.speed > 0) {
+            player.speed -= player.braking * dt * 60;
+        } else {
+            player.speed -= player.acceleration * 0.5 * dt * 60; // Reverse
+        }
+    } else {
+        // Friction
+        if (player.speed > 0) {
+            player.speed -= player.friction * dt * 60;
+            if (player.speed < 0) player.speed = 0;
+        } else if (player.speed < 0) {
+            player.speed += player.friction * dt * 60;
+            if (player.speed > 0) player.speed = 0;
+        }
+    }
+
+    // Clamp speed
+    player.speed = Math.max(-20, Math.min(player.speed, player.maxSpeed));
+
+    // Steering
+    const steerSpeed = 0.03 * dt * 60;
+    if (keys.left) {
+        player.steerAngle -= steerSpeed;
+    } else if (keys.right) {
+        player.steerAngle += steerSpeed;
+    } else {
+        // Return to center
+        player.steerAngle *= 0.9;
+    }
+    player.steerAngle = Math.max(-1, Math.min(1, player.steerAngle));
+
+    // Apply steering to X position based on speed
+    const speedFactor = Math.abs(player.speed) / player.maxSpeed;
+    player.x += player.steerAngle * speedFactor * 200 * dt;
+
+    // Clamp X position (stay on road)
+    const maxX = road.roadWidth * 0.8;
+    if (Math.abs(player.x) > maxX) {
+        player.x = Math.sign(player.x) * maxX;
+        // Off-road penalty - slow down
+        if (Math.abs(player.x) > road.roadWidth * 0.5) {
+            player.speed *= 0.98;
+        }
+    }
+
+    // Update Z position (forward movement)
+    player.z += player.speed * dt * 50;
+
+    // Wrap around track
+    if (player.z >= road.trackLength) {
+        player.z -= road.trackLength;
+    } else if (player.z < 0) {
+        player.z += road.trackLength;
+    }
+
+    // Get current segment
+    const currentSegmentIndex = Math.floor(player.z / road.segmentLength) % road.segments.length;
+    const currentSegment = road.segments[currentSegmentIndex];
+
+    // Update current zone
+    if (currentSegment && currentSegment.zone !== gameState.currentZone.type) {
+        const newZone = ZONES[currentSegment.zone];
+        const oldZone = gameState.currentZone.type;
+        gameState.currentZone = {
+            type: currentSegment.zone,
+            speedLimit: newZone.speedLimit,
+            name: newZone.name,
+        };
+        document.getElementById('speedLimitSign').textContent = newZone.speedLimit;
+
+        // Notify zone change
+        showEducationalPopup(
+            'Entering ' + newZone.name,
+            MA_RULES.speedZones[currentSegment.zone] || 'Follow posted speed limits.',
+            25
+        );
+
+        // Check mission objective for reaching zones
+        checkMissionObjective('reach_zone', currentSegment.zone);
+    }
+
+    // Random events in free roam
+    if (gameState.mode === 'freeRoam') {
+        if (!gameState.lastEventTime) gameState.lastEventTime = 0;
+        gameState.lastEventTime += dt;
+
+        if (gameState.lastEventTime > 20 + Math.random() * 30) {
+            gameState.lastEventTime = 0;
+            triggerRandomEvent();
+        }
+    }
+
+    // Check mission time limit
+    if (gameState.currentMission && gameState.currentMission.startTime) {
+        const elapsed = (Date.now() - gameState.currentMission.startTime) / 1000;
+        if (elapsed > gameState.currentMission.timeLimit) {
+            // Mission failed due to time
+            showViolation(
+                'Mission Failed - Time Expired!',
+                -100,
+                'Try to complete objectives faster next time.'
+            );
+            gameState.currentMission = null;
+            setTimeout(startMission, 3000);
+        }
+    }
+
+    // Track speed maintenance for missions
+    if (gameState.currentMission) {
+        for (const obj of gameState.currentMission.objectives) {
+            if (obj.type === 'maintain_speed' && !obj.completed) {
+                if (player.speed >= obj.min && player.speed <= obj.max) {
+                    obj.timeHeld = (obj.timeHeld || 0) + dt;
+                    if (obj.timeHeld >= obj.duration) {
+                        obj.completed = true;
+                        showPositiveFeedback('Speed maintained correctly!', 100);
+                        updateMissionProgress();
+                    }
+                } else {
+                    obj.timeHeld = 0;
+                }
+            }
+        }
+    }
+
+    // Update streak display
+    if (gameState.streak >= 5) {
+        document.getElementById('streakValue').classList.add('hot');
+    } else {
+        document.getElementById('streakValue').classList.remove('hot');
+    }
+
+    // Check for sign triggers
+    checkSigns(currentSegmentIndex);
+
+    // Check speed violations
+    checkSpeedViolation();
+
+    // Update traffic
+    updateTraffic(dt);
+
+    // Update gear indicator
+    updateGearIndicator();
+
+    // Update UI
+    updateHUD();
+}
+
+function checkSigns(segmentIndex) {
+    const segment = gameState.road.segments[segmentIndex];
+    if (!segment) return;
+
+    for (const sign of segment.signs) {
+        if (sign.triggered) continue;
+
+        sign.triggered = true;
+        handleSign(sign);
+    }
+}
+
+function handleSign(sign) {
+    const player = gameState.player;
+    let violation = false;
+    let message = '';
+
+    switch(sign.action) {
+        case 'must_stop':
+            // Check if player stopped (speed near 0)
+            if (player.speed > 5) {
+                violation = true;
+                message = 'You ran a STOP sign!';
+            } else {
+                showPositiveFeedback('Good stop!', sign.points);
+            }
+            break;
+
+        case 'must_yield':
+            // Yield - should slow down significantly
+            if (player.speed > 20) {
+                violation = true;
+                message = 'You failed to yield!';
+            } else {
+                showPositiveFeedback('Correct yield!', sign.points);
+            }
+            break;
+
+        case 'speed_limit':
+        case 'school_zone':
+            // Update speed limit
+            gameState.currentZone.speedLimit = sign.limit;
+            document.getElementById('speedLimitSign').textContent = sign.limit;
+            // Give a few seconds to adjust
+            setTimeout(() => {
+                if (player.speed > sign.limit + 10) {
+                    showViolation('Speeding in ' + (sign.action === 'school_zone' ? 'school zone' : 'this area') + '!',
+                        sign.penalty, sign.explanation);
+                }
+            }, 3000);
+            break;
+
+        case 'ped_xing':
+        case 'crosswalk':
+            // Should slow down
+            if (player.speed > 15) {
+                violation = true;
+                message = 'Slow down for pedestrian crossing!';
+            } else {
+                showPositiveFeedback('Good awareness!', sign.points);
+            }
+            break;
+
+        case 'yield_right':
+            // Educational popup
+            showEducationalPopup('Right-of-Way', sign.explanation, 50);
+            break;
+
+        case 'railroad':
+            if (player.speed > 15) {
+                violation = true;
+                message = 'Slow down at railroad crossing!';
+            } else {
+                showPositiveFeedback('Safe railroad crossing!', sign.points);
+            }
+            break;
+
+        case 'no_pass':
+        case 'merge':
+            showEducationalPopup(sign.type, sign.explanation, 25);
+            break;
+
+        default:
+            showEducationalPopup(sign.type, sign.explanation, 25);
+    }
+
+    if (violation) {
+        showViolation(message, sign.penalty, sign.explanation);
+    }
+}
+
+function checkSpeedViolation() {
+    const player = gameState.player;
+    const limit = gameState.currentZone.speedLimit;
+
+    // Check every few seconds
+    if (!gameState.lastSpeedCheck) gameState.lastSpeedCheck = 0;
+    gameState.lastSpeedCheck += gameState.deltaTime;
+
+    if (gameState.lastSpeedCheck > 5) { // Check every 5 seconds
+        gameState.lastSpeedCheck = 0;
+
+        if (player.speed > limit + 15) {
+            showViolation(
+                'Excessive speeding! ' + Math.floor(player.speed) + ' in a ' + limit + ' zone',
+                -100,
+                'In MA, fines double in construction and school zones.'
+            );
+        } else if (player.speed > limit + 5) {
+            showViolation(
+                'Speeding: ' + Math.floor(player.speed) + ' mph in a ' + limit + ' mph zone',
+                -50,
+                'Keep your speed at or below the posted limit.'
+            );
+        }
+    }
+}
+
+function showPositiveFeedback(message, points) {
+    const streakBonus = 1 + gameState.streak * 0.1;
+    const totalPoints = Math.floor(points * streakBonus);
+    gameState.score += totalPoints;
+    gameState.streak++;
+    gameState.correctActions++;
+
+    // Track for missions
+    checkMissionObjective('correct_sign_responses');
+    checkMissionObjective('complete_stops');
+    checkMissionObjective('correct_yields');
+
+    // Check streak objective
+    if (gameState.currentMission) {
+        for (const obj of gameState.currentMission.objectives) {
+            if (obj.type === 'streak' && !obj.completed && gameState.streak >= obj.count) {
+                obj.completed = true;
+                showEducationalPopup('Streak Achieved!', `${obj.count}+ correct actions in a row!`, 200);
+                updateMissionProgress();
+            }
+        }
+    }
+
+    const popup = document.getElementById('violationPopup');
+    popup.classList.add('correct');
+    document.getElementById('violationTitle').textContent = gameState.streak >= 3 ? 'STREAK x' + gameState.streak + '!' : 'CORRECT!';
+    document.getElementById('violationText').textContent = message;
+    document.getElementById('pointsChange').textContent = '+' + totalPoints + (streakBonus > 1 ? ' (streak bonus!)' : '');
+    document.getElementById('pointsChange').style.color = '#22c55e';
+
+    popup.classList.add('show');
+    setTimeout(() => popup.classList.remove('show'), 2000);
+
+    // Play success sound
+    playSound('correct');
+
+    updateHUD();
+}
+
+function showViolation(title, points, explanation) {
+    gameState.score += points;
+    gameState.streak = 0;
+    gameState.violations++;
+
+    // Check no_violations objective failure
+    if (gameState.currentMission) {
+        for (const obj of gameState.currentMission.objectives) {
+            if (obj.type === 'no_violations') {
+                obj.failed = true;
+            }
+        }
+    }
+
+    const popup = document.getElementById('violationPopup');
+    popup.classList.remove('correct');
+    document.getElementById('violationTitle').textContent = 'VIOLATION!';
+    document.getElementById('violationText').textContent = title + '\n\n' + explanation;
+    document.getElementById('pointsChange').textContent = points;
+    document.getElementById('pointsChange').style.color = '#ef4444';
+
+    popup.classList.add('show');
+    setTimeout(() => popup.classList.remove('show'), 3000);
+
+    // Play error sound
+    playSound('violation');
+
+    updateHUD();
+}
+
+// Sound effects
+function playSound(type) {
+    try {
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+
+        switch(type) {
+            case 'correct':
+                osc.frequency.value = 523.25; // C5
+                osc.type = 'sine';
+                gain.gain.value = 0.15;
+                osc.start();
+                setTimeout(() => {
+                    osc.frequency.value = 659.25; // E5
+                }, 100);
+                setTimeout(() => {
+                    osc.frequency.value = 783.99; // G5
+                }, 200);
+                gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.4);
+                osc.stop(audioCtx.currentTime + 0.4);
+                break;
+
+            case 'violation':
+                osc.frequency.value = 200;
+                osc.type = 'sawtooth';
+                gain.gain.value = 0.15;
+                osc.start();
+                gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
+                osc.stop(audioCtx.currentTime + 0.3);
+                break;
+
+            case 'horn':
+                osc.frequency.value = 350;
+                osc.type = 'sawtooth';
+                gain.gain.value = 0.2;
+                osc.start();
+                gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
+                osc.stop(audioCtx.currentTime + 0.3);
+                break;
+        }
+    } catch(e) {
+        // Audio not supported
+    }
+}
+
+function showEducationalPopup(title, text, points) {
+    gameState.score += points;
+
+    const popup = document.getElementById('violationPopup');
+    popup.classList.add('correct');
+    document.getElementById('violationTitle').textContent = title.toUpperCase();
+    document.getElementById('violationText').textContent = text;
+    document.getElementById('pointsChange').textContent = '+' + points;
+    document.getElementById('pointsChange').style.color = '#4ade80';
+
+    popup.classList.add('show');
+    setTimeout(() => popup.classList.remove('show'), 2500);
+
+    updateHUD();
+}
+
+function updateTraffic(dt) {
+    const player = gameState.player;
+    const road = gameState.road;
+
+    // Update existing traffic
+    for (let i = gameState.traffic.length - 1; i >= 0; i--) {
+        const vehicle = gameState.traffic[i];
+
+        // Move vehicle
+        vehicle.z += vehicle.speed * dt * 50;
+
+        // Wrap around track
+        if (vehicle.z >= road.trackLength) {
+            vehicle.z -= road.trackLength;
+        }
+
+        // Check for special vehicle interactions
+        const distanceToPlayer = vehicle.z - player.z;
+
+        // School bus with flashing lights
+        if (vehicle.type === 'schoolBus' && vehicle.stoppedForKids) {
+            // Check if player is close and not stopped
+            if (Math.abs(distanceToPlayer) < 500 && player.speed > 5) {
+                if (!vehicle.violationTriggered) {
+                    vehicle.violationTriggered = true;
+                    showViolation(
+                        'Failed to stop for school bus!',
+                        -250,
+                        MA_RULES.schoolBus
+                    );
+                }
+            } else if (Math.abs(distanceToPlayer) < 500 && player.speed <= 5) {
+                if (!vehicle.correctActionTriggered) {
+                    vehicle.correctActionTriggered = true;
+                    showPositiveFeedback('Correctly stopped for school bus!', 150);
+                    checkMissionObjective('stop_for_school_bus');
+                }
+            }
+        }
+
+        // Emergency vehicle
+        if (vehicle.type === 'emergency' && vehicle.sirenOn) {
+            // Check if player yielded (moved right and slowed)
+            if (distanceToPlayer > -300 && distanceToPlayer < 300) {
+                if (player.x > 500 && player.speed < 20) {
+                    if (!vehicle.yieldAcknowledged) {
+                        vehicle.yieldAcknowledged = true;
+                        showPositiveFeedback('Properly yielded to emergency vehicle!', 100);
+                        checkMissionObjective('yield_emergency');
+                    }
+                } else if (!vehicle.yieldWarned && player.speed > 30) {
+                    vehicle.yieldWarned = true;
+                    showViolation(
+                        'Failed to yield to emergency vehicle!',
+                        -150,
+                        MA_RULES.emergency
+                    );
+                }
+            }
+        }
+
+        // Bicycle - check safe passing distance
+        if (vehicle.type === 'bicycle') {
+            if (distanceToPlayer > -100 && distanceToPlayer < 100) {
+                const lateralDistance = Math.abs(player.x - vehicle.x);
+                if (lateralDistance < 400 && player.speed > vehicle.speed + 10) {
+                    if (!vehicle.passWarned) {
+                        vehicle.passWarned = true;
+                        showViolation(
+                            'Pass bicycles with more space!',
+                            -75,
+                            MA_RULES.bicycle
+                        );
+                    }
+                } else if (lateralDistance >= 400 && player.speed > vehicle.speed) {
+                    if (!vehicle.passCorrect) {
+                        vehicle.passCorrect = true;
+                        showPositiveFeedback('Safe bicycle pass!', 50);
+                    }
+                }
+            }
+        }
+
+        // Remove vehicles that are too far behind
+        if (distanceToPlayer < -2000) {
+            gameState.traffic.splice(i, 1);
+        }
+    }
+
+    // Spawn new traffic periodically
+    if (!gameState.lastTrafficSpawn) gameState.lastTrafficSpawn = 0;
+    gameState.lastTrafficSpawn += dt;
+
+    if (gameState.lastTrafficSpawn > 3 + Math.random() * 5) {
+        gameState.lastTrafficSpawn = 0;
+        spawnTraffic();
+    }
+
+    // Update pedestrians
+    updatePedestrians(dt);
+}
+
+function spawnTraffic() {
+    const player = gameState.player;
+    const road = gameState.road;
+
+    // Determine what type to spawn
+    const roll = Math.random();
+    let type;
+    if (roll < 0.6) type = 'car';
+    else if (roll < 0.75) type = 'truck';
+    else if (roll < 0.85) type = 'schoolBus';
+    else if (roll < 0.92) type = 'emergency';
+    else type = 'bicycle';
+
+    const vehicleType = VEHICLE_TYPES[type];
+
+    // Spawn ahead of player
+    const spawnDistance = 1500 + Math.random() * 2000;
+    let spawnZ = player.z + spawnDistance;
+    if (spawnZ >= road.trackLength) spawnZ -= road.trackLength;
+
+    // Lane position
+    const lane = Math.random() > 0.5 ? -600 : 600;
+
+    const vehicle = {
+        type: type,
+        x: lane,
+        z: spawnZ,
+        speed: vehicleType.speed + (Math.random() - 0.5) * 10,
+        width: vehicleType.width,
+        height: vehicleType.height,
+        color: vehicleType.color,
+        special: vehicleType.special,
+
+        // Special states
+        stoppedForKids: type === 'schoolBus' && Math.random() > 0.7,
+        sirenOn: type === 'emergency',
+
+        // Tracking
+        violationTriggered: false,
+        correctActionTriggered: false,
+        yieldAcknowledged: false,
+        yieldWarned: false,
+        passWarned: false,
+        passCorrect: false,
+    };
+
+    gameState.traffic.push(vehicle);
+}
+
+function updatePedestrians(dt) {
+    const player = gameState.player;
+
+    // Update existing pedestrians
+    for (let i = gameState.pedestrians.length - 1; i >= 0; i--) {
+        const ped = gameState.pedestrians[i];
+
+        // Move across road
+        if (ped.crossing) {
+            ped.x += ped.direction * 100 * dt;
+
+            // Check if crossed
+            if (Math.abs(ped.x) > 1500) {
+                gameState.pedestrians.splice(i, 1);
+                continue;
+            }
+        }
+
+        // Check player interaction
+        const distanceToPlayer = ped.z - player.z;
+        if (Math.abs(distanceToPlayer) < 300 && Math.abs(ped.x) < 800) {
+            if (player.speed > 10 && !ped.violationTriggered) {
+                ped.violationTriggered = true;
+                showViolation(
+                    'Failed to yield to pedestrian!',
+                    -200,
+                    MA_RULES.pedestrians
+                );
+            } else if (player.speed <= 10 && !ped.yieldCorrect) {
+                ped.yieldCorrect = true;
+                showPositiveFeedback('Yielded to pedestrian!', 100);
+                checkMissionObjective('stop_for_pedestrian');
+            }
+        }
+    }
+
+    // Spawn pedestrians at crosswalks
+    if (!gameState.lastPedSpawn) gameState.lastPedSpawn = 0;
+    gameState.lastPedSpawn += dt;
+
+    if (gameState.lastPedSpawn > 8 + Math.random() * 10) {
+        gameState.lastPedSpawn = 0;
+        spawnPedestrian();
+    }
+}
+
+function spawnPedestrian() {
+    const player = gameState.player;
+    const road = gameState.road;
+
+    // Find a crosswalk sign ahead
+    const playerSegment = Math.floor(player.z / road.segmentLength);
+
+    for (let i = 10; i < 50; i++) {
+        const segmentIndex = (playerSegment + i) % road.segments.length;
+        const segment = road.segments[segmentIndex];
+
+        for (const sign of segment.signs) {
+            if (sign.type === 'pedestrianCrossing' || sign.type === 'crosswalk') {
+                const ped = {
+                    x: Math.random() > 0.5 ? -1200 : 1200,
+                    z: segmentIndex * road.segmentLength,
+                    crossing: true,
+                    direction: Math.random() > 0.5 ? 1 : -1,
+                    color: `hsl(${Math.random() * 360}, 70%, 50%)`,
+                    violationTriggered: false,
+                    yieldCorrect: false,
+                };
+                gameState.pedestrians.push(ped);
+                return;
+            }
+        }
+    }
+}
+
+function checkMissionObjective(type, value) {
+    if (!gameState.currentMission) return;
+
+    const mission = gameState.currentMission;
+
+    for (const obj of mission.objectives) {
+        if (obj.type === type && !obj.completed) {
+            if (obj.count !== undefined) {
+                obj.progress = (obj.progress || 0) + 1;
+                if (obj.progress >= obj.count) {
+                    obj.completed = true;
+                    showEducationalPopup('Objective Complete!', obj.description, 100);
+                }
+            } else {
+                obj.completed = true;
+                showEducationalPopup('Objective Complete!', obj.description, 100);
+            }
+            updateMissionProgress();
+            break;
+        }
+    }
+
+    // Check if mission complete
+    if (mission.objectives.every(obj => obj.completed)) {
+        completeMission();
+    }
+}
+
+function updateMissionProgress() {
+    if (!gameState.currentMission) return;
+
+    const mission = gameState.currentMission;
+    const completed = mission.objectives.filter(o => o.completed).length;
+    const total = mission.objectives.length;
+
+    document.getElementById('missionObjective').textContent =
+        `Progress: ${completed}/${total} objectives - ` +
+        mission.objectives.find(o => !o.completed)?.description || 'Complete!';
+}
+
+function completeMission() {
+    const mission = gameState.currentMission;
+
+    gameState.score += mission.reward;
+    gameState.missionsCompleted++;
+
+    showEducationalPopup(
+        'MISSION COMPLETE!',
+        `${mission.name} - Reward: +${mission.reward} points`,
+        mission.reward
+    );
+
+    // Start next mission after delay
+    setTimeout(() => {
+        const nextMission = MISSIONS[Math.floor(Math.random() * MISSIONS.length)];
+        startSpecificMission(nextMission);
+    }, 5000);
+}
+
+function startSpecificMission(mission) {
+    // Deep copy to avoid mutating original
+    gameState.currentMission = JSON.parse(JSON.stringify(mission));
+    gameState.currentMission.startTime = Date.now();
+
+    document.getElementById('missionText').textContent = mission.name;
+    document.getElementById('missionObjective').textContent = mission.description;
+
+    updateMissionProgress();
+}
+
+function updateGearIndicator() {
+    const player = gameState.player;
+    let gear = 'D';
+    if (player.speed < 0) gear = 'R';
+    else if (player.speed === 0 && !keys.up) gear = 'P';
+
+    player.gear = gear;
+    document.getElementById('gearIndicator').textContent = gear;
+}
+
+function updateHUD() {
+    const player = gameState.player;
+    const limit = gameState.currentZone.speedLimit;
+
+    // Score
+    document.getElementById('scoreValue').textContent = Math.floor(gameState.score);
+
+    // Streak
+    const streakEl = document.getElementById('streakValue');
+    streakEl.textContent = gameState.streak + 'x';
+    streakEl.classList.toggle('hot', gameState.streak >= 5);
+
+    // Speed
+    const speedEl = document.getElementById('currentSpeed');
+    const speed = Math.abs(Math.floor(player.speed));
+    speedEl.textContent = speed;
+
+    speedEl.classList.remove('speed-ok', 'speed-warning', 'speed-danger');
+    if (speed > limit + 10) {
+        speedEl.classList.add('speed-danger');
+    } else if (speed > limit) {
+        speedEl.classList.add('speed-warning');
+    } else {
+        speedEl.classList.add('speed-ok');
+    }
+}
+
+// ============================================
+// RENDERING
+// ============================================
+function render() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    if (gameState.mode === 'menu') return;
+
+    const player = gameState.player;
+    const road = gameState.road;
+    const camera = gameState.camera;
+
+    const baseSegment = findSegment(player.z);
+    const basePercent = (player.z % road.segmentLength) / road.segmentLength;
+    const playerSegment = findSegment(player.z + 500); // Look-ahead
+    const playerY = interpolate(playerSegment.p1.world.y, playerSegment.p2.world.y, basePercent);
+
+    let maxy = canvas.height;
+    let x = 0;
+    let dx = -(baseSegment.curve * basePercent);
+
+    // Draw sky gradient
+    const skyGradient = ctx.createLinearGradient(0, 0, 0, canvas.height / 2);
+    skyGradient.addColorStop(0, '#1e3a5f');
+    skyGradient.addColorStop(0.5, '#87ceeb');
+    skyGradient.addColorStop(1, '#b0d4e3');
+    ctx.fillStyle = skyGradient;
+    ctx.fillRect(0, 0, canvas.width, canvas.height / 2);
+
+    // Draw ground
+    ctx.fillStyle = '#228b22';
+    ctx.fillRect(0, canvas.height / 2, canvas.width, canvas.height / 2);
+
+    // Draw road segments from back to front
+    const drawDistance = 300;
+
+    for (let n = 0; n < drawDistance; n++) {
+        const segmentIndex = (baseSegment.index + n) % road.segments.length;
+        const segment = road.segments[segmentIndex];
+
+        const looped = segment.index < baseSegment.index;
+        const fog = exponentialFog(n / drawDistance, 0.7);
+
+        // Project segment points
+        const camZ = player.z - (looped ? road.trackLength : 0);
+
+        project(segment.p1, player.x * road.roadWidth - x, playerY + camera.height, camZ, camera.depth, canvas.width, canvas.height, road.roadWidth);
+        project(segment.p2, player.x * road.roadWidth - x - dx, playerY + camera.height, camZ, camera.depth, canvas.width, canvas.height, road.roadWidth);
+
+        x += dx;
+        dx += segment.curve;
+
+        // Skip if behind camera or above horizon
+        if (segment.p1.camera.z <= camera.depth || segment.p2.screen.y >= maxy) continue;
+
+        // Draw segment
+        renderSegment(
+            canvas.width, road.lanes,
+            segment.p1.screen.x, segment.p1.screen.y, segment.p1.screen.w,
+            segment.p2.screen.x, segment.p2.screen.y, segment.p2.screen.w,
+            segment.color, fog, segment.zone
+        );
+
+        maxy = segment.p2.screen.y;
+
+        // Draw signs on this segment
+        for (const sign of segment.signs) {
+            renderSign(sign, segment, canvas.width);
+        }
+    }
+
+    // Draw traffic vehicles
+    renderTraffic(baseSegment.index);
+
+    // Draw pedestrians
+    renderPedestrians(baseSegment.index);
+
+    // Draw player car (from behind, centered)
+    renderPlayerCar();
+
+    // Draw mini-map
+    renderMiniMap();
+
+    // Draw traffic light if at intersection
+    renderTrafficLight();
+}
+
+function renderTraffic(baseSegmentIndex) {
+    const player = gameState.player;
+    const road = gameState.road;
+    const camera = gameState.camera;
+
+    // Sort traffic by distance (far to near)
+    const sortedTraffic = [...gameState.traffic].sort((a, b) => b.z - a.z);
+
+    for (const vehicle of sortedTraffic) {
+        let relativeZ = vehicle.z - player.z;
+
+        // Handle track wrapping
+        if (relativeZ > road.trackLength / 2) relativeZ -= road.trackLength;
+        if (relativeZ < -road.trackLength / 2) relativeZ += road.trackLength;
+
+        // Only render vehicles ahead
+        if (relativeZ < 100 || relativeZ > 3000) continue;
+
+        // Project position
+        const scale = camera.depth / (relativeZ * 0.01);
+        if (scale < 0.05 || scale > 2) continue;
+
+        const screenX = canvas.width / 2 + (vehicle.x - player.x * road.roadWidth) * scale * 0.3;
+        const screenY = canvas.height / 2 + (100 / relativeZ) * canvas.height * 2;
+
+        const width = vehicle.width * scale;
+        const height = vehicle.height * scale;
+
+        if (screenX < -100 || screenX > canvas.width + 100) continue;
+        if (screenY < 0 || screenY > canvas.height) continue;
+
+        ctx.save();
+
+        // Vehicle shadow
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
+        ctx.beginPath();
+        ctx.ellipse(screenX, screenY + height * 0.1, width * 0.6, height * 0.1, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Vehicle body
+        ctx.fillStyle = vehicle.color;
+
+        if (vehicle.type === 'schoolBus') {
+            // School bus shape
+            ctx.fillRect(screenX - width / 2, screenY - height, width, height);
+            ctx.fillStyle = '#000';
+            ctx.fillRect(screenX - width / 2 + width * 0.1, screenY - height + height * 0.1, width * 0.3, height * 0.2);
+            ctx.fillRect(screenX + width * 0.1, screenY - height + height * 0.1, width * 0.3, height * 0.2);
+
+            // Flashing lights if stopped for kids
+            if (vehicle.stoppedForKids) {
+                const flashOn = Math.floor(Date.now() / 200) % 2 === 0;
+                ctx.fillStyle = flashOn ? '#ff0000' : '#660000';
+                ctx.beginPath();
+                ctx.arc(screenX - width / 3, screenY - height - 5, width * 0.08, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.fillStyle = flashOn ? '#660000' : '#ff0000';
+                ctx.beginPath();
+                ctx.arc(screenX + width / 3, screenY - height - 5, width * 0.08, 0, Math.PI * 2);
+                ctx.fill();
+
+                // STOP sign extended
+                ctx.fillStyle = '#ff0000';
+                ctx.fillRect(screenX - width / 2 - width * 0.3, screenY - height * 0.6, width * 0.25, width * 0.25);
+                ctx.fillStyle = '#fff';
+                ctx.font = `${width * 0.08}px Arial`;
+                ctx.textAlign = 'center';
+                ctx.fillText('STOP', screenX - width / 2 - width * 0.17, screenY - height * 0.5);
+            }
+        } else if (vehicle.type === 'emergency') {
+            // Emergency vehicle
+            ctx.fillRect(screenX - width / 2, screenY - height, width, height);
+
+            // Light bar
+            if (vehicle.sirenOn) {
+                const flashOn = Math.floor(Date.now() / 150) % 2 === 0;
+                ctx.fillStyle = flashOn ? '#ff0000' : '#0000ff';
+                ctx.fillRect(screenX - width / 3, screenY - height - height * 0.15, width * 0.3, height * 0.12);
+                ctx.fillStyle = flashOn ? '#0000ff' : '#ff0000';
+                ctx.fillRect(screenX + width * 0.03, screenY - height - height * 0.15, width * 0.3, height * 0.12);
+            }
+        } else if (vehicle.type === 'bicycle') {
+            // Bicycle - simple representation
+            ctx.strokeStyle = vehicle.color;
+            ctx.lineWidth = width * 0.1;
+            // Wheels
+            ctx.beginPath();
+            ctx.arc(screenX - width * 0.2, screenY - height * 0.2, width * 0.3, 0, Math.PI * 2);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.arc(screenX + width * 0.2, screenY - height * 0.2, width * 0.3, 0, Math.PI * 2);
+            ctx.stroke();
+            // Frame
+            ctx.beginPath();
+            ctx.moveTo(screenX - width * 0.2, screenY - height * 0.2);
+            ctx.lineTo(screenX, screenY - height * 0.7);
+            ctx.lineTo(screenX + width * 0.2, screenY - height * 0.2);
+            ctx.stroke();
+            // Rider
+            ctx.fillStyle = '#333';
+            ctx.beginPath();
+            ctx.arc(screenX, screenY - height * 0.9, width * 0.15, 0, Math.PI * 2);
+            ctx.fill();
+        } else {
+            // Regular car/truck
+            ctx.beginPath();
+            ctx.roundRect(screenX - width / 2, screenY - height, width, height, width * 0.1);
+            ctx.fill();
+
+            // Windows
+            ctx.fillStyle = 'rgba(135, 206, 235, 0.6)';
+            ctx.fillRect(screenX - width / 3, screenY - height + height * 0.15, width * 2 / 3, height * 0.25);
+
+            // Tail lights
+            ctx.fillStyle = '#ff4444';
+            ctx.fillRect(screenX - width / 2 + 3, screenY - height * 0.1, width * 0.15, height * 0.08);
+            ctx.fillRect(screenX + width / 2 - width * 0.15 - 3, screenY - height * 0.1, width * 0.15, height * 0.08);
+        }
+
+        ctx.restore();
+    }
+}
+
+function renderPedestrians(baseSegmentIndex) {
+    const player = gameState.player;
+    const road = gameState.road;
+    const camera = gameState.camera;
+
+    for (const ped of gameState.pedestrians) {
+        let relativeZ = ped.z - player.z;
+
+        if (relativeZ > road.trackLength / 2) relativeZ -= road.trackLength;
+        if (relativeZ < -road.trackLength / 2) relativeZ += road.trackLength;
+
+        if (relativeZ < 50 || relativeZ > 2000) continue;
+
+        const scale = camera.depth / (relativeZ * 0.01);
+        if (scale < 0.05 || scale > 2) continue;
+
+        const screenX = canvas.width / 2 + (ped.x - player.x * road.roadWidth) * scale * 0.3;
+        const screenY = canvas.height / 2 + (100 / relativeZ) * canvas.height * 2;
+
+        const size = 30 * scale;
+
+        if (screenX < -50 || screenX > canvas.width + 50) continue;
+
+        ctx.save();
+
+        // Body
+        ctx.fillStyle = ped.color;
+        ctx.beginPath();
+        ctx.arc(screenX, screenY - size * 1.5, size * 0.3, 0, Math.PI * 2); // Head
+        ctx.fill();
+        ctx.fillRect(screenX - size * 0.2, screenY - size * 1.2, size * 0.4, size * 0.8); // Body
+
+        // Legs (animated)
+        const legOffset = Math.sin(Date.now() / 100) * size * 0.1;
+        ctx.fillRect(screenX - size * 0.15 + legOffset, screenY - size * 0.4, size * 0.12, size * 0.4);
+        ctx.fillRect(screenX + size * 0.03 - legOffset, screenY - size * 0.4, size * 0.12, size * 0.4);
+
+        ctx.restore();
+    }
+}
+
+function renderTrafficLight() {
+    // Check if there's a traffic light in current segment
+    const player = gameState.player;
+    const road = gameState.road;
+    const segmentIndex = Math.floor(player.z / road.segmentLength) % road.segments.length;
+
+    // Look ahead for intersections
+    for (let i = 0; i < 20; i++) {
+        const checkIndex = (segmentIndex + i) % road.segments.length;
+        const segment = road.segments[checkIndex];
+
+        for (const sign of segment.signs) {
+            if (sign.type === 'stop' || sign.type === 'yield' || sign.type === 'rightOfWay') {
+                // This could be an intersection - show traffic light visualization
+                if (i < 10 && gameState.trafficLightState) {
+                    const state = gameState.trafficLightState;
+                    const x = canvas.width - 100;
+                    const y = 250;
+
+                    ctx.fillStyle = '#333';
+                    ctx.fillRect(x - 25, y - 60, 50, 120);
+
+                    // Red
+                    ctx.fillStyle = state === 'red' ? '#ff0000' : '#440000';
+                    ctx.beginPath();
+                    ctx.arc(x, y - 35, 15, 0, Math.PI * 2);
+                    ctx.fill();
+
+                    // Yellow
+                    ctx.fillStyle = state === 'yellow' ? '#ffff00' : '#444400';
+                    ctx.beginPath();
+                    ctx.arc(x, y, 15, 0, Math.PI * 2);
+                    ctx.fill();
+
+                    // Green
+                    ctx.fillStyle = state === 'green' ? '#00ff00' : '#004400';
+                    ctx.beginPath();
+                    ctx.arc(x, y + 35, 15, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+                return;
+            }
+        }
+    }
+}
+
+function findSegment(z) {
+    const road = gameState.road;
+    const index = Math.floor(z / road.segmentLength) % road.segments.length;
+    return road.segments[index];
+}
+
+function interpolate(a, b, percent) {
+    return a + (b - a) * percent;
+}
+
+function project(p, cameraX, cameraY, cameraZ, cameraDepth, width, height, roadWidth) {
+    p.camera.x = (p.world.x || 0) - cameraX;
+    p.camera.y = (p.world.y || 0) - cameraY;
+    p.camera.z = (p.world.z || 0) - cameraZ;
+
+    const scale = cameraDepth / p.camera.z;
+    p.screen.scale = scale;
+    p.screen.x = Math.round((width / 2) + (scale * p.camera.x * width / 2));
+    p.screen.y = Math.round((height / 2) - (scale * p.camera.y * height / 2));
+    p.screen.w = Math.round(scale * roadWidth * width / 2);
+}
+
+function exponentialFog(distance, density) {
+    return 1 / Math.pow(Math.E, distance * distance * density);
+}
+
+function renderSegment(width, lanes, x1, y1, w1, x2, y2, w2, color, fog, zone) {
+    const zoneColor = ZONES[zone]?.color || COLORS.LIGHT.road;
+
+    // Grass
+    ctx.fillStyle = color.grass;
+    ctx.fillRect(0, y2, width, y1 - y2);
+
+    // Rumble strips
+    const rumbleW1 = w1 / 5;
+    const rumbleW2 = w2 / 5;
+    ctx.fillStyle = color.rumble;
+    ctx.beginPath();
+    ctx.moveTo(x1 - w1 - rumbleW1, y1);
+    ctx.lineTo(x1 - w1, y1);
+    ctx.lineTo(x2 - w2, y2);
+    ctx.lineTo(x2 - w2 - rumbleW2, y2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.moveTo(x1 + w1, y1);
+    ctx.lineTo(x1 + w1 + rumbleW1, y1);
+    ctx.lineTo(x2 + w2 + rumbleW2, y2);
+    ctx.lineTo(x2 + w2, y2);
+    ctx.fill();
+
+    // Road surface
+    ctx.fillStyle = zoneColor;
+    ctx.beginPath();
+    ctx.moveTo(x1 - w1, y1);
+    ctx.lineTo(x1 + w1, y1);
+    ctx.lineTo(x2 + w2, y2);
+    ctx.lineTo(x2 - w2, y2);
+    ctx.fill();
+
+    // Lane markings
+    if (color.lane !== color.road) {
+        const lineW1 = w1 / 40;
+        const lineW2 = w2 / 40;
+        const laneW1 = w1 * 2 / lanes;
+        const laneW2 = w2 * 2 / lanes;
+
+        // Center line (yellow dashed)
+        ctx.fillStyle = '#fbbf24';
+        ctx.beginPath();
+        ctx.moveTo(x1 - lineW1, y1);
+        ctx.lineTo(x1 + lineW1, y1);
+        ctx.lineTo(x2 + lineW2, y2);
+        ctx.lineTo(x2 - lineW2, y2);
+        ctx.fill();
+
+        // Edge lines (white)
+        ctx.fillStyle = '#ffffff';
+        // Left edge
+        ctx.beginPath();
+        ctx.moveTo(x1 - w1 + lineW1 * 2, y1);
+        ctx.lineTo(x1 - w1 + lineW1 * 4, y1);
+        ctx.lineTo(x2 - w2 + lineW2 * 4, y2);
+        ctx.lineTo(x2 - w2 + lineW2 * 2, y2);
+        ctx.fill();
+        // Right edge
+        ctx.beginPath();
+        ctx.moveTo(x1 + w1 - lineW1 * 4, y1);
+        ctx.lineTo(x1 + w1 - lineW1 * 2, y1);
+        ctx.lineTo(x2 + w2 - lineW2 * 2, y2);
+        ctx.lineTo(x2 + w2 - lineW2 * 4, y2);
+        ctx.fill();
+    }
+}
+
+function renderSign(sign, segment, canvasWidth) {
+    if (!segment.p1.screen.scale) return;
+
+    const scale = segment.p1.screen.scale * 4000;
+    if (scale < 20 || scale > 400) return; // Don't render too small or too large
+
+    const x = segment.p1.screen.x + segment.p1.screen.w * 1.2;
+    const y = segment.p1.screen.y - scale * 0.8;
+    const size = scale * 0.4;
+
+    if (x < 0 || x > canvasWidth || y < 0) return;
+
+    ctx.save();
+
+    // Draw sign based on shape
+    switch(sign.shape) {
+        case 'octagon': // Stop sign
+            ctx.fillStyle = sign.color;
+            ctx.beginPath();
+            for (let i = 0; i < 8; i++) {
+                const angle = (i * Math.PI / 4) - Math.PI / 8;
+                const px = x + size * Math.cos(angle);
+                const py = y + size * Math.sin(angle);
+                if (i === 0) ctx.moveTo(px, py);
+                else ctx.lineTo(px, py);
+            }
+            ctx.closePath();
+            ctx.fill();
+            ctx.strokeStyle = '#fff';
+            ctx.lineWidth = size / 10;
+            ctx.stroke();
+
+            ctx.fillStyle = '#fff';
+            ctx.font = `bold ${size * 0.5}px Arial`;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText('STOP', x, y);
+            break;
+
+        case 'triangle': // Yield sign
+            ctx.fillStyle = '#fff';
+            ctx.beginPath();
+            ctx.moveTo(x, y - size);
+            ctx.lineTo(x - size, y + size * 0.7);
+            ctx.lineTo(x + size, y + size * 0.7);
+            ctx.closePath();
+            ctx.fill();
+            ctx.strokeStyle = sign.color;
+            ctx.lineWidth = size / 5;
+            ctx.stroke();
+
+            ctx.fillStyle = sign.color;
+            ctx.font = `bold ${size * 0.35}px Arial`;
+            ctx.textAlign = 'center';
+            ctx.fillText('YIELD', x, y + size * 0.2);
+            break;
+
+        case 'rectangle': // Speed limit, etc.
+            ctx.fillStyle = sign.bgColor || '#fff';
+            ctx.fillRect(x - size * 0.6, y - size * 0.8, size * 1.2, size * 1.6);
+            ctx.strokeStyle = '#000';
+            ctx.lineWidth = size / 15;
+            ctx.strokeRect(x - size * 0.6, y - size * 0.8, size * 1.2, size * 1.6);
+
+            if (sign.type === 'speedLimit') {
+                ctx.fillStyle = '#000';
+                ctx.font = `bold ${size * 0.25}px Arial`;
+                ctx.textAlign = 'center';
+                ctx.fillText('SPEED', x, y - size * 0.4);
+                ctx.fillText('LIMIT', x, y - size * 0.15);
+                ctx.font = `bold ${size * 0.6}px Arial`;
+                ctx.fillText(sign.text, x, y + size * 0.4);
+            } else {
+                ctx.fillStyle = sign.color === '#ffffff' ? '#000' : sign.color;
+                ctx.font = `bold ${size * 0.3}px Arial`;
+                ctx.textAlign = 'center';
+                const lines = sign.text.split('\n');
+                lines.forEach((line, i) => {
+                    ctx.fillText(line, x, y - size * 0.2 + i * size * 0.35);
+                });
+            }
+            break;
+
+        case 'diamond': // Warning signs
+            ctx.save();
+            ctx.translate(x, y);
+            ctx.rotate(Math.PI / 4);
+            ctx.fillStyle = sign.color;
+            ctx.fillRect(-size * 0.7, -size * 0.7, size * 1.4, size * 1.4);
+            ctx.strokeStyle = '#000';
+            ctx.lineWidth = size / 15;
+            ctx.strokeRect(-size * 0.7, -size * 0.7, size * 1.4, size * 1.4);
+            ctx.restore();
+
+            ctx.fillStyle = '#000';
+            ctx.font = `bold ${size * 0.3}px Arial`;
+            ctx.textAlign = 'center';
+            const dLines = sign.text.split('\n');
+            dLines.forEach((line, i) => {
+                ctx.fillText(line, x, y - size * 0.1 + i * size * 0.35);
+            });
+            break;
+
+        case 'circle': // Railroad
+            ctx.fillStyle = sign.color;
+            ctx.beginPath();
+            ctx.arc(x, y, size, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.strokeStyle = '#000';
+            ctx.lineWidth = size / 10;
+            ctx.stroke();
+
+            ctx.fillStyle = '#000';
+            ctx.font = `bold ${size * 0.6}px Arial`;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText('RR', x, y);
+            break;
+
+        case 'pentagon': // School zone
+            ctx.fillStyle = sign.color;
+            ctx.beginPath();
+            ctx.moveTo(x, y - size);
+            ctx.lineTo(x + size, y - size * 0.3);
+            ctx.lineTo(x + size * 0.6, y + size * 0.8);
+            ctx.lineTo(x - size * 0.6, y + size * 0.8);
+            ctx.lineTo(x - size, y - size * 0.3);
+            ctx.closePath();
+            ctx.fill();
+            ctx.strokeStyle = '#000';
+            ctx.lineWidth = size / 12;
+            ctx.stroke();
+
+            // School figures
+            ctx.fillStyle = '#000';
+            ctx.font = `bold ${size * 0.25}px Arial`;
+            ctx.textAlign = 'center';
+            ctx.fillText('SCHOOL', x, y + size * 0.4);
+
+            // Simple stick figures
+            ctx.beginPath();
+            ctx.arc(x - size * 0.2, y - size * 0.3, size * 0.1, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.fillRect(x - size * 0.25, y - size * 0.2, size * 0.1, size * 0.3);
+            ctx.beginPath();
+            ctx.arc(x + size * 0.2, y - size * 0.3, size * 0.1, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.fillRect(x + size * 0.15, y - size * 0.2, size * 0.1, size * 0.3);
+            break;
+    }
+
+    // Draw pole
+    ctx.fillStyle = '#666';
+    ctx.fillRect(x - size * 0.05, y + size * 0.8, size * 0.1, size * 2);
+
+    ctx.restore();
+}
+
+function renderPlayerCar() {
+    const player = gameState.player;
+    const carWidth = 120;
+    const carHeight = 80;
+    const x = canvas.width / 2;
+    const y = canvas.height - 150;
+
+    ctx.save();
+
+    // Apply steering tilt
+    ctx.translate(x, y);
+    ctx.rotate(player.steerAngle * 0.1);
+    ctx.translate(-x, -y);
+
+    // Car shadow
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
+    ctx.beginPath();
+    ctx.ellipse(x, y + carHeight / 2 + 10, carWidth / 2, 15, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Car body
+    ctx.fillStyle = '#dc2626';
+    ctx.beginPath();
+    ctx.roundRect(x - carWidth / 2, y - carHeight / 2, carWidth, carHeight, 10);
+    ctx.fill();
+
+    // Car roof
+    ctx.fillStyle = '#333';
+    ctx.beginPath();
+    ctx.roundRect(x - carWidth / 3, y - carHeight / 4, carWidth * 2 / 3, carHeight / 2, 5);
+    ctx.fill();
+
+    // Windshield reflection
+    ctx.fillStyle = 'rgba(135, 206, 235, 0.4)';
+    ctx.fillRect(x - carWidth / 3.5, y - carHeight / 6, carWidth * 2 / 3.5, carHeight / 4);
+
+    // Wheels
+    ctx.fillStyle = '#111';
+    ctx.fillRect(x - carWidth / 2 - 5, y - carHeight / 3, 10, 25);
+    ctx.fillRect(x + carWidth / 2 - 5, y - carHeight / 3, 10, 25);
+    ctx.fillRect(x - carWidth / 2 - 5, y + carHeight / 6, 10, 25);
+    ctx.fillRect(x + carWidth / 2 - 5, y + carHeight / 6, 10, 25);
+
+    // Brake lights (if braking)
+    if (keys.down) {
+        ctx.fillStyle = '#ff0000';
+        ctx.shadowColor = '#ff0000';
+        ctx.shadowBlur = 20;
+        ctx.fillRect(x - carWidth / 2 + 10, y + carHeight / 2 - 10, 20, 8);
+        ctx.fillRect(x + carWidth / 2 - 30, y + carHeight / 2 - 10, 20, 8);
+        ctx.shadowBlur = 0;
+    }
+
+    // Turn signals
+    if (player.turnSignal !== 0) {
+        const blinkOn = Math.floor(Date.now() / 300) % 2 === 0;
+        if (blinkOn) {
+            ctx.fillStyle = '#fbbf24';
+            ctx.shadowColor = '#fbbf24';
+            ctx.shadowBlur = 15;
+            if (player.turnSignal === -1) {
+                ctx.fillRect(x - carWidth / 2 + 5, y - carHeight / 2 + 5, 15, 8);
+            } else {
+                ctx.fillRect(x + carWidth / 2 - 20, y - carHeight / 2 + 5, 15, 8);
+            }
+            ctx.shadowBlur = 0;
+        }
+    }
+
+    ctx.restore();
+}
+
+function renderMiniMap() {
+    miniCtx.fillStyle = '#1a1a2e';
+    miniCtx.fillRect(0, 0, 150, 150);
+
+    const road = gameState.road;
+    const player = gameState.player;
+    const scale = 0.0003;
+    const centerX = 75;
+    const centerY = 75;
+
+    // Draw road path
+    miniCtx.strokeStyle = '#4a5568';
+    miniCtx.lineWidth = 3;
+    miniCtx.beginPath();
+
+    let x = 0, y = 0, angle = 0;
+    for (let i = 0; i < road.segments.length; i += 10) {
+        const segment = road.segments[i];
+        angle += segment.curve * 0.02;
+        x += Math.sin(angle) * 10;
+        y += Math.cos(angle) * 10;
+
+        const mapX = centerX + x * scale * 1000;
+        const mapY = centerY - y * scale * 1000;
+
+        if (i === 0) miniCtx.moveTo(mapX, mapY);
+        else miniCtx.lineTo(mapX, mapY);
+    }
+    miniCtx.stroke();
+
+    // Draw player position
+    const playerSegmentIndex = Math.floor(player.z / road.segmentLength);
+    let px = 0, py = 0, pAngle = 0;
+    for (let i = 0; i < playerSegmentIndex && i < road.segments.length; i += 10) {
+        const segment = road.segments[i];
+        pAngle += segment.curve * 0.02;
+        px += Math.sin(pAngle) * 10;
+        py += Math.cos(pAngle) * 10;
+    }
+
+    miniCtx.fillStyle = '#dc2626';
+    miniCtx.beginPath();
+    miniCtx.arc(centerX + px * scale * 1000, centerY - py * scale * 1000, 5, 0, Math.PI * 2);
+    miniCtx.fill();
+
+    // Border
+    miniCtx.strokeStyle = '#4a5568';
+    miniCtx.lineWidth = 2;
+    miniCtx.strokeRect(0, 0, 150, 150);
+}
+
+// ============================================
+// GAME LOOP
+// ============================================
+let lastTime = 0;
+
+function gameLoop(timestamp) {
+    gameState.deltaTime = (timestamp - lastTime) / 1000;
+    lastTime = timestamp;
+
+    // Clamp deltaTime to prevent huge jumps
+    if (gameState.deltaTime > 0.1) gameState.deltaTime = 0.1;
+
+    update(gameState.deltaTime);
+    render();
+
+    requestAnimationFrame(gameLoop);
+}
+
+// ============================================
+// GAME CONTROL FUNCTIONS
+// ============================================
+function startGame(mode) {
+    gameState.mode = mode;
+    gameState.score = 0;
+    gameState.streak = 0;
+    gameState.violations = 0;
+    gameState.correctActions = 0;
+    gameState.player.x = 0;
+    gameState.player.z = 0;
+    gameState.player.speed = 0;
+    gameState.player.steerAngle = 0;
+
+    // Reset sign triggers
+    for (const segment of gameState.road.segments) {
+        for (const sign of segment.signs) {
+            sign.triggered = false;
+            sign.handled = false;
+        }
+    }
+
+    // Set mission text based on mode
+    switch(mode) {
+        case 'freeRoam':
+            document.getElementById('missionText').textContent = 'Free Roam Mode';
+            document.getElementById('missionObjective').textContent = 'Explore and follow all traffic rules. Earn points for correct actions!';
+            break;
+        case 'missions':
+            document.getElementById('missionText').textContent = 'Mission Mode';
+            document.getElementById('missionObjective').textContent = 'Complete objectives while following traffic laws.';
+            startMission();
+            break;
+        case 'signPractice':
+            document.getElementById('missionText').textContent = 'Sign Recognition Practice';
+            document.getElementById('missionObjective').textContent = 'Learn to identify and respond to road signs.';
+            break;
+    }
+
+    document.getElementById('mainMenu').classList.add('hidden');
+    updateHUD();
+}
+
+function startMission() {
+    const mission = MISSIONS[Math.floor(Math.random() * MISSIONS.length)];
+    startSpecificMission(mission);
+}
+
+// Initialize traffic light cycling
+function initTrafficLights() {
+    gameState.trafficLightState = 'green';
+    gameState.trafficLightTimer = 0;
+
+    setInterval(() => {
+        switch(gameState.trafficLightState) {
+            case 'green':
+                gameState.trafficLightState = 'yellow';
+                break;
+            case 'yellow':
+                gameState.trafficLightState = 'red';
+                break;
+            case 'red':
+                gameState.trafficLightState = 'green';
+                break;
+        }
+    }, 5000 + Math.random() * 3000);
+}
+
+// Random events system
+function triggerRandomEvent() {
+    const events = [
+        {
+            type: 'emergency_vehicle',
+            message: 'Emergency vehicle approaching! Move to the right!',
+            action: () => {
+                const emergency = {
+                    type: 'emergency',
+                    x: -800,
+                    z: gameState.player.z - 500,
+                    speed: 50,
+                    width: VEHICLE_TYPES.emergency.width,
+                    height: VEHICLE_TYPES.emergency.height,
+                    color: VEHICLE_TYPES.emergency.color,
+                    sirenOn: true,
+                    yieldAcknowledged: false,
+                    yieldWarned: false,
+                };
+                gameState.traffic.push(emergency);
+            }
+        },
+        {
+            type: 'school_bus_stop',
+            message: 'School bus stopping ahead!',
+            action: () => {
+                const bus = {
+                    type: 'schoolBus',
+                    x: 0,
+                    z: gameState.player.z + 800,
+                    speed: 0,
+                    width: VEHICLE_TYPES.schoolBus.width,
+                    height: VEHICLE_TYPES.schoolBus.height,
+                    color: VEHICLE_TYPES.schoolBus.color,
+                    stoppedForKids: true,
+                    violationTriggered: false,
+                    correctActionTriggered: false,
+                };
+                gameState.traffic.push(bus);
+            }
+        },
+        {
+            type: 'pedestrian_crossing',
+            message: 'Pedestrians crossing ahead!',
+            action: () => {
+                spawnPedestrian();
+                spawnPedestrian();
+            }
+        },
+        {
+            type: 'cyclist',
+            message: 'Cyclist on the road - pass safely!',
+            action: () => {
+                const bike = {
+                    type: 'bicycle',
+                    x: 400,
+                    z: gameState.player.z + 600,
+                    speed: 12,
+                    width: VEHICLE_TYPES.bicycle.width,
+                    height: VEHICLE_TYPES.bicycle.height,
+                    color: VEHICLE_TYPES.bicycle.color,
+                    passWarned: false,
+                    passCorrect: false,
+                };
+                gameState.traffic.push(bike);
+            }
+        },
+    ];
+
+    const event = events[Math.floor(Math.random() * events.length)];
+
+    // Show event notification
+    const popup = document.getElementById('violationPopup');
+    popup.classList.add('correct');
+    document.getElementById('violationTitle').textContent = 'ATTENTION!';
+    document.getElementById('violationText').textContent = event.message;
+    document.getElementById('pointsChange').textContent = '';
+    popup.classList.add('show');
+    setTimeout(() => popup.classList.remove('show'), 2500);
+
+    // Trigger the event
+    event.action();
+}
+
+function togglePause() {
+    if (gameState.mode === 'menu') return;
+
+    if (gameState.mode === 'paused') {
+        resumeGame();
+    } else {
+        gameState.previousMode = gameState.mode;
+        gameState.mode = 'paused';
+        document.getElementById('pauseOverlay').classList.add('show');
+    }
+}
+
+function resumeGame() {
+    gameState.mode = gameState.previousMode || 'freeRoam';
+    document.getElementById('pauseOverlay').classList.remove('show');
+}
+
+function returnToMenu() {
+    gameState.mode = 'menu';
+    document.getElementById('pauseOverlay').classList.remove('show');
+    document.getElementById('mainMenu').classList.remove('hidden');
+
+    // Save stats
+    saveStats();
+}
+
+function saveStats() {
+    const stats = loadStats();
+    stats.highScore = Math.max(stats.highScore, gameState.score);
+    stats.totalCorrect += gameState.correctActions;
+    stats.totalViolations += gameState.violations;
+    stats.totalSessions++;
+    localStorage.setItem('maDrivingSimStats', JSON.stringify(stats));
+    updateMenuStats();
+}
+
+function loadStats() {
+    const saved = localStorage.getItem('maDrivingSimStats');
+    return saved ? JSON.parse(saved) : {
+        highScore: 0,
+        missionsCompleted: 0,
+        totalCorrect: 0,
+        totalViolations: 0,
+        totalSessions: 0,
+    };
+}
+
+function updateMenuStats() {
+    const stats = loadStats();
+    document.getElementById('menuHighScore').textContent = stats.highScore;
+    document.getElementById('menuMissionsComplete').textContent = stats.missionsCompleted;
+    const total = stats.totalCorrect + stats.totalViolations;
+    const accuracy = total > 0 ? Math.floor((stats.totalCorrect / total) * 100) : 0;
+    document.getElementById('menuAccuracy').textContent = accuracy + '%';
+}
+
+// ============================================
+// INITIALIZE
+// ============================================
+function init() {
+    initRoad();
+    initTrafficLights();
+    updateMenuStats();
+    requestAnimationFrame(gameLoop);
+
+    // Spawn initial traffic
+    for (let i = 0; i < 5; i++) {
+        setTimeout(() => spawnTraffic(), i * 500);
+    }
+}
+
+// Polyfill for roundRect if not available
+if (!ctx.roundRect) {
+    CanvasRenderingContext2D.prototype.roundRect = function(x, y, w, h, r) {
+        if (w < 2 * r) r = w / 2;
+        if (h < 2 * r) r = h / 2;
+        this.beginPath();
+        this.moveTo(x + r, y);
+        this.arcTo(x + w, y, x + w, y + h, r);
+        this.arcTo(x + w, y + h, x, y + h, r);
+        this.arcTo(x, y + h, x, y, r);
+        this.arcTo(x, y, x + w, y, r);
+        this.closePath();
+        return this;
+    };
+}
+
+// ============================================
+// INTERSECTION CHALLENGE SYSTEM
+// ============================================
+const intersectionState = {
+    active: false,
+    type: null, // '4way', 'yield', 'uncontrolled'
+    otherCars: [], // Cars at the intersection
+    playerArrivalTime: null,
+    correctAction: null,
+    waitingForAction: false,
+    actionTaken: false,
+};
+
+function triggerIntersectionChallenge(type) {
+    if (intersectionState.active) return;
+
+    intersectionState.active = true;
+    intersectionState.type = type;
+    intersectionState.playerArrivalTime = Date.now();
+    intersectionState.waitingForAction = true;
+    intersectionState.actionTaken = false;
+
+    // Generate other cars at intersection
+    const numCars = type === '4way' ? Math.floor(Math.random() * 3) + 1 : Math.floor(Math.random() * 2);
+    intersectionState.otherCars = [];
+
+    const directions = ['left', 'right', 'opposite'];
+    const shuffled = directions.sort(() => Math.random() - 0.5);
+
+    for (let i = 0; i < numCars; i++) {
+        intersectionState.otherCars.push({
+            direction: shuffled[i],
+            arrivalTime: Date.now() - Math.random() * 3000, // Arrived 0-3 seconds before player
+            signaling: Math.random() > 0.5 ? (Math.random() > 0.5 ? 'left' : 'right') : null,
+        });
+    }
+
+    // Determine correct action
+    determineCorrectAction();
+
+    // Show challenge UI
+    showIntersectionChallenge();
+}
+
+function determineCorrectAction() {
+    const state = intersectionState;
+
+    if (state.type === '4way') {
+        // 4-way stop rules
+        if (state.otherCars.length === 0) {
+            state.correctAction = 'proceed';
+            state.explanation = 'No other cars - proceed after stopping.';
+        } else {
+            // Find who arrived first
+            const playerTime = state.playerArrivalTime;
+            const earlierCars = state.otherCars.filter(c => c.arrivalTime < playerTime);
+
+            if (earlierCars.length > 0) {
+                state.correctAction = 'wait';
+                state.explanation = 'Other vehicles arrived first. Wait for them to proceed.';
+            } else {
+                // Check for ties - yield to right
+                const carOnRight = state.otherCars.find(c => c.direction === 'right');
+                if (carOnRight && Math.abs(carOnRight.arrivalTime - playerTime) < 500) {
+                    state.correctAction = 'wait';
+                    state.explanation = MA_RULES.fourWayStop;
+                } else {
+                    state.correctAction = 'proceed';
+                    state.explanation = 'You arrived first or have right-of-way. Proceed carefully.';
+                }
+            }
+        }
+    } else if (state.type === 'yield') {
+        if (state.otherCars.length === 0) {
+            state.correctAction = 'proceed_slow';
+            state.explanation = 'No cross traffic - proceed with caution.';
+        } else {
+            state.correctAction = 'wait';
+            state.explanation = 'Cross traffic present. You must yield.';
+        }
+    } else { // uncontrolled
+        const carOnRight = state.otherCars.find(c => c.direction === 'right');
+        if (carOnRight) {
+            state.correctAction = 'wait';
+            state.explanation = 'At uncontrolled intersections, yield to vehicles on your RIGHT.';
+        } else {
+            state.correctAction = 'proceed_slow';
+            state.explanation = 'No vehicle on your right. Proceed with caution.';
+        }
+    }
+}
+
+function showIntersectionChallenge() {
+    // Create intersection visualization overlay
+    const overlay = document.createElement('div');
+    overlay.id = 'intersectionOverlay';
+    overlay.innerHTML = `
+        <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+                    background: rgba(0,0,0,0.9); padding: 30px; border-radius: 15px;
+                    border: 3px solid #fbbf24; text-align: center; max-width: 500px;">
+            <h2 style="color: #fbbf24; margin-bottom: 15px;">
+                ${intersectionState.type === '4way' ? '4-WAY STOP' :
+                  intersectionState.type === 'yield' ? 'YIELD INTERSECTION' : 'UNCONTROLLED INTERSECTION'}
+            </h2>
+            <div id="intersectionDiagram" style="width: 200px; height: 200px; margin: 20px auto;
+                        background: #333; border-radius: 10px; position: relative;">
+                <!-- Your car (bottom) -->
+                <div style="position: absolute; bottom: 10px; left: 50%; transform: translateX(-50%);
+                            width: 30px; height: 40px; background: #dc2626; border-radius: 5px;
+                            display: flex; align-items: center; justify-content: center; color: white; font-size: 12px;">YOU</div>
+                ${intersectionState.otherCars.map(car => {
+                    let style = '';
+                    if (car.direction === 'left') {
+                        style = 'left: 10px; top: 50%; transform: translateY(-50%);';
+                    } else if (car.direction === 'right') {
+                        style = 'right: 10px; top: 50%; transform: translateY(-50%);';
+                    } else {
+                        style = 'top: 10px; left: 50%; transform: translateX(-50%);';
+                    }
+                    const arrivalLabel = car.arrivalTime < intersectionState.playerArrivalTime ? '1st' : '2nd';
+                    return `<div style="position: absolute; ${style}
+                                width: 30px; height: 40px; background: #3b82f6; border-radius: 5px;
+                                display: flex; align-items: center; justify-content: center;
+                                color: white; font-size: 10px;">${arrivalLabel}</div>`;
+                }).join('')}
+            </div>
+            <p style="color: #ccc; margin-bottom: 20px;">
+                ${intersectionState.otherCars.length} other vehicle(s) at intersection.
+                ${intersectionState.otherCars.find(c => c.direction === 'right') ?
+                    '<br><span style="color: #fbbf24;">Vehicle on your RIGHT!</span>' : ''}
+            </p>
+            <p style="color: #fff; margin-bottom: 20px;">What should you do?</p>
+            <div style="display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;">
+                <button onclick="handleIntersectionChoice('proceed')"
+                        style="padding: 15px 25px; background: #22c55e; border: none; border-radius: 8px;
+                               color: white; font-weight: bold; cursor: pointer;">
+                    GO - Proceed
+                </button>
+                <button onclick="handleIntersectionChoice('wait')"
+                        style="padding: 15px 25px; background: #ef4444; border: none; border-radius: 8px;
+                               color: white; font-weight: bold; cursor: pointer;">
+                    WAIT - Yield
+                </button>
+            </div>
+        </div>
+    `;
+    overlay.style.cssText = `
+        position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+        background: rgba(0,0,0,0.7); z-index: 300;
+    `;
+    document.getElementById('gameContainer').appendChild(overlay);
+
+    // Pause game during challenge
+    gameState.previousMode = gameState.mode;
+    gameState.mode = 'intersection';
+}
+
+function handleIntersectionChoice(choice) {
+    const state = intersectionState;
+    const overlay = document.getElementById('intersectionOverlay');
+
+    // Normalize choices
+    const playerWaited = choice === 'wait';
+    const shouldWait = state.correctAction === 'wait';
+
+    if ((playerWaited && shouldWait) || (!playerWaited && !shouldWait)) {
+        // Correct!
+        showPositiveFeedback('Correct right-of-way decision!', 150);
+        checkMissionObjective('correct_yields');
+    } else {
+        // Wrong
+        showViolation(
+            'Incorrect right-of-way!',
+            -150,
+            state.explanation
+        );
+    }
+
+    // Remove overlay
+    if (overlay) overlay.remove();
+
+    // Reset state
+    intersectionState.active = false;
+    intersectionState.otherCars = [];
+
+    // Resume game
+    gameState.mode = gameState.previousMode || 'freeRoam';
+}
+
+// Trigger intersection challenges periodically
+function checkForIntersection() {
+    const player = gameState.player;
+    const road = gameState.road;
+    const segmentIndex = Math.floor(player.z / road.segmentLength) % road.segments.length;
+    const segment = road.segments[segmentIndex];
+
+    if (!segment || intersectionState.active) return;
+
+    for (const sign of segment.signs) {
+        if (sign.type === 'stop' && !sign.intersectionTriggered && Math.random() > 0.5) {
+            sign.intersectionTriggered = true;
+            if (player.speed < 5) { // Player has stopped
+                setTimeout(() => triggerIntersectionChallenge('4way'), 500);
+            }
+        } else if (sign.type === 'yield' && !sign.intersectionTriggered && Math.random() > 0.6) {
+            sign.intersectionTriggered = true;
+            triggerIntersectionChallenge('yield');
+        } else if (sign.type === 'rightOfWay' && !sign.intersectionTriggered && Math.random() > 0.5) {
+            sign.intersectionTriggered = true;
+            if (player.speed < 15) {
+                triggerIntersectionChallenge('uncontrolled');
+            }
+        }
+    }
+}
+
+// Add to update loop
+const originalUpdate = update;
+update = function(dt) {
+    if (gameState.mode === 'intersection' || gameState.mode === 'signPractice') return;
+    originalUpdate(dt);
+    checkForIntersection();
+};
+
+// ============================================
+// SIGN PRACTICE MODE
+// ============================================
+const SIGN_QUIZ = [
+    {
+        sign: 'stop',
+        question: 'What does this sign mean?',
+        options: ['Slow down and proceed', 'Come to a complete stop', 'Yield to traffic', 'Speed up'],
+        correct: 1,
+        explanation: 'An octagonal red STOP sign means you must come to a COMPLETE stop before proceeding.',
+    },
+    {
+        sign: 'yield',
+        question: 'What action should you take at this sign?',
+        options: ['Stop completely', 'Slow down and yield right-of-way', 'Proceed at normal speed', 'Honk your horn'],
+        correct: 1,
+        explanation: 'A triangular YIELD sign means slow down and give right-of-way to other vehicles and pedestrians.',
+    },
+    {
+        sign: 'speedLimit25',
+        question: 'What does this speed limit sign indicate?',
+        options: ['Minimum speed', 'Maximum speed', 'Suggested speed', 'Average speed'],
+        correct: 1,
+        explanation: 'Speed limit signs show the MAXIMUM legal speed. Going faster is a violation.',
+    },
+    {
+        sign: 'schoolZone',
+        question: 'When entering a school zone in MA, what is the speed limit when children are present?',
+        options: ['15 mph', '20 mph', '25 mph', '30 mph'],
+        correct: 1,
+        explanation: 'In Massachusetts, the speed limit in school zones is 20 mph when children are present.',
+    },
+    {
+        sign: 'pedestrianCrossing',
+        question: 'What must you do when you see this sign?',
+        options: ['Speed up to clear the area', 'Honk to warn pedestrians', 'Be prepared to stop for pedestrians', 'Flash your lights'],
+        correct: 2,
+        explanation: 'Pedestrian crossing signs warn you to be prepared to stop. Pedestrians have right-of-way in crosswalks.',
+    },
+    {
+        sign: 'railroad',
+        question: 'What should you do at a railroad crossing?',
+        options: ['Speed up to cross quickly', 'Stop only if you see a train', 'Slow down and look both ways', 'Ignore if no gate is down'],
+        correct: 2,
+        explanation: 'Always slow down and look both ways at railroad crossings. Trains cannot stop quickly.',
+    },
+    {
+        sign: 'noRightOnRed',
+        question: 'What does this sign prohibit?',
+        options: ['All right turns', 'Right turns on red light', 'U-turns', 'Left turns'],
+        correct: 1,
+        explanation: 'This sign prohibits turning right when the traffic light is red. You must wait for green.',
+    },
+    {
+        sign: 'doNotPass',
+        question: 'What does this sign mean?',
+        options: ['Pass only on the left', 'Pass only when clear', 'Do not overtake other vehicles', 'Pass at reduced speed'],
+        correct: 2,
+        explanation: 'Do Not Pass signs prohibit overtaking other vehicles in that zone.',
+    },
+    {
+        sign: 'mergeRight',
+        question: 'What should you do when you see a merge sign?',
+        options: ['Speed up to get ahead', 'Maintain speed and adjust position', 'Stop and wait', 'Ignore other vehicles'],
+        correct: 1,
+        explanation: 'Merge signs warn of lanes combining. Adjust speed and position to merge safely.',
+    },
+    {
+        sign: 'oneWay',
+        question: 'What does a ONE WAY sign indicate?',
+        options: ['Preferred direction', 'Only direction traffic can flow', 'One lane road', 'Temporary direction'],
+        correct: 1,
+        explanation: 'ONE WAY signs indicate that traffic flows in only one direction on that street.',
+    },
+    {
+        sign: 'rightOfWay',
+        question: 'At an uncontrolled intersection, who has the right-of-way?',
+        options: ['The larger vehicle', 'The vehicle on the left', 'The vehicle on the right', 'Whoever arrives first'],
+        correct: 2,
+        explanation: 'At uncontrolled intersections, yield to the vehicle on your RIGHT.',
+    },
+    {
+        sign: 'noUTurn',
+        question: 'What does this sign prohibit?',
+        options: ['Left turns', 'Right turns', 'U-turns', 'All turns'],
+        correct: 2,
+        explanation: 'No U-Turn signs prohibit making a U-turn at that location.',
+    },
+];
+
+let signPracticeState = {
+    currentQuestion: 0,
+    score: 0,
+    total: 0,
+    questions: [],
+};
+
+function startSignPractice() {
+    // Shuffle and select questions
+    signPracticeState.questions = [...SIGN_QUIZ].sort(() => Math.random() - 0.5);
+    signPracticeState.currentQuestion = 0;
+    signPracticeState.score = 0;
+    signPracticeState.total = 0;
+
+    gameState.mode = 'signPractice';
+    document.getElementById('mainMenu').classList.add('hidden');
+
+    showSignQuestion();
+}
+
+function showSignQuestion() {
+    if (signPracticeState.currentQuestion >= signPracticeState.questions.length) {
+        endSignPractice();
+        return;
+    }
+
+    const q = signPracticeState.questions[signPracticeState.currentQuestion];
+    const sign = SIGNS[q.sign];
+
+    // Create quiz overlay
+    let overlay = document.getElementById('signPracticeOverlay');
+    if (!overlay) {
+        overlay = document.createElement('div');
+        overlay.id = 'signPracticeOverlay';
+        document.getElementById('gameContainer').appendChild(overlay);
+    }
+
+    overlay.style.cssText = `
+        position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+        background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+        z-index: 300; display: flex; justify-content: center; align-items: center;
+    `;
+
+    overlay.innerHTML = `
+        <div style="text-align: center; max-width: 700px; padding: 40px;">
+            <div style="margin-bottom: 20px; color: #888;">
+                Question ${signPracticeState.currentQuestion + 1} of ${signPracticeState.questions.length}
+                | Score: ${signPracticeState.score}/${signPracticeState.total}
+            </div>
+
+            <div style="margin-bottom: 30px;">
+                <canvas id="signCanvas" width="200" height="200" style="background: #2d3748; border-radius: 10px;"></canvas>
+            </div>
+
+            <h2 style="color: #fff; margin-bottom: 25px; font-size: 1.5rem;">${q.question}</h2>
+
+            <div style="display: grid; gap: 15px; max-width: 500px; margin: 0 auto;">
+                ${q.options.map((opt, i) => `
+                    <button onclick="answerSignQuestion(${i})" class="sign-option"
+                            style="padding: 15px 25px; background: #374151; border: 2px solid #4b5563;
+                                   border-radius: 10px; color: #fff; font-size: 1.1rem; cursor: pointer;
+                                   transition: all 0.2s; text-align: left;">
+                        ${String.fromCharCode(65 + i)}. ${opt}
+                    </button>
+                `).join('')}
+            </div>
+
+            <button onclick="exitSignPractice()" style="margin-top: 30px; padding: 10px 20px;
+                    background: transparent; border: 1px solid #666; border-radius: 5px;
+                    color: #888; cursor: pointer;">
+                Exit to Menu
+            </button>
+        </div>
+    `;
+
+    // Draw the sign
+    setTimeout(() => drawQuizSign(q.sign), 50);
+}
+
+function drawQuizSign(signType) {
+    const canvas = document.getElementById('signCanvas');
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    const sign = SIGNS[signType];
+
+    ctx.fillStyle = '#2d3748';
+    ctx.fillRect(0, 0, 200, 200);
+
+    const x = 100, y = 100, size = 60;
+
+    switch(sign.shape) {
+        case 'octagon':
+            ctx.fillStyle = sign.color;
+            ctx.beginPath();
+            for (let i = 0; i < 8; i++) {
+                const angle = (i * Math.PI / 4) - Math.PI / 8;
+                const px = x + size * Math.cos(angle);
+                const py = y + size * Math.sin(angle);
+                if (i === 0) ctx.moveTo(px, py);
+                else ctx.lineTo(px, py);
+            }
+            ctx.closePath();
+            ctx.fill();
+            ctx.strokeStyle = '#fff';
+            ctx.lineWidth = 4;
+            ctx.stroke();
+            ctx.fillStyle = '#fff';
+            ctx.font = 'bold 24px Arial';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText('STOP', x, y);
+            break;
+
+        case 'triangle':
+            ctx.fillStyle = '#fff';
+            ctx.beginPath();
+            ctx.moveTo(x, y - size);
+            ctx.lineTo(x - size, y + size * 0.7);
+            ctx.lineTo(x + size, y + size * 0.7);
+            ctx.closePath();
+            ctx.fill();
+            ctx.strokeStyle = sign.color;
+            ctx.lineWidth = 6;
+            ctx.stroke();
+            ctx.fillStyle = sign.color;
+            ctx.font = 'bold 20px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText('YIELD', x, y + 15);
+            break;
+
+        case 'rectangle':
+            ctx.fillStyle = sign.bgColor || '#fff';
+            ctx.fillRect(x - size * 0.7, y - size * 0.9, size * 1.4, size * 1.8);
+            ctx.strokeStyle = '#000';
+            ctx.lineWidth = 3;
+            ctx.strokeRect(x - size * 0.7, y - size * 0.9, size * 1.4, size * 1.8);
+
+            ctx.fillStyle = '#000';
+            ctx.font = 'bold 14px Arial';
+            ctx.textAlign = 'center';
+
+            if (signType.includes('speedLimit')) {
+                ctx.fillText('SPEED', x, y - 25);
+                ctx.fillText('LIMIT', x, y - 8);
+                ctx.font = 'bold 32px Arial';
+                ctx.fillText(sign.text, x, y + 30);
+            } else {
+                const lines = sign.text.split('\n');
+                lines.forEach((line, i) => {
+                    ctx.fillText(line, x, y - 10 + i * 20);
+                });
+            }
+            break;
+
+        case 'diamond':
+            ctx.save();
+            ctx.translate(x, y);
+            ctx.rotate(Math.PI / 4);
+            ctx.fillStyle = sign.color;
+            ctx.fillRect(-size * 0.6, -size * 0.6, size * 1.2, size * 1.2);
+            ctx.strokeStyle = '#000';
+            ctx.lineWidth = 3;
+            ctx.strokeRect(-size * 0.6, -size * 0.6, size * 1.2, size * 1.2);
+            ctx.restore();
+
+            ctx.fillStyle = '#000';
+            ctx.font = 'bold 16px Arial';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            const dLines = sign.text.split('\n');
+            dLines.forEach((line, i) => {
+                ctx.fillText(line, x, y - 8 + i * 18);
+            });
+            break;
+
+        case 'circle':
+            ctx.fillStyle = sign.color;
+            ctx.beginPath();
+            ctx.arc(x, y, size, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.strokeStyle = '#000';
+            ctx.lineWidth = 4;
+            ctx.stroke();
+            ctx.fillStyle = '#000';
+            ctx.font = 'bold 28px Arial';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText('RR', x, y);
+            break;
+
+        case 'pentagon':
+            ctx.fillStyle = sign.color;
+            ctx.beginPath();
+            ctx.moveTo(x, y - size);
+            ctx.lineTo(x + size, y - size * 0.2);
+            ctx.lineTo(x + size * 0.6, y + size * 0.8);
+            ctx.lineTo(x - size * 0.6, y + size * 0.8);
+            ctx.lineTo(x - size, y - size * 0.2);
+            ctx.closePath();
+            ctx.fill();
+            ctx.strokeStyle = '#000';
+            ctx.lineWidth = 3;
+            ctx.stroke();
+            ctx.fillStyle = '#000';
+            ctx.font = 'bold 14px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText('SCHOOL', x, y + 35);
+            // Stick figures
+            ctx.beginPath();
+            ctx.arc(x - 15, y - 10, 8, 0, Math.PI * 2);
+            ctx.arc(x + 15, y - 10, 8, 0, Math.PI * 2);
+            ctx.fill();
+            break;
+    }
+}
+
+function answerSignQuestion(answerIndex) {
+    const q = signPracticeState.questions[signPracticeState.currentQuestion];
+    const isCorrect = answerIndex === q.correct;
+
+    signPracticeState.total++;
+    if (isCorrect) {
+        signPracticeState.score++;
+        gameState.score += 50;
+        gameState.streak++;
+        playSound('correct');
+    } else {
+        gameState.streak = 0;
+        playSound('violation');
+    }
+
+    // Show feedback
+    const overlay = document.getElementById('signPracticeOverlay');
+    const buttons = overlay.querySelectorAll('.sign-option');
+
+    buttons.forEach((btn, i) => {
+        btn.disabled = true;
+        if (i === q.correct) {
+            btn.style.background = '#22c55e';
+            btn.style.borderColor = '#22c55e';
+        } else if (i === answerIndex && !isCorrect) {
+            btn.style.background = '#ef4444';
+            btn.style.borderColor = '#ef4444';
+        }
+    });
+
+    // Show explanation
+    const explanationDiv = document.createElement('div');
+    explanationDiv.style.cssText = `
+        margin-top: 20px; padding: 20px; background: ${isCorrect ? 'rgba(34, 197, 94, 0.2)' : 'rgba(239, 68, 68, 0.2)'};
+        border-radius: 10px; border: 2px solid ${isCorrect ? '#22c55e' : '#ef4444'};
+    `;
+    explanationDiv.innerHTML = `
+        <div style="font-size: 1.3rem; font-weight: bold; margin-bottom: 10px; color: ${isCorrect ? '#22c55e' : '#ef4444'};">
+            ${isCorrect ? 'Correct!' : 'Incorrect!'}
+        </div>
+        <div style="color: #ccc;">${q.explanation}</div>
+        <button onclick="nextSignQuestion()" style="margin-top: 15px; padding: 12px 30px;
+                background: #4f46e5; border: none; border-radius: 8px; color: #fff;
+                font-weight: bold; cursor: pointer;">
+            Next Question
+        </button>
+    `;
+
+    overlay.querySelector('div').appendChild(explanationDiv);
+}
+
+function nextSignQuestion() {
+    signPracticeState.currentQuestion++;
+    showSignQuestion();
+}
+
+function endSignPractice() {
+    const overlay = document.getElementById('signPracticeOverlay');
+    const percentage = Math.floor((signPracticeState.score / signPracticeState.total) * 100);
+
+    overlay.innerHTML = `
+        <div style="text-align: center; max-width: 500px; padding: 40px;">
+            <h1 style="color: #ffd700; font-size: 3rem; margin-bottom: 20px;">
+                Sign Practice Complete!
+            </h1>
+
+            <div style="font-size: 4rem; font-weight: bold; color: ${percentage >= 80 ? '#22c55e' : percentage >= 60 ? '#fbbf24' : '#ef4444'};">
+                ${percentage}%
+            </div>
+
+            <div style="font-size: 1.2rem; color: #888; margin: 20px 0;">
+                ${signPracticeState.score} out of ${signPracticeState.total} correct
+            </div>
+
+            <div style="font-size: 1.5rem; color: #fff; margin: 30px 0;">
+                ${percentage >= 80 ? 'Excellent! You know your signs!' :
+                  percentage >= 60 ? 'Good job! Keep practicing!' :
+                  'Keep studying those signs!'}
+            </div>
+
+            <div style="display: flex; gap: 15px; justify-content: center; margin-top: 30px;">
+                <button onclick="startSignPractice()" style="padding: 15px 30px; background: #4f46e5;
+                        border: none; border-radius: 10px; color: #fff; font-weight: bold; cursor: pointer;">
+                    Practice Again
+                </button>
+                <button onclick="exitSignPractice()" style="padding: 15px 30px; background: #374151;
+                        border: none; border-radius: 10px; color: #fff; font-weight: bold; cursor: pointer;">
+                    Main Menu
+                </button>
+            </div>
+        </div>
+    `;
+
+    saveStats();
+}
+
+function exitSignPractice() {
+    const overlay = document.getElementById('signPracticeOverlay');
+    if (overlay) overlay.remove();
+
+    gameState.mode = 'menu';
+    document.getElementById('mainMenu').classList.remove('hidden');
+}
+
+// Start the game
+init();
+</script>
+</body>
+</html>
