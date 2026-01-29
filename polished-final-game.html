@@ -184,7 +184,7 @@ body {
     width: 100%;
     max-width: 900px;
     height: 500px;
-    background: linear-gradient(to bottom, #87CEEB 0%, #B0D4E3 100%);
+    background: #2d2d2d;
     border-radius: 15px;
     display: block;
     margin: 20px auto;
@@ -583,66 +583,197 @@ body {
 </div>
 
 <script>
-// ===== AUDIO SYSTEM =====
+// ===== ENHANCED AUDIO SYSTEM =====
 let audioEnabled = true;
 let musicPlaying = false;
-let backgroundOscillator = null;
-let backgroundGain = null;
+let musicInterval = null;
 const AudioContext = window.AudioContext || window.webkitAudioContext;
 const audioCtx = new (AudioContext || webkitAudioContext)();
 
+// Play a pleasant "ding ding" for correct answers
 function playCorrectSound() {
     if (!audioEnabled) return;
-    const osc = audioCtx.createOscillator();
-    const gain = audioCtx.createGain();
-    osc.connect(gain);
-    gain.connect(audioCtx.destination);
-    osc.frequency.value = 523.25;
-    osc.type = 'sine';
-    gain.gain.value = 0.2;
-    osc.start();
-    gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.5);
-    osc.stop(audioCtx.currentTime + 0.5);
+
+    // First note - high ding
+    const osc1 = audioCtx.createOscillator();
+    const gain1 = audioCtx.createGain();
+    osc1.connect(gain1);
+    gain1.connect(audioCtx.destination);
+    osc1.frequency.value = 880; // A5
+    osc1.type = 'sine';
+    gain1.gain.setValueAtTime(0.3, audioCtx.currentTime);
+    gain1.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.15);
+    osc1.start(audioCtx.currentTime);
+    osc1.stop(audioCtx.currentTime + 0.15);
+
+    // Second note - higher ding (success feel)
+    const osc2 = audioCtx.createOscillator();
+    const gain2 = audioCtx.createGain();
+    osc2.connect(gain2);
+    gain2.connect(audioCtx.destination);
+    osc2.frequency.value = 1318.5; // E6
+    osc2.type = 'sine';
+    gain2.gain.setValueAtTime(0.3, audioCtx.currentTime + 0.1);
+    gain2.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.4);
+    osc2.start(audioCtx.currentTime + 0.1);
+    osc2.stop(audioCtx.currentTime + 0.4);
+
+    // Third note - triumphant finish
+    const osc3 = audioCtx.createOscillator();
+    const gain3 = audioCtx.createGain();
+    osc3.connect(gain3);
+    gain3.connect(audioCtx.destination);
+    osc3.frequency.value = 1760; // A6
+    osc3.type = 'sine';
+    gain3.gain.setValueAtTime(0.25, audioCtx.currentTime + 0.2);
+    gain3.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.6);
+    osc3.start(audioCtx.currentTime + 0.2);
+    osc3.stop(audioCtx.currentTime + 0.6);
 }
 
+// Play a "buzz" sound for wrong answers
 function playWrongSound() {
     if (!audioEnabled) return;
+
+    // Low buzz
+    const osc1 = audioCtx.createOscillator();
+    const gain1 = audioCtx.createGain();
+    osc1.connect(gain1);
+    gain1.connect(audioCtx.destination);
+    osc1.frequency.value = 150;
+    osc1.type = 'sawtooth';
+    gain1.gain.setValueAtTime(0.2, audioCtx.currentTime);
+    gain1.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
+    osc1.start(audioCtx.currentTime);
+    osc1.stop(audioCtx.currentTime + 0.3);
+
+    // Second lower buzz
+    const osc2 = audioCtx.createOscillator();
+    const gain2 = audioCtx.createGain();
+    osc2.connect(gain2);
+    gain2.connect(audioCtx.destination);
+    osc2.frequency.value = 110;
+    osc2.type = 'sawtooth';
+    gain2.gain.setValueAtTime(0.15, audioCtx.currentTime + 0.15);
+    gain2.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.5);
+    osc2.start(audioCtx.currentTime + 0.15);
+    osc2.stop(audioCtx.currentTime + 0.5);
+}
+
+// Play a click sound for button interactions
+function playClickSound() {
+    if (!audioEnabled) return;
+
     const osc = audioCtx.createOscillator();
     const gain = audioCtx.createGain();
     osc.connect(gain);
     gain.connect(audioCtx.destination);
-    osc.frequency.value = 196;
-    osc.type = 'sawtooth';
-    gain.gain.value = 0.2;
-    osc.start();
-    gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
-    osc.stop(audioCtx.currentTime + 0.3);
+    osc.frequency.value = 1000;
+    osc.type = 'sine';
+    gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.05);
+    osc.start(audioCtx.currentTime);
+    osc.stop(audioCtx.currentTime + 0.05);
 }
 
+// Play tick sound for timer
+function playTickSound() {
+    if (!audioEnabled) return;
+
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+    osc.frequency.value = 600;
+    osc.type = 'sine';
+    gain.gain.setValueAtTime(0.05, audioCtx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.03);
+    osc.start(audioCtx.currentTime);
+    osc.stop(audioCtx.currentTime + 0.03);
+}
+
+// Play warning sound when time is low
+function playWarningSound() {
+    if (!audioEnabled) return;
+
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+    osc.frequency.value = 800;
+    osc.type = 'square';
+    gain.gain.setValueAtTime(0.08, audioCtx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
+    osc.start(audioCtx.currentTime);
+    osc.stop(audioCtx.currentTime + 0.1);
+}
+
+// Ambient background music - gentle driving theme
 function startBackgroundMusic() {
     if (!audioEnabled || musicPlaying) return;
-    
-    backgroundOscillator = audioCtx.createOscillator();
-    backgroundGain = audioCtx.createGain();
-    
-    backgroundOscillator.connect(backgroundGain);
-    backgroundGain.connect(audioCtx.destination);
-    
-    backgroundOscillator.frequency.value = 220;
-    backgroundOscillator.type = 'sine';
-    backgroundGain.gain.value = 0.03;
-    
-    backgroundOscillator.start();
     musicPlaying = true;
+
+    // Musical notes for a calm driving ambience
+    const notes = [
+        { freq: 261.63, dur: 0.5 },  // C4
+        { freq: 293.66, dur: 0.5 },  // D4
+        { freq: 329.63, dur: 0.5 },  // E4
+        { freq: 261.63, dur: 0.5 },  // C4
+        { freq: 349.23, dur: 0.5 },  // F4
+        { freq: 329.63, dur: 0.5 },  // E4
+        { freq: 293.66, dur: 0.5 },  // D4
+        { freq: 261.63, dur: 1.0 },  // C4
+    ];
+
+    let noteIndex = 0;
+
+    function playNote() {
+        if (!musicPlaying || !audioEnabled) return;
+
+        const note = notes[noteIndex];
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+
+        // Add subtle vibrato
+        const vibrato = audioCtx.createOscillator();
+        const vibratoGain = audioCtx.createGain();
+        vibrato.frequency.value = 5;
+        vibratoGain.gain.value = 2;
+        vibrato.connect(vibratoGain);
+        vibratoGain.connect(osc.frequency);
+
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+
+        osc.frequency.value = note.freq;
+        osc.type = 'sine';
+        gain.gain.setValueAtTime(0.04, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + note.dur * 0.9);
+
+        vibrato.start(audioCtx.currentTime);
+        osc.start(audioCtx.currentTime);
+        osc.stop(audioCtx.currentTime + note.dur);
+        vibrato.stop(audioCtx.currentTime + note.dur);
+
+        noteIndex = (noteIndex + 1) % notes.length;
+    }
+
+    // Play first note immediately
+    playNote();
+
+    // Continue playing notes
+    musicInterval = setInterval(() => {
+        if (musicPlaying && audioEnabled) {
+            playNote();
+        }
+    }, 600);
 }
 
 function stopBackgroundMusic() {
-    if (backgroundOscillator) {
-        backgroundGain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.5);
-        backgroundOscillator.stop(audioCtx.currentTime + 0.5);
-        backgroundOscillator = null;
-        backgroundGain = null;
-        musicPlaying = false;
+    musicPlaying = false;
+    if (musicInterval) {
+        clearInterval(musicInterval);
+        musicInterval = null;
     }
 }
 
@@ -652,241 +783,1709 @@ function toggleAudio() {
     document.getElementById('audioText').textContent = audioEnabled ? 'Sound ON' : 'Sound OFF';
     if (!audioEnabled) {
         stopBackgroundMusic();
+    } else {
+        playClickSound();
     }
 }
 
-// ===== 100+ DRIVING SCENARIOS with Enhanced Graphics =====
+// ===== GRAPHICS HELPER FUNCTIONS =====
+// Draw a car from bird's eye view
+function drawCar(ctx, x, y, angle, color, isYou = false) {
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.rotate(angle);
+
+    // Car body
+    ctx.fillStyle = color;
+    ctx.fillRect(-15, -25, 30, 50);
+
+    // Windshield
+    ctx.fillStyle = isYou ? '#87CEEB' : '#333';
+    ctx.fillRect(-10, -20, 20, 12);
+
+    // Rear window
+    ctx.fillStyle = isYou ? '#87CEEB' : '#333';
+    ctx.fillRect(-10, 10, 20, 8);
+
+    // Wheels
+    ctx.fillStyle = '#222';
+    ctx.fillRect(-18, -20, 6, 12);
+    ctx.fillRect(12, -20, 6, 12);
+    ctx.fillRect(-18, 10, 6, 12);
+    ctx.fillRect(12, 10, 6, 12);
+
+    // "YOU" label for player car
+    if (isYou) {
+        ctx.fillStyle = '#FFF';
+        ctx.font = 'bold 10px Arial';
+        ctx.textAlign = 'center';
+        ctx.fillText('YOU', 0, 3);
+    }
+
+    ctx.restore();
+}
+
+// Draw a pedestrian from bird's eye view
+function drawPedestrian(ctx, x, y, color = '#FFB6C1') {
+    ctx.fillStyle = color;
+    ctx.beginPath();
+    ctx.arc(x, y, 8, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = '#333';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+}
+
+// Draw a stop sign (top-down pole view)
+function drawStopSignTopDown(ctx, x, y) {
+    // Pole shadow
+    ctx.fillStyle = 'rgba(0,0,0,0.3)';
+    ctx.beginPath();
+    ctx.arc(x + 3, y + 3, 12, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Sign
+    ctx.fillStyle = '#FF0000';
+    ctx.beginPath();
+    for (let i = 0; i < 8; i++) {
+        const angle = (i * Math.PI / 4) - Math.PI / 8;
+        const px = x + 15 * Math.cos(angle);
+        const py = y + 15 * Math.sin(angle);
+        if (i === 0) ctx.moveTo(px, py);
+        else ctx.lineTo(px, py);
+    }
+    ctx.closePath();
+    ctx.fill();
+    ctx.strokeStyle = '#FFF';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+
+    ctx.fillStyle = '#FFF';
+    ctx.font = 'bold 8px Arial';
+    ctx.textAlign = 'center';
+    ctx.fillText('STOP', x, y + 3);
+}
+
+// Draw traffic light
+function drawTrafficLight(ctx, x, y, state = 'red') {
+    ctx.fillStyle = '#333';
+    ctx.fillRect(x - 10, y - 25, 20, 50);
+
+    // Red
+    ctx.fillStyle = state === 'red' ? '#FF0000' : '#550000';
+    ctx.beginPath();
+    ctx.arc(x, y - 15, 6, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Yellow
+    ctx.fillStyle = state === 'yellow' ? '#FFFF00' : '#555500';
+    ctx.beginPath();
+    ctx.arc(x, y, 6, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Green
+    ctx.fillStyle = state === 'green' ? '#00FF00' : '#005500';
+    ctx.beginPath();
+    ctx.arc(x, y + 15, 6, 0, Math.PI * 2);
+    ctx.fill();
+}
+
+// Draw yield sign top-down
+function drawYieldSign(ctx, x, y) {
+    ctx.fillStyle = '#FFF';
+    ctx.strokeStyle = '#FF0000';
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.moveTo(x, y - 12);
+    ctx.lineTo(x - 12, y + 8);
+    ctx.lineTo(x + 12, y + 8);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.fillStyle = '#FF0000';
+    ctx.font = 'bold 6px Arial';
+    ctx.textAlign = 'center';
+    ctx.fillText('YIELD', x, y + 4);
+}
+
+// Draw fire hydrant top-down
+function drawFireHydrant(ctx, x, y) {
+    ctx.fillStyle = '#FF0000';
+    ctx.beginPath();
+    ctx.arc(x, y, 10, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#CC0000';
+    ctx.beginPath();
+    ctx.arc(x, y, 6, 0, Math.PI * 2);
+    ctx.fill();
+}
+
+// Draw railroad crossing
+function drawRailroadCrossing(ctx, x, roadWidth) {
+    // Rails
+    ctx.strokeStyle = '#888';
+    ctx.lineWidth = 6;
+    ctx.beginPath();
+    ctx.moveTo(0, x - 5);
+    ctx.lineTo(roadWidth, x - 5);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(0, x + 5);
+    ctx.lineTo(roadWidth, x + 5);
+    ctx.stroke();
+
+    // Ties
+    ctx.fillStyle = '#654321';
+    for (let i = 20; i < roadWidth; i += 40) {
+        ctx.fillRect(i, x - 12, 8, 24);
+    }
+}
+
+// ===== 100+ DRIVING SCENARIOS with Visual Graphics =====
 const SIMULATOR_SCENARIOS = [
-    // STOP SIGNS & TRAFFIC CONTROL (10 scenarios)
+    // ==================== FOUR-WAY STOP SCENARIOS ====================
+    {
+        id: "fourway1", difficulty: "medium",
+        question: "You (red car) and blue car arrived at the same time at this 4-way stop. Who goes first?",
+        options: ["You go first (straight)", "Blue car goes first (on your right)", "Whoever honks first", "Largest vehicle"],
+        correctAnswer: 1,
+        explanation: "At a 4-way stop when vehicles arrive simultaneously, the vehicle on the RIGHT has right-of-way.",
+        draw: function(ctx) {
+            // Grass background
+            ctx.fillStyle = '#4a7c4e';
+            ctx.fillRect(0, 0, 900, 500);
+
+            // Roads (intersection)
+            ctx.fillStyle = '#555';
+            ctx.fillRect(350, 0, 200, 500); // Vertical road
+            ctx.fillRect(0, 200, 900, 150); // Horizontal road
+
+            // Lane markings - vertical road
+            ctx.strokeStyle = '#FFD700';
+            ctx.lineWidth = 3;
+            ctx.setLineDash([20, 15]);
+            ctx.beginPath();
+            ctx.moveTo(450, 0);
+            ctx.lineTo(450, 200);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(450, 350);
+            ctx.lineTo(450, 500);
+            ctx.stroke();
+
+            // Lane markings - horizontal road
+            ctx.beginPath();
+            ctx.moveTo(0, 275);
+            ctx.lineTo(350, 275);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(550, 275);
+            ctx.lineTo(900, 275);
+            ctx.stroke();
+            ctx.setLineDash([]);
+
+            // Stop lines
+            ctx.strokeStyle = '#FFF';
+            ctx.lineWidth = 5;
+            ctx.beginPath(); ctx.moveTo(350, 195); ctx.lineTo(350, 350); ctx.stroke(); // Left
+            ctx.beginPath(); ctx.moveTo(550, 195); ctx.lineTo(550, 355); ctx.stroke(); // Right
+            ctx.beginPath(); ctx.moveTo(355, 200); ctx.lineTo(545, 200); ctx.stroke(); // Top
+            ctx.beginPath(); ctx.moveTo(355, 350); ctx.lineTo(545, 350); ctx.stroke(); // Bottom
+
+            // Stop signs at all corners
+            drawStopSignTopDown(ctx, 340, 190);
+            drawStopSignTopDown(ctx, 560, 190);
+            drawStopSignTopDown(ctx, 340, 360);
+            drawStopSignTopDown(ctx, 560, 360);
+
+            // YOUR car (red) - coming from bottom, stopped
+            drawCar(ctx, 400, 420, 0, '#FF4444', true);
+
+            // Blue car - on your right, also stopped
+            drawCar(ctx, 620, 240, -Math.PI/2, '#4444FF');
+
+            // Arrow showing intended path
+            ctx.strokeStyle = '#FFD700';
+            ctx.lineWidth = 3;
+            ctx.setLineDash([5, 5]);
+            ctx.beginPath();
+            ctx.moveTo(400, 390);
+            ctx.lineTo(400, 150);
+            ctx.stroke();
+            ctx.setLineDash([]);
+
+            // Arrow head
+            ctx.fillStyle = '#FFD700';
+            ctx.beginPath();
+            ctx.moveTo(400, 140);
+            ctx.lineTo(390, 160);
+            ctx.lineTo(410, 160);
+            ctx.closePath();
+            ctx.fill();
+
+            // Labels
+            ctx.fillStyle = '#FFF';
+            ctx.font = 'bold 14px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText('4-WAY STOP', 450, 30);
+        }
+    },
+    {
+        id: "fourway2", difficulty: "medium",
+        question: "At this 4-way stop, you arrived FIRST, then the green car. Who proceeds?",
+        options: ["Green car (turning)", "You (arrived first)", "Both at same time", "Wait for signal"],
+        correctAnswer: 1,
+        explanation: "The vehicle that arrives FIRST at a 4-way stop has the right-of-way, regardless of direction.",
+        draw: function(ctx) {
+            // Grass background
+            ctx.fillStyle = '#4a7c4e';
+            ctx.fillRect(0, 0, 900, 500);
+
+            // Roads
+            ctx.fillStyle = '#555';
+            ctx.fillRect(350, 0, 200, 500);
+            ctx.fillRect(0, 200, 900, 150);
+
+            // Lane markings
+            ctx.strokeStyle = '#FFD700';
+            ctx.lineWidth = 3;
+            ctx.setLineDash([20, 15]);
+            ctx.beginPath();
+            ctx.moveTo(450, 0); ctx.lineTo(450, 200); ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(450, 350); ctx.lineTo(450, 500); ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(0, 275); ctx.lineTo(350, 275); ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(550, 275); ctx.lineTo(900, 275); ctx.stroke();
+            ctx.setLineDash([]);
+
+            // Stop lines
+            ctx.strokeStyle = '#FFF';
+            ctx.lineWidth = 5;
+            ctx.beginPath(); ctx.moveTo(350, 195); ctx.lineTo(350, 355); ctx.stroke();
+            ctx.beginPath(); ctx.moveTo(550, 195); ctx.lineTo(550, 355); ctx.stroke();
+            ctx.beginPath(); ctx.moveTo(355, 200); ctx.lineTo(545, 200); ctx.stroke();
+            ctx.beginPath(); ctx.moveTo(355, 350); ctx.lineTo(545, 350); ctx.stroke();
+
+            // Stop signs
+            drawStopSignTopDown(ctx, 340, 190);
+            drawStopSignTopDown(ctx, 560, 190);
+            drawStopSignTopDown(ctx, 340, 360);
+            drawStopSignTopDown(ctx, 560, 360);
+
+            // YOUR car - arrived first
+            drawCar(ctx, 400, 420, 0, '#FF4444', true);
+
+            // Green car - arrived second, from left
+            drawCar(ctx, 280, 310, Math.PI/2, '#44FF44');
+
+            // "1st" label near your car
+            ctx.fillStyle = '#FFD700';
+            ctx.font = 'bold 16px Arial';
+            ctx.fillText('1st', 440, 420);
+
+            // "2nd" label near green car
+            ctx.fillText('2nd', 280, 350);
+
+            ctx.fillStyle = '#FFF';
+            ctx.font = 'bold 14px Arial';
+            ctx.fillText('4-WAY STOP', 450, 30);
+        }
+    },
+    {
+        id: "fourway3", difficulty: "hard",
+        question: "Three cars at 4-way stop. You're going straight, others turning. Who has right-of-way?",
+        options: ["Car going straight (you)", "Car turning right", "Car turning left", "All yield to each other"],
+        correctAnswer: 0,
+        explanation: "When multiple cars arrive at the same time, the car going STRAIGHT has priority over turning vehicles.",
+        draw: function(ctx) {
+            // Grass
+            ctx.fillStyle = '#4a7c4e';
+            ctx.fillRect(0, 0, 900, 500);
+
+            // Roads
+            ctx.fillStyle = '#555';
+            ctx.fillRect(350, 0, 200, 500);
+            ctx.fillRect(0, 200, 900, 150);
+
+            // Lane markings
+            ctx.strokeStyle = '#FFD700';
+            ctx.lineWidth = 3;
+            ctx.setLineDash([20, 15]);
+            ctx.beginPath(); ctx.moveTo(450, 0); ctx.lineTo(450, 200); ctx.stroke();
+            ctx.beginPath(); ctx.moveTo(450, 350); ctx.lineTo(450, 500); ctx.stroke();
+            ctx.setLineDash([]);
+
+            // Stop signs
+            drawStopSignTopDown(ctx, 340, 190);
+            drawStopSignTopDown(ctx, 560, 360);
+            drawStopSignTopDown(ctx, 340, 360);
+
+            // YOUR car - going straight
+            drawCar(ctx, 400, 420, 0, '#FF4444', true);
+
+            // Orange car - from opposite, turning left
+            drawCar(ctx, 500, 130, Math.PI, '#FFA500');
+
+            // Purple car - from right, turning right
+            drawCar(ctx, 620, 310, -Math.PI/2, '#9944FF');
+
+            // Direction arrows
+            ctx.strokeStyle = '#FFD700';
+            ctx.lineWidth = 2;
+            // Your straight arrow
+            ctx.setLineDash([5, 5]);
+            ctx.beginPath(); ctx.moveTo(400, 390); ctx.lineTo(400, 150); ctx.stroke();
+            // Orange turning left arrow
+            ctx.beginPath(); ctx.moveTo(500, 160); ctx.quadraticCurveTo(500, 280, 370, 280); ctx.stroke();
+            // Purple turning right arrow
+            ctx.beginPath(); ctx.moveTo(590, 310); ctx.quadraticCurveTo(520, 310, 520, 390); ctx.stroke();
+            ctx.setLineDash([]);
+
+            ctx.fillStyle = '#FFF';
+            ctx.font = 'bold 14px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText('3 CARS - SAME TIME', 450, 30);
+        }
+    },
+
+    // ==================== TRAFFIC LIGHT SCENARIOS ====================
+    {
+        id: "redlight1", difficulty: "easy",
+        question: "Red light, you want to turn right. No sign prohibits it. What do you do?",
+        options: ["Turn immediately", "Stop completely, then turn if clear", "Wait for green only", "Honk and turn"],
+        correctAnswer: 1,
+        explanation: "In MA, you can turn right on red AFTER coming to a complete stop, if traffic is clear and no sign prohibits it.",
+        draw: function(ctx) {
+            // Grass
+            ctx.fillStyle = '#4a7c4e';
+            ctx.fillRect(0, 0, 900, 500);
+
+            // Roads
+            ctx.fillStyle = '#555';
+            ctx.fillRect(350, 0, 200, 500);
+            ctx.fillRect(0, 200, 900, 150);
+
+            // Lane markings
+            ctx.strokeStyle = '#FFD700';
+            ctx.lineWidth = 3;
+            ctx.setLineDash([20, 15]);
+            ctx.beginPath(); ctx.moveTo(450, 0); ctx.lineTo(450, 200); ctx.stroke();
+            ctx.beginPath(); ctx.moveTo(450, 350); ctx.lineTo(450, 500); ctx.stroke();
+            ctx.setLineDash([]);
+
+            // Stop line
+            ctx.strokeStyle = '#FFF';
+            ctx.lineWidth = 5;
+            ctx.beginPath(); ctx.moveTo(355, 350); ctx.lineTo(545, 350); ctx.stroke();
+
+            // Traffic light - RED
+            drawTrafficLight(ctx, 560, 370, 'red');
+
+            // YOUR car - at stop line
+            drawCar(ctx, 500, 420, 0, '#FF4444', true);
+
+            // Turn arrow (right turn)
+            ctx.strokeStyle = '#FFD700';
+            ctx.lineWidth = 3;
+            ctx.setLineDash([5, 5]);
+            ctx.beginPath();
+            ctx.moveTo(500, 390);
+            ctx.quadraticCurveTo(500, 280, 620, 280);
+            ctx.stroke();
+            ctx.setLineDash([]);
+
+            // Arrow head
+            ctx.fillStyle = '#FFD700';
+            ctx.beginPath();
+            ctx.moveTo(630, 280);
+            ctx.lineTo(610, 270);
+            ctx.lineTo(610, 290);
+            ctx.closePath();
+            ctx.fill();
+
+            // Label
+            ctx.fillStyle = '#FFF';
+            ctx.font = 'bold 16px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText('RED LIGHT - RIGHT TURN?', 450, 30);
+        }
+    },
+    {
+        id: "greenlight1", difficulty: "easy",
+        question: "Green light, you want to turn left. Oncoming traffic is present. What do you do?",
+        options: ["Turn immediately", "Yield to oncoming traffic, then turn", "Wait for next green", "Honk at oncoming cars"],
+        correctAnswer: 1,
+        explanation: "On a green light, left turns must YIELD to oncoming traffic and pedestrians before turning.",
+        draw: function(ctx) {
+            // Grass
+            ctx.fillStyle = '#4a7c4e';
+            ctx.fillRect(0, 0, 900, 500);
+
+            // Roads
+            ctx.fillStyle = '#555';
+            ctx.fillRect(350, 0, 200, 500);
+            ctx.fillRect(0, 200, 900, 150);
+
+            // Lane markings
+            ctx.strokeStyle = '#FFD700';
+            ctx.lineWidth = 3;
+            ctx.setLineDash([20, 15]);
+            ctx.beginPath(); ctx.moveTo(450, 0); ctx.lineTo(450, 200); ctx.stroke();
+            ctx.beginPath(); ctx.moveTo(450, 350); ctx.lineTo(450, 500); ctx.stroke();
+            ctx.setLineDash([]);
+
+            // Traffic light - GREEN
+            drawTrafficLight(ctx, 560, 370, 'green');
+
+            // YOUR car
+            drawCar(ctx, 400, 420, 0, '#FF4444', true);
+
+            // Oncoming car
+            drawCar(ctx, 500, 130, Math.PI, '#4444FF');
+
+            // Your left turn arrow
+            ctx.strokeStyle = '#FFD700';
+            ctx.lineWidth = 3;
+            ctx.setLineDash([5, 5]);
+            ctx.beginPath();
+            ctx.moveTo(400, 390);
+            ctx.quadraticCurveTo(400, 280, 280, 280);
+            ctx.stroke();
+            ctx.setLineDash([]);
+
+            // Oncoming car straight arrow
+            ctx.strokeStyle = '#4444FF';
+            ctx.beginPath();
+            ctx.moveTo(500, 160);
+            ctx.lineTo(500, 400);
+            ctx.stroke();
+
+            ctx.fillStyle = '#FFF';
+            ctx.font = 'bold 16px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText('GREEN LIGHT - LEFT TURN', 450, 30);
+        }
+    },
+    {
+        id: "yellowlight1", difficulty: "medium",
+        question: "Yellow light just appeared. You're close to intersection. What should you do?",
+        options: ["Speed up to get through", "Stop if safe to do so", "Always stop immediately", "Proceed if already in intersection"],
+        correctAnswer: 3,
+        explanation: "If you're already in or very close to the intersection when yellow appears, proceed safely. Stop only if you can do so safely.",
+        draw: function(ctx) {
+            // Grass
+            ctx.fillStyle = '#4a7c4e';
+            ctx.fillRect(0, 0, 900, 500);
+
+            // Roads
+            ctx.fillStyle = '#555';
+            ctx.fillRect(350, 0, 200, 500);
+            ctx.fillRect(0, 200, 900, 150);
+
+            // Stop line
+            ctx.strokeStyle = '#FFF';
+            ctx.lineWidth = 5;
+            ctx.beginPath(); ctx.moveTo(355, 350); ctx.lineTo(545, 350); ctx.stroke();
+
+            // Traffic light - YELLOW
+            drawTrafficLight(ctx, 560, 370, 'yellow');
+
+            // YOUR car - very close to intersection
+            drawCar(ctx, 450, 380, 0, '#FF4444', true);
+
+            ctx.fillStyle = '#FFD700';
+            ctx.font = 'bold 16px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText('YELLOW LIGHT!', 450, 30);
+
+            ctx.fillStyle = '#FFF';
+            ctx.font = '14px Arial';
+            ctx.fillText('(Already at intersection)', 450, 55);
+        }
+    },
+
+    // ==================== PEDESTRIAN/CROSSWALK SCENARIOS ====================
+    {
+        id: "crosswalk1", difficulty: "easy",
+        question: "Pedestrian is in the crosswalk. What must you do?",
+        options: ["Honk to warn them", "Speed up to pass before them", "Stop and yield completely", "Slow down and drive around"],
+        correctAnswer: 2,
+        explanation: "You MUST stop and yield to pedestrians in crosswalks. Never honk at or rush pedestrians.",
+        draw: function(ctx) {
+            // Grass
+            ctx.fillStyle = '#4a7c4e';
+            ctx.fillRect(0, 0, 900, 500);
+
+            // Road
+            ctx.fillStyle = '#555';
+            ctx.fillRect(0, 200, 900, 150);
+
+            // Sidewalks
+            ctx.fillStyle = '#999';
+            ctx.fillRect(0, 190, 900, 10);
+            ctx.fillRect(0, 350, 900, 10);
+
+            // Crosswalk stripes
+            ctx.fillStyle = '#FFF';
+            for (let x = 400; x < 500; x += 15) {
+                ctx.fillRect(x, 200, 10, 150);
+            }
+
+            // Lane markings
+            ctx.strokeStyle = '#FFD700';
+            ctx.lineWidth = 3;
+            ctx.setLineDash([20, 15]);
+            ctx.beginPath(); ctx.moveTo(0, 275); ctx.lineTo(390, 275); ctx.stroke();
+            ctx.beginPath(); ctx.moveTo(510, 275); ctx.lineTo(900, 275); ctx.stroke();
+            ctx.setLineDash([]);
+
+            // YOUR car approaching
+            drawCar(ctx, 280, 310, Math.PI/2, '#FF4444', true);
+
+            // Pedestrian in crosswalk
+            drawPedestrian(ctx, 450, 280, '#FFB6C1');
+            drawPedestrian(ctx, 460, 300, '#87CEEB');
+
+            // Walking direction arrow
+            ctx.strokeStyle = '#FFF';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(430, 275);
+            ctx.lineTo(480, 275);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(475, 270);
+            ctx.lineTo(480, 275);
+            ctx.lineTo(475, 280);
+            ctx.stroke();
+
+            ctx.fillStyle = '#FFF';
+            ctx.font = 'bold 16px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText('PEDESTRIAN CROSSWALK', 450, 30);
+        }
+    },
+    {
+        id: "crosswalk2", difficulty: "medium",
+        question: "Pedestrian is waiting at unmarked crosswalk (intersection). What should you do?",
+        options: ["No crosswalk, no need to stop", "Yield to pedestrian", "Only stop if they step out", "Honk to let them know you see them"],
+        correctAnswer: 1,
+        explanation: "Pedestrians have right-of-way at ALL intersections, even without marked crosswalks. Yield to them.",
+        draw: function(ctx) {
+            // Grass
+            ctx.fillStyle = '#4a7c4e';
+            ctx.fillRect(0, 0, 900, 500);
+
+            // Roads
+            ctx.fillStyle = '#555';
+            ctx.fillRect(350, 0, 200, 500);
+            ctx.fillRect(0, 200, 900, 150);
+
+            // No crosswalk markings - unmarked intersection
+            ctx.strokeStyle = '#FFD700';
+            ctx.lineWidth = 3;
+            ctx.setLineDash([20, 15]);
+            ctx.beginPath(); ctx.moveTo(0, 275); ctx.lineTo(350, 275); ctx.stroke();
+            ctx.beginPath(); ctx.moveTo(550, 275); ctx.lineTo(900, 275); ctx.stroke();
+            ctx.setLineDash([]);
+
+            // YOUR car approaching
+            drawCar(ctx, 280, 240, Math.PI/2, '#FF4444', true);
+
+            // Pedestrian waiting at corner
+            drawPedestrian(ctx, 340, 190, '#FFB6C1');
+
+            // Label
+            ctx.fillStyle = '#FFF';
+            ctx.font = 'bold 16px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText('UNMARKED CROSSWALK', 450, 30);
+            ctx.font = '12px Arial';
+            ctx.fillText('(No painted lines)', 450, 50);
+        }
+    },
+
+    // ==================== PARKING SCENARIOS ====================
+    {
+        id: "firehydrant1", difficulty: "easy",
+        question: "Fire hydrant is visible. How far must you park from it?",
+        options: ["5 feet", "10 feet", "15 feet", "20 feet"],
+        correctAnswer: 1,
+        explanation: "In Massachusetts, you must park at least 10 feet away from fire hydrants.",
+        draw: function(ctx) {
+            // Grass
+            ctx.fillStyle = '#4a7c4e';
+            ctx.fillRect(0, 0, 900, 500);
+
+            // Road
+            ctx.fillStyle = '#555';
+            ctx.fillRect(0, 250, 900, 150);
+
+            // Sidewalk
+            ctx.fillStyle = '#999';
+            ctx.fillRect(0, 200, 900, 50);
+
+            // Curb
+            ctx.fillStyle = '#FFD700';
+            ctx.fillRect(0, 245, 900, 5);
+
+            // Fire hydrant
+            drawFireHydrant(ctx, 450, 220);
+
+            // Distance markers
+            ctx.strokeStyle = '#FFF';
+            ctx.lineWidth = 2;
+            ctx.setLineDash([5, 5]);
+            ctx.beginPath(); ctx.moveTo(360, 250); ctx.lineTo(360, 300); ctx.stroke();
+            ctx.beginPath(); ctx.moveTo(540, 250); ctx.lineTo(540, 300); ctx.stroke();
+            ctx.setLineDash([]);
+
+            // "10 ft" labels
+            ctx.fillStyle = '#FFD700';
+            ctx.font = 'bold 14px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText('10ft', 405, 270);
+            ctx.fillText('10ft', 495, 270);
+
+            // Red zones
+            ctx.fillStyle = 'rgba(255,0,0,0.3)';
+            ctx.fillRect(360, 245, 180, 5);
+
+            // Parked cars (legal positions)
+            drawCar(ctx, 300, 320, Math.PI/2, '#44FF44');
+            drawCar(ctx, 600, 320, Math.PI/2, '#44FF44');
+
+            // YOUR car (considering parking)
+            drawCar(ctx, 200, 400, 0, '#FF4444', true);
+
+            ctx.fillStyle = '#FFF';
+            ctx.font = 'bold 16px Arial';
+            ctx.fillText('FIRE HYDRANT PARKING', 450, 30);
+        }
+    },
+    {
+        id: "crosswalkpark1", difficulty: "easy",
+        question: "How far from a crosswalk must you park?",
+        options: ["10 feet", "15 feet", "20 feet", "25 feet"],
+        correctAnswer: 2,
+        explanation: "You must park at least 20 feet from a crosswalk in Massachusetts.",
+        draw: function(ctx) {
+            // Grass
+            ctx.fillStyle = '#4a7c4e';
+            ctx.fillRect(0, 0, 900, 500);
+
+            // Road
+            ctx.fillStyle = '#555';
+            ctx.fillRect(0, 250, 900, 150);
+
+            // Sidewalk
+            ctx.fillStyle = '#999';
+            ctx.fillRect(0, 200, 900, 50);
+
+            // Crosswalk
+            ctx.fillStyle = '#FFF';
+            for (let x = 420; x < 480; x += 12) {
+                ctx.fillRect(x, 250, 8, 150);
+            }
+
+            // Distance marker
+            ctx.strokeStyle = '#FFD700';
+            ctx.lineWidth = 2;
+            ctx.setLineDash([5, 5]);
+            ctx.beginPath(); ctx.moveTo(400, 255); ctx.lineTo(200, 255); ctx.stroke();
+            ctx.setLineDash([]);
+
+            ctx.fillStyle = '#FFD700';
+            ctx.font = 'bold 14px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText('20 ft min', 300, 245);
+
+            // Legal parking spot
+            drawCar(ctx, 150, 320, Math.PI/2, '#44FF44');
+
+            // YOUR car
+            drawCar(ctx, 750, 320, Math.PI/2, '#FF4444', true);
+
+            ctx.fillStyle = '#FFF';
+            ctx.font = 'bold 16px Arial';
+            ctx.fillText('CROSSWALK PARKING', 450, 30);
+        }
+    },
+
+    // ==================== ROAD MARKING SCENARIOS ====================
+    {
+        id: "doubleyellow1", difficulty: "easy",
+        question: "You see double solid yellow lines. Can you cross them to pass?",
+        options: ["Yes, if safe", "No, never for passing", "Only in emergencies", "Only in daytime"],
+        correctAnswer: 1,
+        explanation: "Double solid yellow lines mean NO PASSING in either direction. You cannot cross them to pass another vehicle.",
+        draw: function(ctx) {
+            // Grass
+            ctx.fillStyle = '#4a7c4e';
+            ctx.fillRect(0, 0, 900, 500);
+
+            // Road
+            ctx.fillStyle = '#555';
+            ctx.fillRect(0, 150, 900, 200);
+
+            // Double yellow line
+            ctx.strokeStyle = '#FFD700';
+            ctx.lineWidth = 4;
+            ctx.beginPath(); ctx.moveTo(0, 248); ctx.lineTo(900, 248); ctx.stroke();
+            ctx.beginPath(); ctx.moveTo(0, 258); ctx.lineTo(900, 258); ctx.stroke();
+
+            // YOUR car
+            drawCar(ctx, 300, 300, Math.PI/2, '#FF4444', true);
+
+            // Slow car ahead
+            drawCar(ctx, 450, 300, Math.PI/2, '#888888');
+
+            // X mark showing no passing
+            ctx.strokeStyle = '#FF0000';
+            ctx.lineWidth = 4;
+            ctx.beginPath();
+            ctx.moveTo(350, 180);
+            ctx.lineTo(410, 230);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(410, 180);
+            ctx.lineTo(350, 230);
+            ctx.stroke();
+
+            ctx.fillStyle = '#FFF';
+            ctx.font = 'bold 16px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText('DOUBLE YELLOW LINE', 450, 30);
+            ctx.fillStyle = '#FF0000';
+            ctx.fillText('NO PASSING', 450, 55);
+        }
+    },
+    {
+        id: "brokenyellow1", difficulty: "easy",
+        question: "You see a broken yellow line on your side. What does it mean?",
+        options: ["No passing allowed", "Passing is allowed when safe", "Road work ahead", "Yield to oncoming"],
+        correctAnswer: 1,
+        explanation: "A broken yellow line on your side means you MAY pass when it's safe to do so.",
+        draw: function(ctx) {
+            // Grass
+            ctx.fillStyle = '#4a7c4e';
+            ctx.fillRect(0, 0, 900, 500);
+
+            // Road
+            ctx.fillStyle = '#555';
+            ctx.fillRect(0, 150, 900, 200);
+
+            // Broken yellow line
+            ctx.strokeStyle = '#FFD700';
+            ctx.lineWidth = 4;
+            ctx.setLineDash([30, 20]);
+            ctx.beginPath(); ctx.moveTo(0, 250); ctx.lineTo(900, 250); ctx.stroke();
+            ctx.setLineDash([]);
+
+            // YOUR car
+            drawCar(ctx, 300, 300, Math.PI/2, '#FF4444', true);
+
+            // Slow car ahead
+            drawCar(ctx, 500, 300, Math.PI/2, '#888888');
+
+            // Checkmark showing passing allowed
+            ctx.strokeStyle = '#00FF00';
+            ctx.lineWidth = 4;
+            ctx.beginPath();
+            ctx.moveTo(380, 200);
+            ctx.lineTo(400, 220);
+            ctx.lineTo(440, 170);
+            ctx.stroke();
+
+            // Passing arrow
+            ctx.strokeStyle = '#00FF00';
+            ctx.lineWidth = 2;
+            ctx.setLineDash([5, 5]);
+            ctx.beginPath();
+            ctx.moveTo(300, 280);
+            ctx.quadraticCurveTo(400, 200, 550, 200);
+            ctx.quadraticCurveTo(650, 200, 650, 300);
+            ctx.stroke();
+            ctx.setLineDash([]);
+
+            ctx.fillStyle = '#FFF';
+            ctx.font = 'bold 16px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText('BROKEN YELLOW LINE', 450, 30);
+            ctx.fillStyle = '#00FF00';
+            ctx.fillText('PASSING ALLOWED', 450, 55);
+        }
+    },
+    {
+        id: "solidwhite1", difficulty: "medium",
+        question: "You're in a lane with solid white lines on both sides. Can you change lanes?",
+        options: ["Yes, anytime", "No, lane changes prohibited", "Only with turn signal", "Only if going slow"],
+        correctAnswer: 1,
+        explanation: "Solid white lines indicate lane changes are PROHIBITED. Stay in your lane.",
+        draw: function(ctx) {
+            // Grass
+            ctx.fillStyle = '#4a7c4e';
+            ctx.fillRect(0, 0, 900, 500);
+
+            // Road
+            ctx.fillStyle = '#555';
+            ctx.fillRect(0, 150, 900, 200);
+
+            // Solid white lines (3 lanes)
+            ctx.strokeStyle = '#FFF';
+            ctx.lineWidth = 4;
+            ctx.beginPath(); ctx.moveTo(0, 200); ctx.lineTo(900, 200); ctx.stroke();
+            ctx.beginPath(); ctx.moveTo(0, 250); ctx.lineTo(900, 250); ctx.stroke();
+            ctx.beginPath(); ctx.moveTo(0, 300); ctx.lineTo(900, 300); ctx.stroke();
+
+            // YOUR car in middle lane
+            drawCar(ctx, 400, 275, Math.PI/2, '#FF4444', true);
+
+            // X marks on both sides
+            ctx.strokeStyle = '#FF0000';
+            ctx.lineWidth = 3;
+            // Left X
+            ctx.beginPath(); ctx.moveTo(370, 215); ctx.lineTo(390, 235); ctx.stroke();
+            ctx.beginPath(); ctx.moveTo(390, 215); ctx.lineTo(370, 235); ctx.stroke();
+            // Right X
+            ctx.beginPath(); ctx.moveTo(410, 265); ctx.lineTo(430, 285); ctx.stroke();
+            ctx.beginPath(); ctx.moveTo(430, 265); ctx.lineTo(410, 285); ctx.stroke();
+
+            ctx.fillStyle = '#FFF';
+            ctx.font = 'bold 16px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText('SOLID WHITE LINES', 450, 30);
+            ctx.fillStyle = '#FF0000';
+            ctx.fillText('NO LANE CHANGES', 450, 55);
+        }
+    },
+
+    // ==================== RAILROAD CROSSING SCENARIOS ====================
+    {
+        id: "railroad1", difficulty: "easy",
+        question: "Railroad crossing lights are flashing red. What must you do?",
+        options: ["Slow down and look", "Stop and wait for train", "Proceed if no train visible", "Honk and proceed"],
+        correctAnswer: 1,
+        explanation: "When railroad lights flash, you MUST stop and wait. The train may be closer than it appears.",
+        draw: function(ctx) {
+            // Grass
+            ctx.fillStyle = '#4a7c4e';
+            ctx.fillRect(0, 0, 900, 500);
+
+            // Road
+            ctx.fillStyle = '#555';
+            ctx.fillRect(300, 0, 300, 500);
+
+            // Railroad tracks
+            ctx.strokeStyle = '#888';
+            ctx.lineWidth = 8;
+            ctx.beginPath(); ctx.moveTo(0, 200); ctx.lineTo(900, 200); ctx.stroke();
+            ctx.beginPath(); ctx.moveTo(0, 220); ctx.lineTo(900, 220); ctx.stroke();
+
+            // Ties
+            ctx.fillStyle = '#654321';
+            for (let x = 0; x < 900; x += 30) {
+                ctx.fillRect(x, 195, 10, 35);
+            }
+
+            // Crossing signal
+            ctx.fillStyle = '#333';
+            ctx.fillRect(620, 140, 10, 100);
+
+            // Flashing lights (red)
+            ctx.fillStyle = '#FF0000';
+            ctx.beginPath(); ctx.arc(610, 150, 12, 0, Math.PI * 2); ctx.fill();
+            ctx.beginPath(); ctx.arc(640, 150, 12, 0, Math.PI * 2); ctx.fill();
+
+            // X sign
+            ctx.strokeStyle = '#FFD700';
+            ctx.lineWidth = 6;
+            ctx.beginPath(); ctx.moveTo(590, 180); ctx.lineTo(660, 230); ctx.stroke();
+            ctx.beginPath(); ctx.moveTo(660, 180); ctx.lineTo(590, 230); ctx.stroke();
+
+            // YOUR car
+            drawCar(ctx, 450, 400, 0, '#FF4444', true);
+
+            // Stop line
+            ctx.strokeStyle = '#FFF';
+            ctx.lineWidth = 5;
+            ctx.beginPath(); ctx.moveTo(305, 280); ctx.lineTo(595, 280); ctx.stroke();
+
+            // Train approaching indicator
+            ctx.fillStyle = '#FFF';
+            ctx.font = 'bold 16px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText('RAILROAD CROSSING', 450, 30);
+            ctx.fillStyle = '#FF0000';
+            ctx.font = 'bold 20px Arial';
+            ctx.fillText('LIGHTS FLASHING!', 450, 60);
+        }
+    },
+    {
+        id: "railroad2", difficulty: "medium",
+        question: "Train has passed. Gates are rising. When can you proceed?",
+        options: ["Immediately as gates rise", "Wait until gates fully up", "When gate is halfway up", "After checking both ways"],
+        correctAnswer: 1,
+        explanation: "Wait until gates are FULLY raised and lights stop flashing. Another train could be coming from the other direction.",
+        draw: function(ctx) {
+            // Grass
+            ctx.fillStyle = '#4a7c4e';
+            ctx.fillRect(0, 0, 900, 500);
+
+            // Road
+            ctx.fillStyle = '#555';
+            ctx.fillRect(300, 0, 300, 500);
+
+            // Railroad tracks
+            ctx.strokeStyle = '#888';
+            ctx.lineWidth = 8;
+            ctx.beginPath(); ctx.moveTo(0, 200); ctx.lineTo(900, 200); ctx.stroke();
+            ctx.beginPath(); ctx.moveTo(0, 220); ctx.lineTo(900, 220); ctx.stroke();
+
+            // Gate (partially raised)
+            ctx.fillStyle = '#FF0000';
+            ctx.save();
+            ctx.translate(590, 230);
+            ctx.rotate(-Math.PI / 4); // 45 degrees up
+            ctx.fillRect(0, -5, 150, 10);
+            ctx.restore();
+
+            // YOUR car
+            drawCar(ctx, 450, 380, 0, '#FF4444', true);
+
+            ctx.fillStyle = '#FFF';
+            ctx.font = 'bold 16px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText('GATES RISING', 450, 30);
+            ctx.fillStyle = '#FFD700';
+            ctx.fillText('Wait until fully up!', 450, 55);
+        }
+    },
+
+    // ==================== SCHOOL ZONE SCENARIOS ====================
+    {
+        id: "school1", difficulty: "easy",
+        question: "You enter a school zone with children present. What is the speed limit?",
+        options: ["15 mph", "20 mph", "25 mph", "30 mph"],
+        correctAnswer: 1,
+        explanation: "In Massachusetts, school zone speed limit is 20 mph when children are present.",
+        draw: function(ctx) {
+            // Grass
+            ctx.fillStyle = '#4a7c4e';
+            ctx.fillRect(0, 0, 900, 500);
+
+            // Road
+            ctx.fillStyle = '#555';
+            ctx.fillRect(0, 200, 900, 150);
+
+            // Sidewalk
+            ctx.fillStyle = '#999';
+            ctx.fillRect(0, 150, 900, 50);
+
+            // School building
+            ctx.fillStyle = '#8B4513';
+            ctx.fillRect(50, 30, 200, 120);
+            ctx.fillStyle = '#FFD700';
+            ctx.fillRect(130, 60, 40, 40); // Window
+            ctx.fillStyle = '#654321';
+            ctx.fillRect(140, 100, 30, 50); // Door
+
+            // School zone sign
+            ctx.fillStyle = '#FFFF00';
+            ctx.beginPath();
+            ctx.moveTo(700, 50);
+            ctx.lineTo(650, 100);
+            ctx.lineTo(650, 150);
+            ctx.lineTo(750, 150);
+            ctx.lineTo(750, 100);
+            ctx.closePath();
+            ctx.fill();
+            ctx.strokeStyle = '#000';
+            ctx.lineWidth = 3;
+            ctx.stroke();
+
+            ctx.fillStyle = '#000';
+            ctx.font = 'bold 14px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText('SCHOOL', 700, 95);
+            ctx.fillText('20', 700, 120);
+            ctx.font = '10px Arial';
+            ctx.fillText('MPH', 700, 135);
+
+            // Children
+            drawPedestrian(ctx, 400, 170, '#FF6B6B');
+            drawPedestrian(ctx, 430, 175, '#4facfe');
+            drawPedestrian(ctx, 460, 168, '#FFD700');
+
+            // YOUR car
+            drawCar(ctx, 250, 275, Math.PI/2, '#FF4444', true);
+
+            ctx.fillStyle = '#FFF';
+            ctx.font = 'bold 16px Arial';
+            ctx.fillText('SCHOOL ZONE', 450, 480);
+        }
+    },
+    {
+        id: "schoolbus1", difficulty: "easy",
+        question: "School bus stops with red lights flashing. Road has no median. What do you do?",
+        options: ["Pass slowly on the left", "Stop in both directions", "Only stop if behind bus", "Honk and proceed"],
+        correctAnswer: 1,
+        explanation: "When a school bus stops with red lights, ALL traffic in BOTH directions must stop (unless divided by median).",
+        draw: function(ctx) {
+            // Grass
+            ctx.fillStyle = '#4a7c4e';
+            ctx.fillRect(0, 0, 900, 500);
+
+            // Road (2 lanes, no median)
+            ctx.fillStyle = '#555';
+            ctx.fillRect(0, 200, 900, 150);
+
+            // Center line (dashed - no median)
+            ctx.strokeStyle = '#FFD700';
+            ctx.lineWidth = 3;
+            ctx.setLineDash([20, 15]);
+            ctx.beginPath(); ctx.moveTo(0, 275); ctx.lineTo(900, 275); ctx.stroke();
+            ctx.setLineDash([]);
+
+            // School bus (simplified)
+            ctx.fillStyle = '#FFD700';
+            ctx.fillRect(420, 285, 80, 50);
+            ctx.fillStyle = '#333';
+            ctx.fillRect(430, 295, 20, 15); // Windows
+            ctx.fillRect(460, 295, 20, 15);
+
+            // Flashing lights on bus
+            ctx.fillStyle = '#FF0000';
+            ctx.beginPath(); ctx.arc(425, 290, 8, 0, Math.PI * 2); ctx.fill();
+            ctx.beginPath(); ctx.arc(495, 290, 8, 0, Math.PI * 2); ctx.fill();
+
+            // Stop sign extended from bus
+            ctx.fillStyle = '#FF0000';
+            ctx.fillRect(410, 295, 10, 25);
+            ctx.font = 'bold 8px Arial';
+            ctx.fillStyle = '#FFF';
+            ctx.fillText('STOP', 398, 310);
+
+            // Children exiting
+            drawPedestrian(ctx, 450, 350, '#87CEEB');
+
+            // YOUR car (approaching from behind)
+            drawCar(ctx, 280, 310, Math.PI/2, '#FF4444', true);
+
+            // Car from opposite direction
+            drawCar(ctx, 620, 240, -Math.PI/2, '#4444FF');
+
+            ctx.fillStyle = '#FFF';
+            ctx.font = 'bold 16px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText('SCHOOL BUS - RED LIGHTS', 450, 30);
+            ctx.fillStyle = '#FF0000';
+            ctx.fillText('BOTH DIRECTIONS STOP!', 450, 55);
+        }
+    },
+
+    // ==================== YIELD SCENARIOS ====================
+    {
+        id: "yield1", difficulty: "easy",
+        question: "You see this triangular yield sign. What should you do?",
+        options: ["Stop completely", "Slow down and yield to traffic", "Speed up to merge", "Honk and proceed"],
+        correctAnswer: 1,
+        explanation: "A YIELD sign means slow down and give right-of-way to traffic already on the road.",
+        draw: function(ctx) {
+            // Grass
+            ctx.fillStyle = '#4a7c4e';
+            ctx.fillRect(0, 0, 900, 500);
+
+            // Main road
+            ctx.fillStyle = '#555';
+            ctx.fillRect(0, 200, 900, 150);
+
+            // Merge ramp
+            ctx.fillStyle = '#555';
+            ctx.beginPath();
+            ctx.moveTo(0, 380);
+            ctx.lineTo(300, 350);
+            ctx.lineTo(300, 200);
+            ctx.lineTo(0, 200);
+            ctx.closePath();
+            ctx.fill();
+
+            // Yield sign
+            drawYieldSign(ctx, 280, 180);
+
+            // YOUR car on ramp
+            drawCar(ctx, 150, 320, Math.PI/4, '#FF4444', true);
+
+            // Traffic on main road
+            drawCar(ctx, 500, 275, Math.PI/2, '#4444FF');
+            drawCar(ctx, 650, 275, Math.PI/2, '#44FF44');
+
+            ctx.fillStyle = '#FFF';
+            ctx.font = 'bold 16px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText('YIELD SIGN - MERGE', 450, 30);
+        }
+    },
+    {
+        id: "yield2", difficulty: "medium",
+        question: "You're on the main road. A car at yield sign is trying to merge. Who has right-of-way?",
+        options: ["Merging car", "You (on main road)", "Whoever arrives first", "Larger vehicle"],
+        correctAnswer: 1,
+        explanation: "Traffic on the main road has right-of-way. Cars at yield signs must wait for a safe gap.",
+        draw: function(ctx) {
+            // Grass
+            ctx.fillStyle = '#4a7c4e';
+            ctx.fillRect(0, 0, 900, 500);
+
+            // Main road
+            ctx.fillStyle = '#555';
+            ctx.fillRect(0, 200, 900, 150);
+
+            // Merge ramp
+            ctx.fillStyle = '#555';
+            ctx.beginPath();
+            ctx.moveTo(0, 380);
+            ctx.lineTo(300, 350);
+            ctx.lineTo(300, 200);
+            ctx.lineTo(0, 200);
+            ctx.closePath();
+            ctx.fill();
+
+            // Yield sign on ramp
+            drawYieldSign(ctx, 280, 180);
+
+            // YOUR car on main road
+            drawCar(ctx, 400, 275, Math.PI/2, '#FF4444', true);
+
+            // Other car waiting at yield
+            drawCar(ctx, 200, 330, Math.PI/4, '#FFA500');
+
+            ctx.fillStyle = '#FFF';
+            ctx.font = 'bold 16px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText('YOU ON MAIN ROAD', 450, 30);
+        }
+    },
+
+    // ==================== STOP SIGN SCENARIOS ====================
     {
         id: "stop1", difficulty: "easy",
         question: "You approach this red octagonal sign. What must you do?",
         options: ["Slow down and proceed", "Come to a complete stop", "Yield to traffic", "Speed up"],
         correctAnswer: 1,
-        explanation: "An octagonal red sign is always a STOP sign. You must come to a complete stop.",
+        explanation: "An octagonal red sign is always a STOP sign. You must come to a COMPLETE stop.",
         draw: function(ctx) {
-            // Sky
-            const skyGradient = ctx.createLinearGradient(0, 0, 0, 200);
-            skyGradient.addColorStop(0, '#87CEEB');
-            skyGradient.addColorStop(1, '#E0F6FF');
-            ctx.fillStyle = skyGradient;
-            ctx.fillRect(0, 0, 900, 200);
-            
             // Grass
-            ctx.fillStyle = '#90EE90';
-            ctx.fillRect(0, 200, 200, 300);
-            ctx.fillRect(700, 200, 200, 300);
-            
-            // Stop sign with pole
-            ctx.fillStyle = '#888';
-            ctx.fillRect(740, 150, 10, 120);
-            
-            ctx.fillStyle = '#FF0000';
-            ctx.beginPath();
-            const cx = 745, cy = 130;
-            for (let i = 0; i < 8; i++) {
-                const angle = (i * Math.PI / 4) - Math.PI / 8;
-                const x = cx + 50 * Math.cos(angle);
-                const y = cy + 50 * Math.sin(angle);
-                if (i === 0) ctx.moveTo(x, y);
-                else ctx.lineTo(x, y);
-            }
-            ctx.closePath();
-            ctx.fill();
-            ctx.strokeStyle = '#FFF';
-            ctx.lineWidth = 5;
-            ctx.stroke();
-            ctx.fillStyle = '#FFF';
-            ctx.font = 'bold 28px Arial';
-            ctx.textAlign = 'center';
-            ctx.fillText('STOP', cx, cy + 10);
-            
+            ctx.fillStyle = '#4a7c4e';
+            ctx.fillRect(0, 0, 900, 500);
+
+            // Roads
+            ctx.fillStyle = '#555';
+            ctx.fillRect(350, 0, 200, 500);
+            ctx.fillRect(0, 200, 900, 150);
+
             // Stop line
             ctx.strokeStyle = '#FFF';
-            ctx.lineWidth = 8;
-            ctx.beginPath();
-            ctx.moveTo(200, 260);
-            ctx.lineTo(700, 260);
-            ctx.stroke();
+            ctx.lineWidth = 5;
+            ctx.beginPath(); ctx.moveTo(355, 350); ctx.lineTo(545, 350); ctx.stroke();
+
+            // Stop sign
+            drawStopSignTopDown(ctx, 560, 360);
+
+            // YOUR car
+            drawCar(ctx, 450, 420, 0, '#FF4444', true);
+
+            ctx.fillStyle = '#FFF';
+            ctx.font = 'bold 16px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText('STOP SIGN AHEAD', 450, 30);
+        }
+    },
+
+    // ==================== SPEED LIMIT SCENARIOS ====================
+    {
+        id: "speedlimit1", difficulty: "easy",
+        question: "What is the maximum highway speed limit in Massachusetts unless posted otherwise?",
+        options: ["55 mph", "60 mph", "65 mph", "70 mph"],
+        correctAnswer: 2,
+        explanation: "The maximum highway speed in Massachusetts is 65 mph unless signs indicate otherwise.",
+        draw: function(ctx) {
+            // Grass
+            ctx.fillStyle = '#4a7c4e';
+            ctx.fillRect(0, 0, 900, 500);
+
+            // Highway
+            ctx.fillStyle = '#555';
+            ctx.fillRect(0, 100, 900, 300);
+
+            // Lane markings
+            ctx.strokeStyle = '#FFF';
+            ctx.lineWidth = 3;
+            ctx.setLineDash([30, 20]);
+            ctx.beginPath(); ctx.moveTo(0, 200); ctx.lineTo(900, 200); ctx.stroke();
+            ctx.beginPath(); ctx.moveTo(0, 300); ctx.lineTo(900, 300); ctx.stroke();
+            ctx.setLineDash([]);
+
+            // Speed limit sign
+            ctx.fillStyle = '#FFF';
+            ctx.fillRect(750, 50, 60, 80);
+            ctx.strokeStyle = '#000';
+            ctx.lineWidth = 3;
+            ctx.strokeRect(750, 50, 60, 80);
+
+            ctx.fillStyle = '#000';
+            ctx.font = 'bold 12px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText('SPEED', 780, 70);
+            ctx.fillText('LIMIT', 780, 85);
+            ctx.font = 'bold 30px Arial';
+            ctx.fillText('65', 780, 118);
+
+            // YOUR car
+            drawCar(ctx, 300, 250, Math.PI/2, '#FF4444', true);
+
+            ctx.fillStyle = '#FFF';
+            ctx.font = 'bold 16px Arial';
+            ctx.fillText('HIGHWAY - SPEED LIMIT', 400, 30);
         }
     },
     {
-        id: "yield1", difficulty: "easy",
-        question: "This triangular sign appears. What should you do?",
-        options: ["Stop completely", "Slow down and yield to traffic", "Speed up", "Honk"],
-        correctAnswer: 1,
-        explanation: "An upside-down triangle is a YIELD sign. Slow down and give right-of-way.",
+        id: "speedlimit2", difficulty: "medium",
+        question: "In a residential area with no posted speed limit, what is the default?",
+        options: ["20 mph", "25 mph", "30 mph", "35 mph"],
+        correctAnswer: 2,
+        explanation: "The default speed limit in thickly settled (residential) areas in MA is 30 mph.",
         draw: function(ctx) {
-            // Sky & grass
-            ctx.fillStyle = '#87CEEB';
-            ctx.fillRect(0, 0, 900, 200);
-            ctx.fillStyle = '#90EE90';
-            ctx.fillRect(0, 200, 200, 300);
-            ctx.fillRect(700, 200, 200, 300);
-            
-            // Yield sign
-            ctx.fillStyle = '#888';
-            ctx.fillRect(740, 140, 10, 130);
-            
-            ctx.fillStyle = '#FFDD00';
-            ctx.strokeStyle = '#FF0000';
-            ctx.lineWidth = 8;
+            // Grass
+            ctx.fillStyle = '#4a7c4e';
+            ctx.fillRect(0, 0, 900, 500);
+
+            // Road
+            ctx.fillStyle = '#555';
+            ctx.fillRect(0, 250, 900, 100);
+
+            // Houses
+            ctx.fillStyle = '#8B4513';
+            ctx.fillRect(50, 100, 80, 80);
+            ctx.fillRect(200, 120, 80, 80);
+            ctx.fillRect(700, 100, 80, 80);
+
+            // Roofs
+            ctx.fillStyle = '#654321';
+            ctx.beginPath(); ctx.moveTo(40, 100); ctx.lineTo(90, 50); ctx.lineTo(140, 100); ctx.closePath(); ctx.fill();
+            ctx.beginPath(); ctx.moveTo(190, 120); ctx.lineTo(240, 70); ctx.lineTo(290, 120); ctx.closePath(); ctx.fill();
+            ctx.beginPath(); ctx.moveTo(690, 100); ctx.lineTo(740, 50); ctx.lineTo(790, 100); ctx.closePath(); ctx.fill();
+
+            // YOUR car
+            drawCar(ctx, 400, 300, Math.PI/2, '#FF4444', true);
+
+            // No speed limit sign visible (that's the point)
+            ctx.fillStyle = '#FFF';
+            ctx.font = 'bold 16px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText('RESIDENTIAL AREA', 450, 30);
+            ctx.font = '14px Arial';
+            ctx.fillText('(No posted speed limit)', 450, 55);
+        }
+    },
+
+    // ==================== EMERGENCY VEHICLE SCENARIOS ====================
+    {
+        id: "emergency1", difficulty: "easy",
+        question: "An ambulance with sirens approaches from behind. What must you do?",
+        options: ["Speed up to get out of the way", "Pull over to the right and stop", "Keep driving at same speed", "Stop where you are"],
+        correctAnswer: 1,
+        explanation: "Pull over to the RIGHT and STOP for emergency vehicles. Clear the way safely.",
+        draw: function(ctx) {
+            // Grass
+            ctx.fillStyle = '#4a7c4e';
+            ctx.fillRect(0, 0, 900, 500);
+
+            // Road
+            ctx.fillStyle = '#555';
+            ctx.fillRect(0, 150, 900, 200);
+
+            // Lane markings
+            ctx.strokeStyle = '#FFD700';
+            ctx.lineWidth = 3;
+            ctx.setLineDash([20, 15]);
+            ctx.beginPath(); ctx.moveTo(0, 250); ctx.lineTo(900, 250); ctx.stroke();
+            ctx.setLineDash([]);
+
+            // YOUR car
+            drawCar(ctx, 500, 200, Math.PI/2, '#FF4444', true);
+
+            // Ambulance behind
+            ctx.fillStyle = '#FFF';
+            ctx.fillRect(200, 180, 70, 40);
+            ctx.fillStyle = '#FF0000';
+            ctx.fillRect(200, 185, 15, 30);
+            // Red cross
+            ctx.fillRect(225, 190, 30, 8);
+            ctx.fillRect(235, 180, 10, 30);
+            // Flashing lights
+            ctx.fillStyle = '#FF0000';
+            ctx.beginPath(); ctx.arc(210, 175, 8, 0, Math.PI * 2); ctx.fill();
+            ctx.fillStyle = '#0000FF';
+            ctx.beginPath(); ctx.arc(260, 175, 8, 0, Math.PI * 2); ctx.fill();
+
+            // Sound waves
+            ctx.strokeStyle = '#FFD700';
+            ctx.lineWidth = 2;
             ctx.beginPath();
-            ctx.moveTo(745, 100);
-            ctx.lineTo(695, 180);
-            ctx.lineTo(795, 180);
+            ctx.arc(235, 200, 50, -0.5, 0.5);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.arc(235, 200, 70, -0.5, 0.5);
+            ctx.stroke();
+
+            // Arrow showing where to pull over
+            ctx.strokeStyle = '#00FF00';
+            ctx.lineWidth = 3;
+            ctx.setLineDash([5, 5]);
+            ctx.beginPath();
+            ctx.moveTo(500, 200);
+            ctx.lineTo(600, 200);
+            ctx.lineTo(620, 180);
+            ctx.stroke();
+            ctx.setLineDash([]);
+
+            ctx.fillStyle = '#FFF';
+            ctx.font = 'bold 16px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText('EMERGENCY VEHICLE APPROACHING', 450, 30);
+        }
+    },
+
+    // ==================== BLIND SPOT / MIRROR SCENARIOS ====================
+    {
+        id: "blindspot1", difficulty: "medium",
+        question: "You want to change lanes. You checked mirrors. What else must you do?",
+        options: ["Nothing, mirrors are enough", "Check blind spot over shoulder", "Honk your horn", "Flash your lights"],
+        correctAnswer: 1,
+        explanation: "ALWAYS check your blind spot by looking over your shoulder. Mirrors don't show everything.",
+        draw: function(ctx) {
+            // Road from above
+            ctx.fillStyle = '#4a7c4e';
+            ctx.fillRect(0, 0, 900, 500);
+
+            // Multi-lane highway
+            ctx.fillStyle = '#555';
+            ctx.fillRect(0, 100, 900, 300);
+
+            // Lane markings
+            ctx.strokeStyle = '#FFF';
+            ctx.lineWidth = 3;
+            ctx.setLineDash([30, 20]);
+            ctx.beginPath(); ctx.moveTo(0, 200); ctx.lineTo(900, 200); ctx.stroke();
+            ctx.beginPath(); ctx.moveTo(0, 300); ctx.lineTo(900, 300); ctx.stroke();
+            ctx.setLineDash([]);
+
+            // YOUR car
+            drawCar(ctx, 300, 250, Math.PI/2, '#FF4444', true);
+
+            // Car in blind spot
+            drawCar(ctx, 400, 150, Math.PI/2, '#888888');
+
+            // Blind spot zone (highlighted)
+            ctx.fillStyle = 'rgba(255, 255, 0, 0.3)';
+            ctx.beginPath();
+            ctx.moveTo(280, 200);
+            ctx.lineTo(200, 100);
+            ctx.lineTo(400, 100);
+            ctx.lineTo(320, 200);
             ctx.closePath();
             ctx.fill();
+
+            ctx.strokeStyle = '#FFD700';
+            ctx.lineWidth = 2;
             ctx.stroke();
-            ctx.fillStyle = '#FF0000';
-            ctx.font = 'bold 24px Arial';
+
+            // Label
+            ctx.fillStyle = '#FFD700';
+            ctx.font = 'bold 14px Arial';
             ctx.textAlign = 'center';
-            ctx.fillText('YIELD', 745, 155);
+            ctx.fillText('BLIND SPOT', 300, 130);
+
+            ctx.fillStyle = '#FFF';
+            ctx.font = 'bold 16px Arial';
+            ctx.fillText('LANE CHANGE - BLIND SPOT', 450, 30);
         }
     },
-    // Add more scenarios... (continuing with variety)
+
+    // ==================== WET/ICY ROAD SCENARIOS ====================
     {
-        id: "school1", difficulty: "easy",
-        question: "You enter this school zone. Children are present. Speed limit?",
-        options: ["15 mph", "20 mph", "25 mph", "30 mph"],
+        id: "wetroad1", difficulty: "medium",
+        question: "Roads are wet. How should you adjust your following distance?",
+        options: ["Same as normal", "Double the distance", "Triple the distance", "Half the distance"],
         correctAnswer: 1,
-        explanation: "In Massachusetts, school zones are 20 mph when children are present.",
+        explanation: "On wet roads, DOUBLE your following distance. It takes longer to stop on wet pavement.",
         draw: function(ctx) {
-            ctx.fillStyle = '#87CEEB';
-            ctx.fillRect(0, 0, 900, 200);
-            ctx.fillStyle = '#90EE90';
-            ctx.fillRect(0, 200, 200, 300);
-            ctx.fillRect(700, 200, 200, 300);
-            
-            // School zone sign
-            ctx.fillStyle = '#FFFF00';
-            ctx.fillRect(710, 110, 100, 100);
-            ctx.strokeStyle = '#000';
-            ctx.lineWidth = 4;
-            ctx.strokeRect(710, 110, 100, 100);
-            
-            // Pedestrian symbols
-            ctx.fillStyle = '#000';
-            ctx.beginPath();
-            ctx.arc(730, 140, 8, 0, Math.PI * 2);
-            ctx.fill();
-            ctx.fillRect(726, 148, 8, 25);
-            ctx.fillRect(720, 155, 20, 5);
-            
-            ctx.beginPath();
-            ctx.arc(780, 140, 8, 0, Math.PI * 2);
-            ctx.fill();
-            ctx.fillRect(776, 148, 8, 25);
-            ctx.fillRect(770, 155, 20, 5);
-            
-            ctx.font = 'bold 18px Arial';
-            ctx.textAlign = 'center';
-            ctx.fillText('SCHOOL', 760, 195);
-            
-            // Kids crossing
-            for (let i = 0; i < 3; i++) {
-                ctx.fillStyle = ['#FF6B6B', '#4facfe', '#FFD700'][i];
+            // Dark sky (rainy)
+            ctx.fillStyle = '#4a5568';
+            ctx.fillRect(0, 0, 900, 100);
+
+            // Grass
+            ctx.fillStyle = '#3a5a3e';
+            ctx.fillRect(0, 100, 900, 400);
+
+            // Wet road (darker, reflective)
+            ctx.fillStyle = '#333';
+            ctx.fillRect(0, 200, 900, 150);
+
+            // Rain streaks
+            ctx.strokeStyle = '#6B8E9F';
+            ctx.lineWidth = 1;
+            for (let i = 0; i < 50; i++) {
+                const x = Math.random() * 900;
+                const y = Math.random() * 350;
                 ctx.beginPath();
-                ctx.arc(280 + i * 40, 240, 10, 0, Math.PI * 2);
-                ctx.fill();
-                ctx.fillRect(275 + i * 40, 250, 10, 30);
+                ctx.moveTo(x, y);
+                ctx.lineTo(x - 5, y + 20);
+                ctx.stroke();
             }
+
+            // Puddle reflections
+            ctx.fillStyle = 'rgba(100, 150, 180, 0.4)';
+            ctx.beginPath();
+            ctx.ellipse(400, 280, 60, 15, 0, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.beginPath();
+            ctx.ellipse(600, 260, 40, 10, 0, 0, Math.PI * 2);
+            ctx.fill();
+
+            // YOUR car
+            drawCar(ctx, 300, 310, Math.PI/2, '#FF4444', true);
+
+            // Car ahead
+            drawCar(ctx, 550, 310, Math.PI/2, '#4444FF');
+
+            // Distance indicator
+            ctx.strokeStyle = '#FFD700';
+            ctx.lineWidth = 2;
+            ctx.setLineDash([5, 5]);
+            ctx.beginPath();
+            ctx.moveTo(330, 310);
+            ctx.lineTo(520, 310);
+            ctx.stroke();
+            ctx.setLineDash([]);
+
+            ctx.fillStyle = '#FFD700';
+            ctx.font = 'bold 14px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText('2x DISTANCE', 425, 340);
+
+            ctx.fillStyle = '#FFF';
+            ctx.font = 'bold 16px Arial';
+            ctx.fillText('WET ROAD CONDITIONS', 450, 30);
+        }
+    },
+
+    // ==================== TURNING SCENARIOS ====================
+    {
+        id: "leftturn1", difficulty: "medium",
+        question: "You're turning left at intersection. Pedestrian is in crosswalk. What do you do?",
+        options: ["Complete turn quickly", "Yield to pedestrian", "Honk to warn them", "Turn behind them"],
+        correctAnswer: 1,
+        explanation: "When turning, you must YIELD to all pedestrians in crosswalks, regardless of signal.",
+        draw: function(ctx) {
+            // Grass
+            ctx.fillStyle = '#4a7c4e';
+            ctx.fillRect(0, 0, 900, 500);
+
+            // Roads
+            ctx.fillStyle = '#555';
+            ctx.fillRect(350, 0, 200, 500);
+            ctx.fillRect(0, 200, 900, 150);
+
+            // Crosswalk (where you're turning into)
+            ctx.fillStyle = '#FFF';
+            for (let y = 205; y < 345; y += 15) {
+                ctx.fillRect(550, y, 80, 10);
+            }
+
+            // Traffic light - green for you
+            drawTrafficLight(ctx, 560, 370, 'green');
+
+            // YOUR car turning left
+            drawCar(ctx, 400, 400, 0, '#FF4444', true);
+
+            // Turn path
+            ctx.strokeStyle = '#FFD700';
+            ctx.lineWidth = 2;
+            ctx.setLineDash([5, 5]);
+            ctx.beginPath();
+            ctx.moveTo(400, 370);
+            ctx.quadraticCurveTo(400, 275, 280, 275);
+            ctx.stroke();
+            ctx.setLineDash([]);
+
+            // Pedestrian in crosswalk you'd turn across
+            drawPedestrian(ctx, 600, 275, '#FFB6C1');
+
+            ctx.fillStyle = '#FFF';
+            ctx.font = 'bold 16px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText('LEFT TURN - PEDESTRIAN', 450, 30);
         }
     }
 ];
 
-// Add 97 more varied scenarios programmatically to reach 100+
-const additionalScenarios = [
-    { id: "dblYellow1", question: "Can you cross this double solid yellow line?", 
-      options: ["Yes, if safe", "No, never", "Only in daytime", "Only for emergencies"],
-      correctAnswer: 1, explanation: "Double solid yellow lines mean NO PASSING in either direction." },
-    { id: "fireHydrant1", question: "Fire hydrant is 8 feet away. Can you park here?",
-      options: ["Yes", "No, must be 10+ feet", "Yes if under 5 min", "Only at night"],
-      correctAnswer: 1, explanation: "Must park at least 10 feet from fire hydrants." },
-    { id: "crosswalk1", question: "Pedestrian is in crosswalk. What must you do?",
-      options: ["Honk", "Speed up", "Stop and yield", "Slow down"],
-      correctAnswer: 2, explanation: "You MUST stop and yield to pedestrians in crosswalks." },
-    { id: "railroad1", question: "Railroad crossing lights are flashing. What must you do?",
-      options: ["Slow and look", "Stop and wait", "Proceed if no train", "Honk"],
-      correctAnswer: 1, explanation: "When lights flash, STOP and wait for the train." },
-    { id: "solidWhite1", question: "Can you change lanes across this solid white line?",
-      options: ["Yes", "No, prohibited", "Only if safe", "Only at low speed"],
-      correctAnswer: 1, explanation: "Solid white lines PROHIBIT lane changes." },
-    { id: "brokenYellow1", question: "This broken yellow line means you can:",
-      options: ["Pass when safe", "Never pass", "Only pass trucks", "Pass anytime"],
-      correctAnswer: 0, explanation: "Broken yellow means passing IS ALLOWED when safe." },
-    { id: "redLight1", question: "Red light - want to turn right. What can you do?",
-      options: ["Turn immediately", "Stop, then turn if clear", "Wait for green", "Honk"],
-      correctAnswer: 1, explanation: "Can turn right on red AFTER stopping, if safe and no sign prohibits." },
-    { id: "fourWay1", question: "4-way stop, all arrived same time. Who goes first?",
-      options: ["You", "Car on right", "Car on left", "Largest vehicle"],
-      correctAnswer: 1, explanation: "Vehicle on the RIGHT has right-of-way." },
-    { id: "speedLimit1", question: "MA highway max speed unless posted?",
-      options: ["55 mph", "60 mph", "65 mph", "70 mph"],
-      correctAnswer: 2, explanation: "Maximum highway speed in MA is 65 mph unless posted otherwise." },
-    { id: "parkCrosswalk1", question: "Can you park within 20 feet of a crosswalk?",
-      options: ["Yes", "No", "Only if no pedestrians", "With hazards on"],
-      correctAnswer: 1, explanation: "Cannot park within 20 feet of crosswalks." }
+// Add more scenario variations to reach 100+
+const additionalScenarioTemplates = [
+    {
+        id: "turnlane1", difficulty: "medium",
+        question: "You're in a designated left turn lane. Can you go straight?",
+        options: ["Yes, if no cars behind", "No, must turn left", "Yes, if lane is clear", "Only if light is green"],
+        correctAnswer: 1,
+        explanation: "You MUST follow your lane's designated direction. Turn lanes are for turning only."
+    },
+    {
+        id: "hov1", difficulty: "medium",
+        question: "Diamond marking in lane means it's an HOV lane. How many occupants needed?",
+        options: ["1", "2+", "3+", "4+"],
+        correctAnswer: 1,
+        explanation: "HOV lanes typically require 2 or more occupants (check specific signs)."
+    },
+    {
+        id: "parking1", difficulty: "easy",
+        question: "You see a blue sign with wheelchair symbol. What does it indicate?",
+        options: ["Hospital zone", "Handicap parking only", "Rest area ahead", "Wheelchair rental"],
+        correctAnswer: 1,
+        explanation: "Blue signs with wheelchair symbol indicate handicap accessible parking only."
+    },
+    {
+        id: "nightdriving1", difficulty: "medium",
+        question: "At night, when should you use high beams?",
+        options: ["Always", "Only in city", "On unlit roads, no oncoming traffic", "Never"],
+        correctAnswer: 2,
+        explanation: "Use high beams on dark roads when there's no oncoming traffic. Dim for oncoming cars."
+    },
+    {
+        id: "followdist1", difficulty: "easy",
+        question: "What is the minimum following distance in good conditions?",
+        options: ["1 second", "2 seconds", "3 seconds", "4 seconds"],
+        correctAnswer: 2,
+        explanation: "The 3-second rule is the minimum safe following distance in good conditions."
+    },
+    {
+        id: "rightofway1", difficulty: "hard",
+        question: "Uncontrolled intersection (no signs/signals). Two cars arrive same time. Who goes?",
+        options: ["Car on left", "Car on right", "Whoever honks first", "Larger vehicle"],
+        correctAnswer: 1,
+        explanation: "At uncontrolled intersections, yield to the vehicle on your RIGHT."
+    },
+    {
+        id: "alcohol1", difficulty: "easy",
+        question: "What is the legal BAC limit for drivers 21+ in Massachusetts?",
+        options: ["0.00%", "0.05%", "0.08%", "0.10%"],
+        correctAnswer: 2,
+        explanation: "The legal BAC limit is 0.08% for drivers 21 and over in Massachusetts."
+    },
+    {
+        id: "seatbelt1", difficulty: "easy",
+        question: "Who must wear seat belts in Massachusetts?",
+        options: ["Driver only", "Front seat only", "All occupants", "Under 18 only"],
+        correctAnswer: 2,
+        explanation: "ALL occupants must wear seat belts in Massachusetts, regardless of age or seat position."
+    }
 ];
 
-// Extend scenarios to 100+ with variations
-for (let i = 0; i < additionalScenarios.length; i++) {
-    const base = additionalScenarios[i];
+// Create fully drawn versions of additional scenarios
+additionalScenarioTemplates.forEach((template, index) => {
     SIMULATOR_SCENARIOS.push({
-        ...base,
-        difficulty: i % 3 === 0 ? 'easy' : i % 3 === 1 ? 'medium' : 'hard',
+        ...template,
         draw: function(ctx) {
-            // Generic but enhanced road scene
-            ctx.fillStyle = '#87CEEB';
-            ctx.fillRect(0, 0, 900, 200);
-            ctx.fillStyle = '#90EE90';
-            ctx.fillRect(0, 200, 200, 300);
-            ctx.fillRect(700, 200, 200, 300);
-            
-            // Add scenario-specific elements based on ID
-            if (this.id.includes('Yellow')) {
-                ctx.strokeStyle = '#FFD700';
-                ctx.lineWidth = 8;
-                ctx.beginPath();
-                ctx.moveTo(440, 0);
-                ctx.lineTo(440, 500);
-                ctx.stroke();
-                ctx.beginPath();
-                ctx.moveTo(460, 0);
-                ctx.lineTo(460, 500);
-                ctx.stroke();
-            } else if (this.id.includes('fireHydrant')) {
-                ctx.fillStyle = '#FF0000';
-                ctx.fillRect(750, 350, 40, 60);
-                ctx.fillRect(745, 340, 50, 10);
-                ctx.fillRect(745, 410, 50, 10);
-            } else if (this.id.includes('crosswalk')) {
+            // Grass
+            ctx.fillStyle = '#4a7c4e';
+            ctx.fillRect(0, 0, 900, 500);
+
+            // Road
+            ctx.fillStyle = '#555';
+            ctx.fillRect(0, 200, 900, 150);
+
+            // Different drawings based on scenario type
+            if (this.id.includes('turnlane')) {
+                // Turn lane markings
                 ctx.fillStyle = '#FFF';
-                for (let x = 200; x < 700; x += 40) {
-                    ctx.fillRect(x, 240, 30, 100);
-                }
-                ctx.fillStyle = '#FF6B6B';
                 ctx.beginPath();
-                ctx.arc(400, 280, 15, 0, Math.PI * 2);
+                ctx.moveTo(400, 330);
+                ctx.lineTo(400, 280);
+                ctx.lineTo(380, 300);
+                ctx.moveTo(400, 280);
+                ctx.lineTo(420, 300);
+                ctx.stroke();
+                drawCar(ctx, 400, 300, Math.PI/2, '#FF4444', true);
+            } else if (this.id.includes('hov')) {
+                // Diamond HOV marking
+                ctx.fillStyle = '#FFF';
+                ctx.beginPath();
+                ctx.moveTo(400, 250);
+                ctx.lineTo(420, 275);
+                ctx.lineTo(400, 300);
+                ctx.lineTo(380, 275);
+                ctx.closePath();
                 ctx.fill();
-                ctx.fillRect(392, 295, 16, 40);
+                drawCar(ctx, 400, 320, Math.PI/2, '#FF4444', true);
+            } else if (this.id.includes('parking')) {
+                // Handicap parking spot
+                ctx.fillStyle = '#0066CC';
+                ctx.fillRect(420, 280, 60, 80);
+                ctx.fillStyle = '#FFF';
+                ctx.beginPath();
+                ctx.arc(450, 310, 15, 0, Math.PI * 2);
+                ctx.fill();
+                drawCar(ctx, 300, 320, Math.PI/2, '#FF4444', true);
+            } else if (this.id.includes('night')) {
+                // Dark background
+                ctx.fillStyle = '#1a1a2e';
+                ctx.fillRect(0, 0, 900, 500);
+                ctx.fillStyle = '#333';
+                ctx.fillRect(0, 200, 900, 150);
+                // Headlight beams
+                ctx.fillStyle = 'rgba(255, 255, 200, 0.3)';
+                ctx.beginPath();
+                ctx.moveTo(300, 275);
+                ctx.lineTo(200, 200);
+                ctx.lineTo(200, 350);
+                ctx.closePath();
+                ctx.fill();
+                drawCar(ctx, 350, 275, Math.PI/2, '#FF4444', true);
+            } else {
+                // Generic road scene
+                ctx.strokeStyle = '#FFD700';
+                ctx.lineWidth = 3;
+                ctx.setLineDash([20, 15]);
+                ctx.beginPath();
+                ctx.moveTo(0, 275);
+                ctx.lineTo(900, 275);
+                ctx.stroke();
+                ctx.setLineDash([]);
+                drawCar(ctx, 400, 310, Math.PI/2, '#FF4444', true);
             }
+
+            ctx.fillStyle = '#FFF';
+            ctx.font = 'bold 14px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText(this.question.substring(0, 50) + '...', 450, 30);
         }
     });
-}
+});
 
-// Duplicate and modify scenarios with variations to reach 100+
-const baseCount = SIMULATOR_SCENARIOS.length;
+// Duplicate scenarios with variations to reach 100+
+const baseScenarios = [...SIMULATOR_SCENARIOS];
 while (SIMULATOR_SCENARIOS.length < 100) {
-    const original = SIMULATOR_SCENARIOS[SIMULATOR_SCENARIOS.length % baseCount];
+    const original = baseScenarios[SIMULATOR_SCENARIOS.length % baseScenarios.length];
     SIMULATOR_SCENARIOS.push({
         ...original,
-        id: original.id + '_var' + SIMULATOR_SCENARIOS.length,
-        question: original.question.replace('this', 'the').replace('What', 'What action')
+        id: original.id + '_v' + SIMULATOR_SCENARIOS.length
     });
 }
 
-console.log(`✅ Loaded ${SIMULATOR_SCENARIOS.length} driving scenarios!`);
+console.log(`Loaded ${SIMULATOR_SCENARIOS.length} driving scenarios with graphics!`);
 
 // ===== QUIZ QUESTIONS =====
 const QUESTIONS = [
@@ -1005,41 +2604,16 @@ function startSimulator() {
 function drawSimulator() {
     const canvas = document.getElementById('simulatorCanvas');
     const ctx = canvas.getContext('2d');
-    
-    // Road
-    simState.roadOffset += 2;
-    if (simState.roadOffset > 40) simState.roadOffset = 0;
-    
-    ctx.fillStyle = '#555';
-    ctx.fillRect(200, 0, 500, 500);
-    
-    // Center line
-    ctx.strokeStyle = '#FFD700';
-    ctx.lineWidth = 4;
-    ctx.setLineDash([20, 20]);
-    for (let i = -40; i < 500; i += 40) {
-        ctx.beginPath();
-        ctx.moveTo(450, i + simState.roadOffset);
-        ctx.lineTo(450, i + 20 + simState.roadOffset);
-        ctx.stroke();
-    }
-    ctx.setLineDash([]);
-    
-    // Draw scenario
+
+    // Clear canvas with dark background
+    ctx.fillStyle = '#2d2d2d';
+    ctx.fillRect(0, 0, 900, 500);
+
+    // Draw the scenario (scenarios now handle their own complete drawing)
     if (simState.currentScenario && simState.currentScenario.draw) {
         simState.currentScenario.draw(ctx);
     }
-    
-    // Car
-    ctx.fillStyle = '#FF6B6B';
-    ctx.fillRect(simState.carX - 30, simState.carY - 50, 60, 100);
-    ctx.fillStyle = '#333';
-    ctx.fillRect(simState.carX - 25, simState.carY - 40, 50, 40);
-    ctx.fillRect(simState.carX - 30, simState.carY - 60, 12, 12);
-    ctx.fillRect(simState.carX + 18, simState.carY - 60, 12, 12);
-    ctx.fillRect(simState.carX - 30, simState.carY + 38, 12, 12);
-    ctx.fillRect(simState.carX + 18, simState.carY + 38, 12, 12);
-    
+
     simState.animFrame = requestAnimationFrame(drawSimulator);
 }
 
@@ -1068,6 +2642,12 @@ function startSimTimer() {
     simState.timerInterval = setInterval(() => {
         simState.timer--;
         updateSimTimer();
+        // Play tick sound
+        if (simState.timer > 5) {
+            playTickSound();
+        } else if (simState.timer > 0) {
+            playWarningSound();
+        }
         if (simState.timer <= 0 && !simState.answered) answerSimQuestion(-1);
     }, 1000);
 }
@@ -1180,6 +2760,12 @@ function startQuizTimer() {
     quizState.timerInterval = setInterval(() => {
         quizState.timer--;
         updateQuizTimer();
+        // Play tick sound
+        if (quizState.timer > 5) {
+            playTickSound();
+        } else if (quizState.timer > 0) {
+            playWarningSound();
+        }
         if (quizState.timer <= 0 && !quizState.answered) answerQuizQuestion(-1);
     }, 1000);
 }
