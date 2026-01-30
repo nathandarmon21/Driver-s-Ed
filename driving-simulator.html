@@ -3,229 +3,107 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MA Driving Simulator - Open World</title>
+    <title>Driver's Ed - Top-Down Driving Simulator</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
-            background: #1a1a2e;
-            font-family: 'Segoe UI', Tahoma, sans-serif;
+            background: #111;
             overflow: hidden;
-            color: #fff;
-        }
-        #gameContainer {
-            position: relative;
-            width: 100vw;
-            height: 100vh;
+            font-family: 'Segoe UI', Tahoma, sans-serif;
         }
         #gameCanvas {
             display: block;
         }
 
-        /* HUD */
-        .hud-box {
-            position: absolute;
-            background: rgba(0,0,0,0.8);
-            border: 2px solid #444;
-            border-radius: 10px;
-            padding: 12px 15px;
-            font-size: 0.9rem;
+        /* Minimal HUD - bottom left corner only */
+        #hud {
+            position: fixed;
+            bottom: 15px;
+            left: 15px;
+            display: flex;
+            gap: 15px;
+            z-index: 100;
         }
-
-        #speedBox {
-            top: 20px;
-            right: 20px;
-            text-align: center;
+        .hud-item {
+            background: rgba(0,0,0,0.75);
+            padding: 8px 14px;
+            border-radius: 8px;
+            color: #fff;
+            font-size: 14px;
+            border: 1px solid #333;
         }
-        #speedValue {
-            font-size: 2.5rem;
+        .hud-item .value {
+            font-size: 20px;
             font-weight: bold;
             color: #4ade80;
         }
-        #speedValue.warning { color: #fbbf24; }
-        #speedValue.danger { color: #ef4444; }
-        #limitSign {
-            width: 50px;
-            height: 50px;
-            background: #fff;
-            border: 3px solid #000;
-            border-radius: 50%;
-            color: #000;
-            font-size: 1.3rem;
-            font-weight: bold;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin: 8px auto 0;
-        }
+        .hud-item .value.warning { color: #fbbf24; }
+        .hud-item .value.danger { color: #ef4444; }
 
-        #scoreBox {
-            top: 20px;
-            left: 20px;
-        }
-        #scoreValue {
-            font-size: 1.8rem;
-            color: #ffd700;
-        }
-
-        #controlsBox {
-            bottom: 20px;
-            left: 20px;
-            font-size: 0.8rem;
-            color: #888;
-        }
-        #controlsBox kbd {
-            background: #333;
-            padding: 2px 6px;
-            border-radius: 3px;
-            border: 1px solid #555;
-        }
-
-        /* Feedback message - small, non-blocking */
-        #feedbackBox {
-            bottom: 20px;
-            right: 20px;
-            max-width: 300px;
-            font-size: 0.95rem;
-            transition: opacity 0.3s;
-            opacity: 0;
-        }
-        #feedbackBox.show { opacity: 1; }
-        #feedbackBox.good { border-color: #22c55e; color: #22c55e; }
-        #feedbackBox.bad { border-color: #ef4444; color: #ef4444; }
-
-        /* Turn indicator */
-        #turnIndicator {
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            font-size: 1.2rem;
-            text-align: center;
-            display: none;
-            border-color: #fbbf24;
-        }
-        #turnIndicator.show { display: block; }
-
-        /* Mini-map */
-        #miniMap {
-            top: 150px;
-            right: 20px;
-            padding: 5px;
-        }
-        #miniMapCanvas {
-            border-radius: 5px;
-        }
-
-        /* Menu */
-        #menu {
-            position: absolute;
-            top: 0; left: 0; right: 0; bottom: 0;
-            background: linear-gradient(135deg, #1a1a2e, #16213e);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            z-index: 200;
-        }
-        #menu.hidden { display: none; }
-        #menu h1 {
-            font-size: 2.5rem;
-            margin-bottom: 10px;
-            background: linear-gradient(45deg, #4ade80, #22d3ee);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
-        #menu p {
-            color: #888;
-            margin-bottom: 30px;
-            font-size: 1.1rem;
-        }
-        .menuBtn {
-            padding: 15px 40px;
-            margin: 10px;
-            font-size: 1.1rem;
-            font-weight: bold;
-            border: none;
-            border-radius: 10px;
-            cursor: pointer;
-            color: #fff;
-            background: linear-gradient(135deg, #22c55e, #16a34a);
-            transition: transform 0.2s;
-        }
-        .menuBtn:hover {
-            transform: translateY(-3px);
-        }
-
-        #audioToggle {
+        /* Small feedback notification - top right */
+        #feedback {
             position: fixed;
-            bottom: 80px;
-            right: 20px;
-            background: rgba(0,0,0,0.8);
-            padding: 10px 15px;
-            border-radius: 20px;
-            cursor: pointer;
-            z-index: 10000;
-            color: white;
-            font-size: 0.9rem;
-            border: 2px solid #444;
+            top: 15px;
+            right: 15px;
+            background: rgba(0,0,0,0.85);
+            padding: 10px 16px;
+            border-radius: 8px;
+            color: #fff;
+            font-size: 13px;
+            max-width: 260px;
+            opacity: 0;
+            transition: opacity 0.3s;
+            z-index: 100;
+            border-left: 3px solid #666;
+        }
+        #feedback.show { opacity: 1; }
+        #feedback.good { border-left-color: #4ade80; color: #4ade80; }
+        #feedback.bad { border-left-color: #ef4444; color: #ef4444; }
+
+        /* Controls hint - bottom right */
+        #controls {
+            position: fixed;
+            bottom: 15px;
+            right: 15px;
+            background: rgba(0,0,0,0.6);
+            padding: 8px 12px;
+            border-radius: 6px;
+            color: #777;
+            font-size: 11px;
+            z-index: 100;
+        }
+        #controls kbd {
+            background: #333;
+            padding: 1px 5px;
+            border-radius: 3px;
+            margin: 0 2px;
         }
     </style>
 </head>
 <body>
-<div id="gameContainer">
     <canvas id="gameCanvas"></canvas>
 
-    <div id="speedBox" class="hud-box">
-        <div id="speedValue">0</div>
-        <div>MPH</div>
-        <div id="limitSign">25</div>
-    </div>
-
-    <div id="scoreBox" class="hud-box">
-        <div>SCORE</div>
-        <div id="scoreValue">0</div>
-    </div>
-
-    <div id="miniMap" class="hud-box">
-        <canvas id="miniMapCanvas" width="120" height="120"></canvas>
-    </div>
-
-    <div id="controlsBox" class="hud-box">
-        <div><kbd>W</kbd>/<kbd>↑</kbd> Accelerate</div>
-        <div><kbd>S</kbd>/<kbd>↓</kbd> Brake</div>
-        <div><kbd>←</kbd>/<kbd>→</kbd> Turn at intersection</div>
-        <div><kbd>SPACE</kbd> Emergency Stop</div>
-    </div>
-
-    <div id="feedbackBox" class="hud-box"></div>
-
-    <div id="turnIndicator" class="hud-box">
-        <div>INTERSECTION</div>
-        <div style="font-size: 1.5rem; margin: 10px 0;">← ↑ →</div>
-        <div>Choose direction</div>
-    </div>
-
-    <div id="audioToggle" onclick="toggleAudio()">
-        <span id="audioIcon">🔊</span> Sound
-    </div>
-
-    <div id="menu">
-        <h1>MA Driving Simulator</h1>
-        <p>Explore the neighborhood and follow traffic rules!</p>
-        <button class="menuBtn" onclick="startGame()">Start Driving</button>
-        <div style="margin-top: 30px; color: #666; font-size: 0.85rem; text-align: center; max-width: 400px;">
-            <p>Drive through intersections, obey stop signs and traffic lights, yield to pedestrians, and watch for school buses!</p>
+    <div id="hud">
+        <div class="hud-item">
+            <span class="value" id="speedVal">0</span> mph
+        </div>
+        <div class="hud-item">
+            Score: <span class="value" id="scoreVal">1000</span>
         </div>
     </div>
-</div>
+
+    <div id="feedback"></div>
+
+    <div id="controls">
+        <kbd>↑</kbd> Gas <kbd>↓</kbd> Brake <kbd>←</kbd><kbd>→</kbd> Steer
+    </div>
 
 <script>
 // ============================================
-// CANVAS SETUP
+// SETUP
 // ============================================
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
-const miniCanvas = document.getElementById('miniMapCanvas');
-const miniCtx = miniCanvas.getContext('2d');
 
 function resize() {
     canvas.width = window.innerWidth;
@@ -235,847 +113,975 @@ resize();
 window.addEventListener('resize', resize);
 
 // ============================================
-// CITY MAP - Looping grid of streets
+// CONSTANTS
 // ============================================
-// Map legend:
-// 0 = grass/building
-// 1 = road (vertical)
-// 2 = road (horizontal)
-// 3 = intersection
-// 4 = intersection with stop sign
-// 5 = intersection with traffic light
+const TILE = 140;  // Tile size in pixels
+const ROAD_W = 90; // Road width
+const LANE_W = ROAD_W / 2;
 
-const TILE_SIZE = 100; // World units per tile
-const MAP_WIDTH = 8;
-const MAP_HEIGHT = 8;
-
-// City layout - roads form connected loops
-const cityMap = [
-    [0, 0, 1, 0, 0, 1, 0, 0],
-    [0, 0, 1, 0, 0, 1, 0, 0],
-    [2, 2, 4, 2, 2, 5, 2, 2],
-    [0, 0, 1, 0, 0, 1, 0, 0],
-    [0, 0, 1, 0, 0, 1, 0, 0],
-    [2, 2, 5, 2, 2, 4, 2, 2],
-    [0, 0, 1, 0, 0, 1, 0, 0],
-    [0, 0, 1, 0, 0, 1, 0, 0],
+// Larger map (16x16) with looping connected roads
+// 0=grass, 1=road_V, 2=road_H, 3=intersection, 4=stop_intersection, 5=light_intersection
+const MAP = [
+    [0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,0],
+    [0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,0],
+    [2,2,2,3,2,2,2,4,2,2,2,3,2,2,2,2],
+    [0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,0],
+    [0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,0],
+    [0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,0],
+    [2,2,2,5,2,2,2,3,2,2,2,5,2,2,2,2],
+    [0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,0],
+    [0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,0],
+    [2,2,2,3,2,2,2,4,2,2,2,3,2,2,2,2],
+    [0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,0],
+    [0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,0],
+    [0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,0],
+    [2,2,2,4,2,2,2,5,2,2,2,4,2,2,2,2],
+    [0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,0],
+    [0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,0],
 ];
 
-// Wrap coordinates for infinite looping
-function wrapCoord(val, max) {
-    return ((val % max) + max) % max;
-}
-
-function getTile(x, y) {
-    const tileX = Math.floor(wrapCoord(x, MAP_WIDTH * TILE_SIZE) / TILE_SIZE);
-    const tileY = Math.floor(wrapCoord(y, MAP_HEIGHT * TILE_SIZE) / TILE_SIZE);
-    return cityMap[tileY][tileX];
-}
-
-function getTileCoords(x, y) {
-    return {
-        tx: Math.floor(wrapCoord(x, MAP_WIDTH * TILE_SIZE) / TILE_SIZE),
-        ty: Math.floor(wrapCoord(y, MAP_HEIGHT * TILE_SIZE) / TILE_SIZE)
-    };
-}
+const MAP_W = MAP[0].length;
+const MAP_H = MAP.length;
+const WORLD_W = MAP_W * TILE;
+const WORLD_H = MAP_H * TILE;
 
 // ============================================
 // GAME STATE
 // ============================================
 const game = {
-    mode: 'menu',
     score: 1000,
-
-    // Player position and movement
-    x: 2.5 * TILE_SIZE,  // Start on a road
-    y: 4 * TILE_SIZE,
-    heading: 0,          // 0=North, 1=East, 2=South, 3=West
-    speed: 0,
-    maxSpeed: 50,
-
-    // Speed limits
-    speedLimit: 25,
-    inSchoolZone: false,
-
-    // Intersection state
-    atIntersection: false,
-    intersectionHandled: false,
-    stoppedAtIntersection: false,
-    turnChoice: null,    // null, 'left', 'straight', 'right'
-
-    // Traffic elements in world
-    trafficLights: {},   // key: "tx,ty", value: 'red'|'yellow'|'green'
-    stopSignsChecked: {}, // key: "tx,ty", value: true if stopped there
-
-    // Dynamic elements
-    pedestrians: [],
-    otherCars: [],
-    schoolBus: null,
-
-    // Feedback
-    feedbackTimer: 0,
-
-    // Time
     time: 0,
+    feedbackTimer: 0
 };
 
-// Heading directions
-const HEADINGS = [
-    { name: 'North', dx: 0, dy: -1, angle: 0 },
-    { name: 'East', dx: 1, dy: 0, angle: Math.PI / 2 },
-    { name: 'South', dx: 0, dy: 1, angle: Math.PI },
-    { name: 'West', dx: -1, dy: 0, angle: -Math.PI / 2 },
-];
+// Player car
+const player = {
+    x: 3 * TILE + TILE/2,
+    y: 4 * TILE + TILE/2,
+    angle: Math.PI,  // Facing south
+    speed: 0,
+    maxSpeed: 6,
+    accel: 0.12,
+    brake: 0.25,
+    friction: 0.03,
+    turnSpeed: 0.045,
+    width: 28,
+    height: 48
+};
+
+// Camera
+const cam = { x: 0, y: 0 };
+
+// Input
+const keys = { up: false, down: false, left: false, right: false };
+
+// World elements
+let trafficLights = [];
+let stopSigns = [];
+let pedestrians = [];
+let otherCars = [];
+let buildings = [];
+let trees = [];
+
+// Track stop sign compliance
+let stoppedSigns = new Set();
+let ranSigns = new Set();
+let ranLights = new Set();
+
+// ============================================
+// INITIALIZATION
+// ============================================
+function init() {
+    // Find all intersections and add traffic elements
+    for (let ty = 0; ty < MAP_H; ty++) {
+        for (let tx = 0; tx < MAP_W; tx++) {
+            const tile = MAP[ty][tx];
+            const cx = tx * TILE + TILE/2;
+            const cy = ty * TILE + TILE/2;
+
+            if (tile === 4) {
+                // Stop sign intersection
+                stopSigns.push({
+                    x: cx, y: cy,
+                    tx: tx, ty: ty
+                });
+            } else if (tile === 5) {
+                // Traffic light intersection
+                trafficLights.push({
+                    x: cx, y: cy,
+                    tx: tx, ty: ty,
+                    state: Math.random() < 0.5 ? 'green' : 'red',
+                    timer: 180 + Math.random() * 120
+                });
+            }
+
+            // Add decorations to grass tiles
+            if (tile === 0) {
+                // Buildings
+                if (Math.random() < 0.4) {
+                    buildings.push({
+                        x: cx - 30 + Math.random() * 20,
+                        y: cy - 30 + Math.random() * 20,
+                        w: 50 + Math.random() * 30,
+                        h: 50 + Math.random() * 30,
+                        color: ['#8B7355', '#A0522D', '#CD853F', '#D2691E', '#BC8F8F'][Math.floor(Math.random()*5)],
+                        roofColor: ['#654321', '#8B4513', '#A0522D'][Math.floor(Math.random()*3)]
+                    });
+                }
+                // Trees
+                if (Math.random() < 0.5) {
+                    const numTrees = 1 + Math.floor(Math.random() * 3);
+                    for (let i = 0; i < numTrees; i++) {
+                        trees.push({
+                            x: tx * TILE + 20 + Math.random() * (TILE - 40),
+                            y: ty * TILE + 20 + Math.random() * (TILE - 40),
+                            size: 12 + Math.random() * 10
+                        });
+                    }
+                }
+            }
+        }
+    }
+
+    // Spawn pedestrians near intersections
+    spawnPedestrians(10);
+
+    // Spawn other cars
+    spawnOtherCars(6);
+}
+
+function spawnPedestrians(count) {
+    for (let i = 0; i < count; i++) {
+        // Find intersection
+        let tx, ty;
+        let attempts = 0;
+        do {
+            tx = Math.floor(Math.random() * MAP_W);
+            ty = Math.floor(Math.random() * MAP_H);
+            attempts++;
+        } while (MAP[ty][tx] < 3 && attempts < 50);
+
+        if (attempts >= 50) continue;
+
+        const side = Math.floor(Math.random() * 4);
+        const offset = (Math.random() - 0.5) * 30;
+        let px, py;
+
+        switch(side) {
+            case 0: px = tx * TILE + TILE/2 + offset; py = ty * TILE + 10; break;
+            case 1: px = tx * TILE + TILE - 10; py = ty * TILE + TILE/2 + offset; break;
+            case 2: px = tx * TILE + TILE/2 + offset; py = ty * TILE + TILE - 10; break;
+            case 3: px = tx * TILE + 10; py = ty * TILE + TILE/2 + offset; break;
+        }
+
+        pedestrians.push({
+            x: px, y: py,
+            vx: (Math.random() - 0.5) * 0.5,
+            vy: (Math.random() - 0.5) * 0.5,
+            color: ['#e74c3c', '#3498db', '#9b59b6', '#f39c12', '#1abc9c', '#e91e63'][Math.floor(Math.random()*6)],
+            walkTimer: 0
+        });
+    }
+}
+
+function spawnOtherCars(count) {
+    const colors = ['#e74c3c', '#3498db', '#27ae60', '#f39c12', '#9b59b6', '#1abc9c', '#e91e63'];
+
+    for (let i = 0; i < count; i++) {
+        let tx, ty;
+        let attempts = 0;
+        do {
+            tx = Math.floor(Math.random() * MAP_W);
+            ty = Math.floor(Math.random() * MAP_H);
+            attempts++;
+        } while ((MAP[ty][tx] === 0 || MAP[ty][tx] >= 3) && attempts < 50);
+
+        if (attempts >= 50) continue;
+
+        const isVertical = MAP[ty][tx] === 1;
+        const angle = isVertical ? (Math.random() < 0.5 ? 0 : Math.PI) : (Math.random() < 0.5 ? Math.PI/2 : -Math.PI/2);
+
+        otherCars.push({
+            x: tx * TILE + TILE/2 + (Math.random() - 0.5) * 20,
+            y: ty * TILE + TILE/2 + (Math.random() - 0.5) * 20,
+            angle: angle,
+            speed: 1.5 + Math.random() * 1.5,
+            color: colors[Math.floor(Math.random() * colors.length)],
+            turnCooldown: 0
+        });
+    }
+}
 
 // ============================================
 // INPUT
 // ============================================
-const keys = { up: false, down: false, left: false, right: false, space: false };
-
 document.addEventListener('keydown', e => {
-    if (game.mode === 'menu') return;
-    switch(e.key.toLowerCase()) {
-        case 'w': case 'arrowup': keys.up = true; break;
-        case 's': case 'arrowdown': keys.down = true; break;
-        case 'a': case 'arrowleft': keys.left = true; break;
-        case 'd': case 'arrowright': keys.right = true; break;
-        case ' ': keys.space = true; e.preventDefault(); break;
+    switch(e.key) {
+        case 'ArrowUp': case 'w': case 'W': keys.up = true; break;
+        case 'ArrowDown': case 's': case 'S': keys.down = true; break;
+        case 'ArrowLeft': case 'a': case 'A': keys.left = true; break;
+        case 'ArrowRight': case 'd': case 'D': keys.right = true; break;
+    }
+    if (['ArrowUp','ArrowDown','ArrowLeft','ArrowRight',' '].includes(e.key)) {
+        e.preventDefault();
     }
 });
 
 document.addEventListener('keyup', e => {
-    switch(e.key.toLowerCase()) {
-        case 'w': case 'arrowup': keys.up = false; break;
-        case 's': case 'arrowdown': keys.down = false; break;
-        case 'a': case 'arrowleft': keys.left = false; break;
-        case 'd': case 'arrowright': keys.right = false; break;
-        case ' ': keys.space = false; break;
+    switch(e.key) {
+        case 'ArrowUp': case 'w': case 'W': keys.up = false; break;
+        case 'ArrowDown': case 's': case 'S': keys.down = false; break;
+        case 'ArrowLeft': case 'a': case 'A': keys.left = false; break;
+        case 'ArrowRight': case 'd': case 'D': keys.right = false; break;
     }
 });
 
 // ============================================
-// AUDIO
+// UTILITY
 // ============================================
-let audioEnabled = true;
-let audioCtx = null;
-
-function getAudioCtx() {
-    if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    return audioCtx;
+function wrap(val, max) {
+    return ((val % max) + max) % max;
 }
 
-function playSound(type) {
-    if (!audioEnabled) return;
-    try {
-        const ctx = getAudioCtx();
-        const osc = ctx.createOscillator();
-        const gain = ctx.createGain();
-        osc.connect(gain);
-        gain.connect(ctx.destination);
-
-        if (type === 'good') {
-            osc.frequency.value = 880;
-            osc.type = 'sine';
-            gain.gain.setValueAtTime(0.15, ctx.currentTime);
-            gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.2);
-            osc.start(); osc.stop(ctx.currentTime + 0.2);
-        } else if (type === 'bad') {
-            osc.frequency.value = 200;
-            osc.type = 'sawtooth';
-            gain.gain.setValueAtTime(0.15, ctx.currentTime);
-            gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.3);
-            osc.start(); osc.stop(ctx.currentTime + 0.3);
-        }
-    } catch(e) {}
+function getTile(x, y) {
+    const tx = Math.floor(wrap(x, WORLD_W) / TILE);
+    const ty = Math.floor(wrap(y, WORLD_H) / TILE);
+    return { tile: MAP[ty][tx], tx, ty };
 }
 
-function toggleAudio() {
-    audioEnabled = !audioEnabled;
-    document.getElementById('audioIcon').textContent = audioEnabled ? '🔊' : '🔇';
+function dist(x1, y1, x2, y2) {
+    // Handle wrapping distance
+    let dx = Math.abs(x1 - x2);
+    let dy = Math.abs(y1 - y2);
+    if (dx > WORLD_W / 2) dx = WORLD_W - dx;
+    if (dy > WORLD_H / 2) dy = WORLD_H - dy;
+    return Math.sqrt(dx * dx + dy * dy);
+}
+
+function showFeedback(msg, good) {
+    const fb = document.getElementById('feedback');
+    fb.textContent = msg;
+    fb.className = 'show ' + (good ? 'good' : 'bad');
+    game.feedbackTimer = 180;
+
+    if (good) game.score += 15;
+    else game.score = Math.max(0, game.score - 40);
 }
 
 // ============================================
-// FEEDBACK SYSTEM
+// UPDATE
 // ============================================
-function showFeedback(message, isGood) {
-    const box = document.getElementById('feedbackBox');
-    box.textContent = message;
-    box.className = 'hud-box show ' + (isGood ? 'good' : 'bad');
-    game.feedbackTimer = 180; // 3 seconds at 60fps
-
-    playSound(isGood ? 'good' : 'bad');
-
-    if (!isGood) {
-        game.score = Math.max(0, game.score - 50);
-    } else {
-        game.score += 25;
-    }
-}
-
-// ============================================
-// SPAWN DYNAMIC ELEMENTS
-// ============================================
-function spawnPedestrian() {
-    // Find a crosswalk (intersection) to spawn at
-    const intersections = [];
-    for (let ty = 0; ty < MAP_HEIGHT; ty++) {
-        for (let tx = 0; tx < MAP_WIDTH; tx++) {
-            if (cityMap[ty][tx] >= 3) {
-                intersections.push({tx, ty});
-            }
-        }
-    }
-
-    if (intersections.length === 0) return;
-
-    const spot = intersections[Math.floor(Math.random() * intersections.length)];
-    const worldX = (spot.tx + 0.5) * TILE_SIZE;
-    const worldY = (spot.ty + 0.5) * TILE_SIZE;
-
-    // Crossing direction
-    const crossingHorizontal = Math.random() > 0.5;
-
-    game.pedestrians.push({
-        x: worldX + (crossingHorizontal ? -40 : 0),
-        y: worldY + (crossingHorizontal ? 0 : -40),
-        targetX: worldX + (crossingHorizontal ? 40 : 0),
-        targetY: worldY + (crossingHorizontal ? 0 : 40),
-        speed: 0.3,
-        crossing: true,
-    });
-}
-
-function spawnSchoolBus() {
-    // Spawn a stopped school bus on a road
-    const roads = [];
-    for (let ty = 0; ty < MAP_HEIGHT; ty++) {
-        for (let tx = 0; tx < MAP_WIDTH; tx++) {
-            if (cityMap[ty][tx] === 1) { // Vertical road
-                roads.push({tx, ty, heading: 0});
-            }
-        }
-    }
-
-    if (roads.length === 0) return;
-
-    const spot = roads[Math.floor(Math.random() * roads.length)];
-    game.schoolBus = {
-        x: (spot.tx + 0.5) * TILE_SIZE,
-        y: (spot.ty + 0.3) * TILE_SIZE,
-        heading: spot.heading,
-        stopped: true,
-        lightsFlashing: true,
-        timer: 600, // 10 seconds
-    };
-}
-
-function spawnOtherCar() {
-    // Spawn a car at an intersection
-    const intersections = [];
-    for (let ty = 0; ty < MAP_HEIGHT; ty++) {
-        for (let tx = 0; tx < MAP_WIDTH; tx++) {
-            if (cityMap[ty][tx] >= 3) {
-                intersections.push({tx, ty});
-            }
-        }
-    }
-
-    if (intersections.length === 0) return;
-
-    const spot = intersections[Math.floor(Math.random() * intersections.length)];
-    const heading = Math.floor(Math.random() * 4);
-    const dir = HEADINGS[heading];
-
-    game.otherCars.push({
-        x: (spot.tx + 0.5) * TILE_SIZE - dir.dx * 60,
-        y: (spot.ty + 0.5) * TILE_SIZE - dir.dy * 60,
-        heading: heading,
-        waiting: true,
-        arrivedTime: game.time,
-        color: ['#3b82f6', '#ef4444', '#a855f7', '#f59e0b'][Math.floor(Math.random() * 4)],
-    });
-}
-
-// ============================================
-// GAME LOGIC
-// ============================================
-function startGame() {
-    document.getElementById('menu').classList.add('hidden');
-    game.mode = 'driving';
-    game.score = 1000;
-    game.x = 2.5 * TILE_SIZE;
-    game.y = 4 * TILE_SIZE;
-    game.heading = 0;
-    game.speed = 0;
-    game.time = 0;
-    game.pedestrians = [];
-    game.otherCars = [];
-    game.schoolBus = null;
-    game.stopSignsChecked = {};
-
-    // Initialize traffic lights
-    game.trafficLights = {};
-    for (let ty = 0; ty < MAP_HEIGHT; ty++) {
-        for (let tx = 0; tx < MAP_WIDTH; tx++) {
-            if (cityMap[ty][tx] === 5) {
-                game.trafficLights[`${tx},${ty}`] = 'green';
-            }
-        }
-    }
-
-    // Spawn initial elements
-    spawnPedestrian();
-    spawnOtherCar();
-
-    if (audioCtx && audioCtx.state === 'suspended') {
-        audioCtx.resume();
-    }
-}
-
 function update() {
-    if (game.mode !== 'driving') return;
-
     game.time++;
 
-    // Update feedback timer
+    // Feedback timer
     if (game.feedbackTimer > 0) {
         game.feedbackTimer--;
         if (game.feedbackTimer === 0) {
-            document.getElementById('feedbackBox').classList.remove('show');
+            document.getElementById('feedback').classList.remove('show');
         }
     }
 
-    // Update traffic lights (cycle every 5 seconds)
-    if (game.time % 300 === 0) {
-        for (let key in game.trafficLights) {
-            const current = game.trafficLights[key];
-            if (current === 'green') game.trafficLights[key] = 'yellow';
-            else if (current === 'yellow') game.trafficLights[key] = 'red';
-            else game.trafficLights[key] = 'green';
-        }
-    }
-
-    // Speed control
-    if (keys.space) {
-        game.speed = Math.max(0, game.speed - 2);
-    } else if (keys.up) {
-        game.speed = Math.min(game.maxSpeed, game.speed + 0.5);
+    // Player movement
+    if (keys.up) {
+        player.speed = Math.min(player.speed + player.accel, player.maxSpeed);
     } else if (keys.down) {
-        game.speed = Math.max(0, game.speed - 0.8);
+        player.speed = Math.max(player.speed - player.brake, -player.maxSpeed * 0.4);
     } else {
-        game.speed = Math.max(0, game.speed - 0.1);
+        // Friction
+        if (player.speed > 0) player.speed = Math.max(0, player.speed - player.friction);
+        else if (player.speed < 0) player.speed = Math.min(0, player.speed + player.friction);
     }
 
-    // Check current tile
-    const currentTile = getTile(game.x, game.y);
-    const tileCoords = getTileCoords(game.x, game.y);
-    const tileKey = `${tileCoords.tx},${tileCoords.ty}`;
-
-    // Check if at intersection
-    const wasAtIntersection = game.atIntersection;
-    game.atIntersection = currentTile >= 3;
-
-    // Entering intersection
-    if (game.atIntersection && !wasAtIntersection) {
-        game.intersectionHandled = false;
-        game.stoppedAtIntersection = false;
-
-        // Check for stop sign
-        if (currentTile === 4) {
-            game.speedLimit = 0; // Must stop
-        }
-
-        // Check traffic light
-        if (currentTile === 5) {
-            const lightState = game.trafficLights[tileKey];
-            if (lightState === 'red' && game.speed > 5) {
-                showFeedback('Ran red light!', false);
-            }
-        }
-    }
-
-    // At intersection logic
-    if (game.atIntersection) {
-        document.getElementById('turnIndicator').classList.add('show');
-
-        // Track if we've stopped
-        if (game.speed < 2) {
-            if (!game.stoppedAtIntersection && currentTile === 4) {
-                game.stoppedAtIntersection = true;
-                if (!game.stopSignsChecked[tileKey]) {
-                    game.stopSignsChecked[tileKey] = true;
-                    showFeedback('Good stop!', true);
-                }
-            }
-        }
-
-        // Handle turn choice
-        if (keys.left && !game.intersectionHandled) {
-            game.heading = (game.heading + 3) % 4; // Turn left
-            game.intersectionHandled = true;
-        } else if (keys.right && !game.intersectionHandled) {
-            game.heading = (game.heading + 1) % 4; // Turn right
-            game.intersectionHandled = true;
-        } else if (keys.up && game.speed > 0 && !game.intersectionHandled) {
-            game.intersectionHandled = true; // Go straight
-        }
-
-        // Penalty for not stopping at stop sign
-        if (currentTile === 4 && !game.stoppedAtIntersection && game.speed > 10) {
-            if (!game.stopSignsChecked[tileKey + '_ran']) {
-                game.stopSignsChecked[tileKey + '_ran'] = true;
-                showFeedback('Ran stop sign!', false);
-            }
-        }
-    } else {
-        document.getElementById('turnIndicator').classList.remove('show');
-        game.speedLimit = 25; // Reset to normal
-
-        // Reset stop sign check when leaving
-        const prevKey = `${tileCoords.tx},${tileCoords.ty}`;
-        delete game.stopSignsChecked[prevKey];
-        delete game.stopSignsChecked[prevKey + '_ran'];
+    // Steering (scales with speed)
+    if (Math.abs(player.speed) > 0.1) {
+        const turnMult = Math.min(1, Math.abs(player.speed) / 3);
+        if (keys.left) player.angle -= player.turnSpeed * turnMult * Math.sign(player.speed);
+        if (keys.right) player.angle += player.turnSpeed * turnMult * Math.sign(player.speed);
     }
 
     // Move player
-    const dir = HEADINGS[game.heading];
-    game.x += dir.dx * game.speed * 0.1;
-    game.y += dir.dy * game.speed * 0.1;
+    player.x += Math.sin(player.angle) * player.speed;
+    player.y -= Math.cos(player.angle) * player.speed;
 
-    // Wrap around map
-    game.x = wrapCoord(game.x, MAP_WIDTH * TILE_SIZE);
-    game.y = wrapCoord(game.y, MAP_HEIGHT * TILE_SIZE);
+    // Wrap world
+    player.x = wrap(player.x, WORLD_W);
+    player.y = wrap(player.y, WORLD_H);
 
-    // Speeding check
-    if (game.speed > game.speedLimit + 10 && game.time % 120 === 0) {
-        showFeedback(`Speeding! ${Math.floor(game.speed)} in ${game.speedLimit} zone`, false);
-    }
+    // Camera follows player (centered)
+    cam.x = player.x - canvas.width / 2;
+    cam.y = player.y - canvas.height / 2;
+
+    // Update traffic lights
+    trafficLights.forEach(light => {
+        light.timer--;
+        if (light.timer <= 0) {
+            if (light.state === 'green') { light.state = 'yellow'; light.timer = 45; }
+            else if (light.state === 'yellow') { light.state = 'red'; light.timer = 200; }
+            else { light.state = 'green'; light.timer = 200; }
+        }
+    });
+
+    // Check stop signs
+    stopSigns.forEach(sign => {
+        const d = dist(player.x, player.y, sign.x, sign.y);
+        const key = `${sign.tx},${sign.ty}`;
+
+        if (d < 50) {
+            if (player.speed < 0.5 && !stoppedSigns.has(key)) {
+                stoppedSigns.add(key);
+                showFeedback('Good stop at stop sign!', true);
+            } else if (player.speed > 3 && !stoppedSigns.has(key) && !ranSigns.has(key)) {
+                ranSigns.add(key);
+                showFeedback('You ran the stop sign!', false);
+            }
+        } else if (d > 100) {
+            stoppedSigns.delete(key);
+            ranSigns.delete(key);
+        }
+    });
+
+    // Check traffic lights
+    trafficLights.forEach(light => {
+        const d = dist(player.x, player.y, light.x, light.y);
+        const key = `${light.tx},${light.ty}`;
+
+        if (d < 45 && light.state === 'red' && player.speed > 2.5 && !ranLights.has(key)) {
+            ranLights.add(key);
+            showFeedback('You ran a red light!', false);
+        } else if (d > 100) {
+            ranLights.delete(key);
+        }
+    });
 
     // Update pedestrians
-    for (let i = game.pedestrians.length - 1; i >= 0; i--) {
-        const ped = game.pedestrians[i];
+    pedestrians.forEach(ped => {
+        ped.walkTimer++;
 
-        // Move pedestrian
-        const dx = ped.targetX - ped.x;
-        const dy = ped.targetY - ped.y;
-        const dist = Math.sqrt(dx*dx + dy*dy);
-
-        if (dist > 2) {
-            ped.x += (dx / dist) * ped.speed;
-            ped.y += (dy / dist) * ped.speed;
-        } else {
-            // Pedestrian finished crossing
-            game.pedestrians.splice(i, 1);
-            continue;
+        // Change direction occasionally
+        if (ped.walkTimer % 120 === 0) {
+            ped.vx = (Math.random() - 0.5) * 0.6;
+            ped.vy = (Math.random() - 0.5) * 0.6;
         }
+
+        ped.x += ped.vx;
+        ped.y += ped.vy;
+
+        // Keep near roads
+        ped.x = wrap(ped.x, WORLD_W);
+        ped.y = wrap(ped.y, WORLD_H);
 
         // Check collision with player
-        const playerDist = Math.sqrt(
-            Math.pow(game.x - ped.x, 2) +
-            Math.pow(game.y - ped.y, 2)
-        );
-
-        if (playerDist < 30 && game.speed > 5) {
-            showFeedback('Failed to yield to pedestrian!', false);
-            game.pedestrians.splice(i, 1);
+        const d = dist(player.x, player.y, ped.x, ped.y);
+        if (d < 25 && player.speed > 1.5) {
+            showFeedback('Too close to pedestrian!', false);
+            // Move pedestrian away
+            const ang = Math.atan2(ped.y - player.y, ped.x - player.x);
+            ped.x += Math.cos(ang) * 40;
+            ped.y += Math.sin(ang) * 40;
         }
-    }
-
-    // Update school bus
-    if (game.schoolBus) {
-        game.schoolBus.timer--;
-        if (game.schoolBus.timer <= 0) {
-            game.schoolBus = null;
-        } else {
-            // Check if player passes while lights flashing
-            const busDist = Math.sqrt(
-                Math.pow(game.x - game.schoolBus.x, 2) +
-                Math.pow(game.y - game.schoolBus.y, 2)
-            );
-
-            if (busDist < 50 && game.speed > 5 && game.schoolBus.lightsFlashing) {
-                showFeedback('Passed stopped school bus!', false);
-                game.schoolBus.lightsFlashing = false;
-            }
-        }
-    }
+    });
 
     // Update other cars
-    for (let i = game.otherCars.length - 1; i >= 0; i--) {
-        const car = game.otherCars[i];
+    otherCars.forEach(car => {
+        car.x += Math.sin(car.angle) * car.speed;
+        car.y -= Math.cos(car.angle) * car.speed;
+        car.x = wrap(car.x, WORLD_W);
+        car.y = wrap(car.y, WORLD_H);
 
-        // Remove after some time
-        if (game.time - car.arrivedTime > 600) {
-            game.otherCars.splice(i, 1);
-            continue;
+        // Turn at intersections randomly
+        const { tile } = getTile(car.x, car.y);
+        if (tile >= 3 && car.turnCooldown <= 0) {
+            if (Math.random() < 0.02) {
+                car.angle += (Math.random() < 0.5 ? 1 : -1) * Math.PI / 2;
+                car.turnCooldown = 60;
+            }
+        }
+        if (car.turnCooldown > 0) car.turnCooldown--;
+
+        // Check collision with player
+        const d = dist(player.x, player.y, car.x, car.y);
+        if (d < 35 && player.speed > 1) {
+            showFeedback('Collision! Maintain safe distance.', false);
+            player.speed = -1;
+        }
+    });
+
+    // Update HUD
+    const speedEl = document.getElementById('speedVal');
+    const displaySpeed = Math.abs(Math.round(player.speed * 12));
+    speedEl.textContent = displaySpeed;
+    speedEl.className = 'value' + (displaySpeed > 50 ? ' danger' : displaySpeed > 35 ? ' warning' : '');
+    document.getElementById('scoreVal').textContent = game.score;
+}
+
+// ============================================
+// RENDER
+// ============================================
+function render() {
+    const W = canvas.width;
+    const H = canvas.height;
+
+    // Sky/background
+    ctx.fillStyle = '#87CEEB';
+    ctx.fillRect(0, 0, W, H);
+
+    // Calculate visible tile range
+    const startTX = Math.floor(cam.x / TILE) - 1;
+    const startTY = Math.floor(cam.y / TILE) - 1;
+    const endTX = startTX + Math.ceil(W / TILE) + 3;
+    const endTY = startTY + Math.ceil(H / TILE) + 3;
+
+    // Draw tiles
+    for (let ty = startTY; ty < endTY; ty++) {
+        for (let tx = startTX; tx < endTX; tx++) {
+            const wtx = ((tx % MAP_W) + MAP_W) % MAP_W;
+            const wty = ((ty % MAP_H) + MAP_H) % MAP_H;
+            const tile = MAP[wty][wtx];
+
+            const sx = tx * TILE - cam.x;
+            const sy = ty * TILE - cam.y;
+
+            drawTile(sx, sy, tile);
         }
     }
 
-    // Spawn new elements periodically
-    if (game.time % 600 === 0 && game.pedestrians.length < 3) {
-        spawnPedestrian();
-    }
-    if (game.time % 900 === 0 && !game.schoolBus && Math.random() > 0.5) {
-        spawnSchoolBus();
-    }
-    if (game.time % 480 === 0 && game.otherCars.length < 4) {
-        spawnOtherCar();
-    }
+    // Draw buildings
+    buildings.forEach(b => {
+        const sx = getScreenX(b.x);
+        const sy = getScreenY(b.y);
+        if (sx > -100 && sx < W + 100 && sy > -100 && sy < H + 100) {
+            drawBuilding(sx, sy, b);
+        }
+    });
 
-    updateHUD();
+    // Draw trees
+    trees.forEach(t => {
+        const sx = getScreenX(t.x);
+        const sy = getScreenY(t.y);
+        if (sx > -50 && sx < W + 50 && sy > -50 && sy < H + 50) {
+            drawTree(sx, sy, t.size);
+        }
+    });
+
+    // Draw stop signs
+    stopSigns.forEach(s => {
+        const sx = getScreenX(s.x);
+        const sy = getScreenY(s.y);
+        if (sx > -50 && sx < W + 50 && sy > -50 && sy < H + 50) {
+            drawStopSign(sx, sy);
+        }
+    });
+
+    // Draw traffic lights
+    trafficLights.forEach(l => {
+        const sx = getScreenX(l.x);
+        const sy = getScreenY(l.y);
+        if (sx > -50 && sx < W + 50 && sy > -50 && sy < H + 50) {
+            drawTrafficLight(sx, sy, l.state);
+        }
+    });
+
+    // Draw pedestrians
+    pedestrians.forEach(p => {
+        const sx = getScreenX(p.x);
+        const sy = getScreenY(p.y);
+        if (sx > -30 && sx < W + 30 && sy > -30 && sy < H + 30) {
+            drawPedestrian(sx, sy, p.color);
+        }
+    });
+
+    // Draw other cars
+    otherCars.forEach(c => {
+        const sx = getScreenX(c.x);
+        const sy = getScreenY(c.y);
+        if (sx > -60 && sx < W + 60 && sy > -60 && sy < H + 60) {
+            drawCar(sx, sy, c.angle, c.color, 24, 42);
+        }
+    });
+
+    // Draw player car (always visible, centered)
+    drawPlayerCar(W/2, H/2, player.angle);
+
+    // Draw minimap
+    drawMinimap();
 }
 
-function updateHUD() {
-    const speedEl = document.getElementById('speedValue');
-    speedEl.textContent = Math.floor(game.speed);
-    speedEl.className = game.speed > game.speedLimit + 10 ? 'danger' :
-                        game.speed > game.speedLimit ? 'warning' : '';
-
-    document.getElementById('limitSign').textContent = game.speedLimit;
-    document.getElementById('scoreValue').textContent = game.score;
+function getScreenX(wx) {
+    let x = wx - cam.x;
+    while (x < -WORLD_W/2) x += WORLD_W;
+    while (x > WORLD_W/2) x -= WORLD_W;
+    return x;
 }
 
-// ============================================
-// RENDERING
-// ============================================
-function render() {
-    const w = canvas.width;
-    const h = canvas.height;
+function getScreenY(wy) {
+    let y = wy - cam.y;
+    while (y < -WORLD_H/2) y += WORLD_H;
+    while (y > WORLD_H/2) y -= WORLD_H;
+    return y;
+}
 
-    // Clear
-    ctx.fillStyle = '#1a1a2e';
-    ctx.fillRect(0, 0, w, h);
+function drawTile(x, y, tile) {
+    // Grass base
+    ctx.fillStyle = '#4a9c4a';
+    ctx.fillRect(x, y, TILE, TILE);
 
-    // Get current heading
-    const dir = HEADINGS[game.heading];
-    const perpDir = HEADINGS[(game.heading + 1) % 4];
+    // Grass texture
+    ctx.fillStyle = '#3d8a3d';
+    for (let i = 0; i < 8; i++) {
+        ctx.beginPath();
+        ctx.arc(x + Math.random() * TILE, y + Math.random() * TILE, 3, 0, Math.PI * 2);
+        ctx.fill();
+    }
 
-    // Draw ground/grass
-    ctx.fillStyle = '#1a4a1a';
-    ctx.fillRect(0, h * 0.4, w, h * 0.6);
+    const cx = x + TILE/2;
+    const cy = y + TILE/2;
+    const roadOffset = (TILE - ROAD_W) / 2;
 
-    // Draw road ahead
-    const roadWidth = w * 0.5;
-    const horizonY = h * 0.4;
+    if (tile === 1) {
+        // Vertical road
+        drawRoadSegment(x + roadOffset, y, ROAD_W, TILE, 'v');
+    } else if (tile === 2) {
+        // Horizontal road
+        drawRoadSegment(x, y + roadOffset, TILE, ROAD_W, 'h');
+    } else if (tile >= 3) {
+        // Intersection
+        drawRoadSegment(x + roadOffset, y, ROAD_W, TILE, 'v');
+        drawRoadSegment(x, y + roadOffset, TILE, ROAD_W, 'h');
+        drawCrosswalk(cx, cy);
+    }
+}
 
-    // Road surface
-    ctx.fillStyle = '#333';
-    ctx.beginPath();
-    ctx.moveTo(w/2 - roadWidth/2, h);
-    ctx.lineTo(w/2 + roadWidth/2, h);
-    ctx.lineTo(w/2 + 30, horizonY);
-    ctx.lineTo(w/2 - 30, horizonY);
-    ctx.closePath();
-    ctx.fill();
+function drawRoadSegment(x, y, w, h, dir) {
+    // Asphalt
+    ctx.fillStyle = '#3a3a3a';
+    ctx.fillRect(x, y, w, h);
 
-    // Road edges
-    ctx.strokeStyle = '#fff';
+    // Curbs
+    ctx.fillStyle = '#6a6a6a';
+    if (dir === 'v') {
+        ctx.fillRect(x, y, 4, h);
+        ctx.fillRect(x + w - 4, y, 4, h);
+    } else {
+        ctx.fillRect(x, y, w, 4);
+        ctx.fillRect(x, y + h - 4, w, 4);
+    }
+
+    // Center yellow line
+    ctx.strokeStyle = '#f4d03f';
     ctx.lineWidth = 4;
+    ctx.setLineDash([20, 12]);
     ctx.beginPath();
-    ctx.moveTo(w/2 - roadWidth/2, h);
-    ctx.lineTo(w/2 - 30, horizonY);
-    ctx.stroke();
-    ctx.beginPath();
-    ctx.moveTo(w/2 + roadWidth/2, h);
-    ctx.lineTo(w/2 + 30, horizonY);
-    ctx.stroke();
-
-    // Center line (dashed yellow)
-    ctx.strokeStyle = '#fbbf24';
-    ctx.lineWidth = 3;
-    ctx.setLineDash([30, 20]);
-    ctx.beginPath();
-    ctx.moveTo(w/2, h);
-    ctx.lineTo(w/2, horizonY);
+    if (dir === 'v') {
+        ctx.moveTo(x + w/2, y);
+        ctx.lineTo(x + w/2, y + h);
+    } else {
+        ctx.moveTo(x, y + h/2);
+        ctx.lineTo(x + w, y + h/2);
+    }
     ctx.stroke();
     ctx.setLineDash([]);
 
-    // Check what's ahead
-    const lookAhead = 80;
-    const aheadX = game.x + dir.dx * lookAhead;
-    const aheadY = game.y + dir.dy * lookAhead;
-    const aheadTile = getTile(aheadX, aheadY);
-    const aheadCoords = getTileCoords(aheadX, aheadY);
-
-    // Draw intersection ahead if approaching one
-    if (aheadTile >= 3 && !game.atIntersection) {
-        // Cross road
-        ctx.fillStyle = '#333';
-        ctx.fillRect(0, horizonY + 50, w, 80);
-
-        // Crosswalk stripes
-        ctx.fillStyle = '#fff';
-        for (let x = w/2 - 100; x < w/2 + 100; x += 30) {
-            ctx.fillRect(x, horizonY + 60, 20, 60);
-        }
-
-        // Stop sign or traffic light
-        if (aheadTile === 4) {
-            // Draw stop sign
-            drawStopSign(ctx, w/2 + roadWidth/2 + 50, horizonY + 80);
-        } else if (aheadTile === 5) {
-            // Draw traffic light
-            const lightKey = `${aheadCoords.tx},${aheadCoords.ty}`;
-            const lightState = game.trafficLights[lightKey] || 'red';
-            drawTrafficLight(ctx, w/2 + roadWidth/2 + 50, horizonY + 30, lightState);
-        }
-    }
-
-    // Draw intersection while in it
-    if (game.atIntersection) {
-        // Left road
-        ctx.fillStyle = '#333';
+    // White lane markers
+    ctx.strokeStyle = 'rgba(255,255,255,0.5)';
+    ctx.lineWidth = 2;
+    ctx.setLineDash([15, 20]);
+    if (dir === 'v') {
         ctx.beginPath();
-        ctx.moveTo(0, h * 0.5);
-        ctx.lineTo(0, h * 0.7);
-        ctx.lineTo(w/2 - roadWidth/2, h * 0.65);
-        ctx.lineTo(w/2 - roadWidth/2, h * 0.55);
-        ctx.closePath();
-        ctx.fill();
-
-        // Right road
+        ctx.moveTo(x + w * 0.25, y);
+        ctx.lineTo(x + w * 0.25, y + h);
+        ctx.stroke();
         ctx.beginPath();
-        ctx.moveTo(w, h * 0.5);
-        ctx.lineTo(w, h * 0.7);
-        ctx.lineTo(w/2 + roadWidth/2, h * 0.65);
-        ctx.lineTo(w/2 + roadWidth/2, h * 0.55);
-        ctx.closePath();
-        ctx.fill();
-
-        // Turn arrows
-        ctx.fillStyle = '#fbbf24';
-        ctx.font = 'bold 48px Arial';
-        ctx.textAlign = 'center';
-        ctx.fillText('←', 100, h * 0.6);
-        ctx.fillText('→', w - 100, h * 0.6);
-        ctx.fillText('↑', w/2, horizonY + 100);
+        ctx.moveTo(x + w * 0.75, y);
+        ctx.lineTo(x + w * 0.75, y + h);
+        ctx.stroke();
+    } else {
+        ctx.beginPath();
+        ctx.moveTo(x, y + h * 0.25);
+        ctx.lineTo(x + w, y + h * 0.25);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(x, y + h * 0.75);
+        ctx.lineTo(x + w, y + h * 0.75);
+        ctx.stroke();
     }
-
-    // Draw pedestrians
-    for (const ped of game.pedestrians) {
-        const relX = (ped.x - game.x) * perpDir.dx + (ped.y - game.y) * perpDir.dy;
-        const relY = (ped.x - game.x) * dir.dx + (ped.y - game.y) * dir.dy;
-
-        if (relY > 10 && relY < 200) {
-            const scale = 1 - (relY / 250);
-            const screenX = w/2 + relX * scale * 3;
-            const screenY = horizonY + (h - horizonY) * (1 - scale) * 0.8;
-
-            // Pedestrian circle
-            ctx.fillStyle = '#FFB6C1';
-            ctx.beginPath();
-            ctx.arc(screenX, screenY, 15 * scale, 0, Math.PI * 2);
-            ctx.fill();
-            ctx.strokeStyle = '#333';
-            ctx.lineWidth = 2;
-            ctx.stroke();
-        }
-    }
-
-    // Draw school bus if ahead
-    if (game.schoolBus) {
-        const relX = (game.schoolBus.x - game.x) * perpDir.dx + (game.schoolBus.y - game.y) * perpDir.dy;
-        const relY = (game.schoolBus.x - game.x) * dir.dx + (game.schoolBus.y - game.y) * dir.dy;
-
-        if (relY > 20 && relY < 300) {
-            const scale = Math.max(0.3, 1 - (relY / 350));
-            const screenX = w/2 + relX * scale * 2;
-            const screenY = horizonY + (h - horizonY) * (1 - scale) * 0.7;
-
-            // Bus body
-            ctx.fillStyle = '#fbbf24';
-            ctx.fillRect(screenX - 50 * scale, screenY - 30 * scale, 100 * scale, 60 * scale);
-
-            // Windows
-            ctx.fillStyle = '#333';
-            ctx.fillRect(screenX - 40 * scale, screenY - 20 * scale, 15 * scale, 15 * scale);
-            ctx.fillRect(screenX - 20 * scale, screenY - 20 * scale, 15 * scale, 15 * scale);
-            ctx.fillRect(screenX + 5 * scale, screenY - 20 * scale, 15 * scale, 15 * scale);
-
-            // SCHOOL BUS text
-            ctx.fillStyle = '#000';
-            ctx.font = `bold ${12 * scale}px Arial`;
-            ctx.textAlign = 'center';
-            ctx.fillText('SCHOOL BUS', screenX, screenY + 5 * scale);
-
-            // Flashing lights
-            if (game.schoolBus.lightsFlashing && Math.floor(game.time / 15) % 2 === 0) {
-                ctx.fillStyle = '#ff0000';
-                ctx.beginPath();
-                ctx.arc(screenX - 40 * scale, screenY - 35 * scale, 8 * scale, 0, Math.PI * 2);
-                ctx.fill();
-                ctx.beginPath();
-                ctx.arc(screenX + 40 * scale, screenY - 35 * scale, 8 * scale, 0, Math.PI * 2);
-                ctx.fill();
-            }
-
-            // Stop arm
-            if (game.schoolBus.lightsFlashing) {
-                ctx.fillStyle = '#ff0000';
-                ctx.fillRect(screenX - 70 * scale, screenY - 10 * scale, 20 * scale, 25 * scale);
-                ctx.fillStyle = '#fff';
-                ctx.font = `bold ${8 * scale}px Arial`;
-                ctx.fillText('STOP', screenX - 60 * scale, screenY + 5 * scale);
-            }
-        }
-    }
-
-    // Draw other cars
-    for (const car of game.otherCars) {
-        const relX = (car.x - game.x) * perpDir.dx + (car.y - game.y) * perpDir.dy;
-        const relY = (car.x - game.x) * dir.dx + (car.y - game.y) * dir.dy;
-
-        if (relY > 30 && relY < 250) {
-            const scale = Math.max(0.3, 1 - (relY / 300));
-            const screenX = w/2 + relX * scale * 2.5;
-            const screenY = horizonY + (h - horizonY) * (1 - scale) * 0.75;
-
-            // Car body
-            ctx.fillStyle = car.color;
-            ctx.fillRect(screenX - 25 * scale, screenY - 15 * scale, 50 * scale, 35 * scale);
-
-            // Windshield
-            ctx.fillStyle = '#87CEEB';
-            ctx.fillRect(screenX - 18 * scale, screenY - 10 * scale, 36 * scale, 12 * scale);
-        }
-    }
-
-    // Player car hood (dashboard view hint)
-    ctx.fillStyle = '#1a1a2e';
-    ctx.fillRect(w/2 - 80, h - 50, 160, 60);
-    ctx.fillStyle = '#333';
-    ctx.fillRect(w/2 - 70, h - 45, 140, 50);
-
-    // Render mini-map
-    renderMiniMap();
+    ctx.setLineDash([]);
 }
 
-function drawStopSign(ctx, x, y) {
-    ctx.fillStyle = '#dc2626';
+function drawCrosswalk(cx, cy) {
+    ctx.fillStyle = '#fff';
+    // Horizontal stripes
+    for (let i = -4; i <= 4; i++) {
+        ctx.fillRect(cx - 35, cy - 55 + i * 12, 70, 6);
+        ctx.fillRect(cx - 35, cy + 30 + i * 12, 70, 6);
+    }
+    // Vertical stripes
+    for (let i = -4; i <= 4; i++) {
+        ctx.fillRect(cx - 55 + i * 12, cy - 35, 6, 70);
+        ctx.fillRect(cx + 30 + i * 12, cy - 35, 6, 70);
+    }
+}
+
+function drawBuilding(x, y, b) {
+    // Shadow
+    ctx.fillStyle = 'rgba(0,0,0,0.25)';
+    ctx.fillRect(x + 4, y + 4, b.w, b.h);
+
+    // Building body
+    ctx.fillStyle = b.color;
+    ctx.fillRect(x, y, b.w, b.h);
+
+    // Outline
+    ctx.strokeStyle = '#333';
+    ctx.lineWidth = 2;
+    ctx.strokeRect(x, y, b.w, b.h);
+
+    // Roof
+    ctx.fillStyle = b.roofColor;
+    ctx.fillRect(x - 3, y - 6, b.w + 6, 10);
+
+    // Windows
+    ctx.fillStyle = '#87CEEB';
+    const winSize = 10;
+    const winGap = 16;
+    for (let wy = y + 12; wy < y + b.h - 15; wy += winGap) {
+        for (let wx = x + 8; wx < x + b.w - 12; wx += winGap) {
+            ctx.fillRect(wx, wy, winSize, winSize);
+            // Window frame
+            ctx.strokeStyle = '#555';
+            ctx.lineWidth = 1;
+            ctx.strokeRect(wx, wy, winSize, winSize);
+        }
+    }
+
+    // Door
+    ctx.fillStyle = '#654321';
+    ctx.fillRect(x + b.w/2 - 8, y + b.h - 20, 16, 20);
+}
+
+function drawTree(x, y, size) {
+    // Trunk
+    ctx.fillStyle = '#8B4513';
+    ctx.fillRect(x - 4, y, 8, size);
+
+    // Foliage layers
+    ctx.fillStyle = '#228B22';
     ctx.beginPath();
+    ctx.arc(x, y - size * 0.3, size * 1.2, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.fillStyle = '#2d9f2d';
+    ctx.beginPath();
+    ctx.arc(x - size * 0.5, y, size * 0.9, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.beginPath();
+    ctx.arc(x + size * 0.5, y, size * 0.9, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.fillStyle = '#34b534';
+    ctx.beginPath();
+    ctx.arc(x, y - size * 0.7, size * 0.8, 0, Math.PI * 2);
+    ctx.fill();
+}
+
+function drawStopSign(x, y) {
+    // Post
+    ctx.fillStyle = '#777';
+    ctx.fillRect(x - 3, y, 6, 35);
+
+    // Octagon
+    ctx.save();
+    ctx.translate(x, y - 18);
+    ctx.fillStyle = '#cc0000';
+    ctx.beginPath();
+    const r = 20;
     for (let i = 0; i < 8; i++) {
-        const angle = (i * Math.PI / 4) - Math.PI / 8;
-        const px = x + 30 * Math.cos(angle);
-        const py = y + 30 * Math.sin(angle);
+        const ang = (i * Math.PI / 4) - Math.PI / 8;
+        const px = Math.cos(ang) * r;
+        const py = Math.sin(ang) * r;
         if (i === 0) ctx.moveTo(px, py);
         else ctx.lineTo(px, py);
     }
     ctx.closePath();
     ctx.fill();
+
+    // White border
     ctx.strokeStyle = '#fff';
     ctx.lineWidth = 3;
     ctx.stroke();
 
+    // Text
     ctx.fillStyle = '#fff';
-    ctx.font = 'bold 14px Arial';
+    ctx.font = 'bold 11px Arial';
     ctx.textAlign = 'center';
-    ctx.fillText('STOP', x, y + 5);
+    ctx.textBaseline = 'middle';
+    ctx.fillText('STOP', 0, 1);
+    ctx.restore();
 }
 
-function drawTrafficLight(ctx, x, y, state) {
-    // Pole
-    ctx.fillStyle = '#333';
-    ctx.fillRect(x - 5, y, 10, 80);
+function drawTrafficLight(x, y, state) {
+    // Post
+    ctx.fillStyle = '#444';
+    ctx.fillRect(x - 4, y + 5, 8, 45);
 
-    // Light box
+    // Box
     ctx.fillStyle = '#222';
-    ctx.fillRect(x - 15, y - 50, 30, 55);
+    ctx.fillRect(x - 14, y - 40, 28, 48);
+    ctx.strokeStyle = '#555';
+    ctx.lineWidth = 2;
+    ctx.strokeRect(x - 14, y - 40, 28, 48);
 
-    // Red
-    ctx.fillStyle = state === 'red' ? '#ff0000' : '#440000';
+    // Lights
+    const colors = {
+        red: state === 'red' ? '#ff0000' : '#330000',
+        yellow: state === 'yellow' ? '#ffff00' : '#333300',
+        green: state === 'green' ? '#00ff00' : '#003300'
+    };
+
+    ctx.fillStyle = colors.red;
     ctx.beginPath();
-    ctx.arc(x, y - 35, 8, 0, Math.PI * 2);
+    ctx.arc(x, y - 28, 8, 0, Math.PI * 2);
     ctx.fill();
 
-    // Yellow
-    ctx.fillStyle = state === 'yellow' ? '#ffff00' : '#444400';
+    ctx.fillStyle = colors.yellow;
     ctx.beginPath();
-    ctx.arc(x, y - 18, 8, 0, Math.PI * 2);
+    ctx.arc(x, y - 10, 8, 0, Math.PI * 2);
     ctx.fill();
 
-    // Green
-    ctx.fillStyle = state === 'green' ? '#00ff00' : '#004400';
+    ctx.fillStyle = colors.green;
     ctx.beginPath();
-    ctx.arc(x, y - 1, 8, 0, Math.PI * 2);
+    ctx.arc(x, y + 8, 8, 0, Math.PI * 2);
     ctx.fill();
+
+    // Glow effect
+    if (state === 'red') {
+        ctx.shadowColor = '#ff0000';
+        ctx.shadowBlur = 15;
+        ctx.beginPath();
+        ctx.arc(x, y - 28, 6, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.shadowBlur = 0;
+    } else if (state === 'green') {
+        ctx.shadowColor = '#00ff00';
+        ctx.shadowBlur = 15;
+        ctx.beginPath();
+        ctx.arc(x, y + 8, 6, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.shadowBlur = 0;
+    }
 }
 
-function renderMiniMap() {
-    const mw = miniCanvas.width;
-    const mh = miniCanvas.height;
-    const tileSize = mw / MAP_WIDTH;
+function drawPedestrian(x, y, color) {
+    // Shadow
+    ctx.fillStyle = 'rgba(0,0,0,0.3)';
+    ctx.beginPath();
+    ctx.ellipse(x, y + 10, 8, 4, 0, 0, Math.PI * 2);
+    ctx.fill();
 
-    // Clear
-    miniCtx.fillStyle = '#1a4a1a';
-    miniCtx.fillRect(0, 0, mw, mh);
+    // Body
+    ctx.fillStyle = color;
+    ctx.fillRect(x - 6, y - 5, 12, 18);
 
-    // Draw tiles
-    for (let ty = 0; ty < MAP_HEIGHT; ty++) {
-        for (let tx = 0; tx < MAP_WIDTH; tx++) {
-            const tile = cityMap[ty][tx];
+    // Head
+    ctx.fillStyle = '#ffd5b4';
+    ctx.beginPath();
+    ctx.arc(x, y - 12, 8, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Hair
+    ctx.fillStyle = '#333';
+    ctx.beginPath();
+    ctx.arc(x, y - 14, 7, Math.PI, Math.PI * 2);
+    ctx.fill();
+
+    // Legs
+    ctx.fillStyle = '#333';
+    ctx.fillRect(x - 5, y + 13, 4, 8);
+    ctx.fillRect(x + 1, y + 13, 4, 8);
+}
+
+function drawCar(x, y, angle, color, w, h) {
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.rotate(angle);
+
+    // Shadow
+    ctx.fillStyle = 'rgba(0,0,0,0.3)';
+    ctx.fillRect(-w/2 + 3, -h/2 + 3, w, h);
+
+    // Body
+    ctx.fillStyle = color;
+    ctx.fillRect(-w/2, -h/2, w, h);
+
+    // Outline
+    ctx.strokeStyle = '#222';
+    ctx.lineWidth = 2;
+    ctx.strokeRect(-w/2, -h/2, w, h);
+
+    // Windshield
+    ctx.fillStyle = '#7ec8e3';
+    ctx.fillRect(-w/2 + 4, -h/2 + 5, w - 8, 10);
+
+    // Rear window
+    ctx.fillRect(-w/2 + 4, h/2 - 12, w - 8, 8);
+
+    // Wheels
+    ctx.fillStyle = '#111';
+    ctx.fillRect(-w/2 - 3, -h/2 + 5, 5, 10);
+    ctx.fillRect(w/2 - 2, -h/2 + 5, 5, 10);
+    ctx.fillRect(-w/2 - 3, h/2 - 15, 5, 10);
+    ctx.fillRect(w/2 - 2, h/2 - 15, 5, 10);
+
+    // Headlights
+    ctx.fillStyle = '#ffffcc';
+    ctx.fillRect(-w/2 + 3, -h/2, 6, 4);
+    ctx.fillRect(w/2 - 9, -h/2, 6, 4);
+
+    // Taillights
+    ctx.fillStyle = '#ff3333';
+    ctx.fillRect(-w/2 + 3, h/2 - 4, 6, 4);
+    ctx.fillRect(w/2 - 9, h/2 - 4, 6, 4);
+
+    ctx.restore();
+}
+
+function drawPlayerCar(x, y, angle) {
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.rotate(angle);
+
+    const w = player.width;
+    const h = player.height;
+
+    // Shadow
+    ctx.fillStyle = 'rgba(0,0,0,0.4)';
+    ctx.fillRect(-w/2 + 4, -h/2 + 4, w, h);
+
+    // Body (blue sports car)
+    const grad = ctx.createLinearGradient(-w/2, 0, w/2, 0);
+    grad.addColorStop(0, '#1e40af');
+    grad.addColorStop(0.5, '#3b82f6');
+    grad.addColorStop(1, '#1e40af');
+    ctx.fillStyle = grad;
+    ctx.fillRect(-w/2, -h/2, w, h);
+
+    // Racing stripe
+    ctx.fillStyle = '#60a5fa';
+    ctx.fillRect(-2, -h/2, 4, h);
+
+    // Outline
+    ctx.strokeStyle = '#1e3a8a';
+    ctx.lineWidth = 3;
+    ctx.strokeRect(-w/2, -h/2, w, h);
+
+    // Windshield
+    ctx.fillStyle = '#93c5fd';
+    ctx.fillRect(-w/2 + 5, -h/2 + 6, w - 10, 12);
+
+    // Rear window
+    ctx.fillRect(-w/2 + 5, h/2 - 14, w - 10, 10);
+
+    // Wheels with rims
+    ctx.fillStyle = '#111';
+    ctx.fillRect(-w/2 - 4, -h/2 + 6, 6, 12);
+    ctx.fillRect(w/2 - 2, -h/2 + 6, 6, 12);
+    ctx.fillRect(-w/2 - 4, h/2 - 18, 6, 12);
+    ctx.fillRect(w/2 - 2, h/2 - 18, 6, 12);
+
+    // Wheel rims
+    ctx.fillStyle = '#666';
+    ctx.fillRect(-w/2 - 2, -h/2 + 9, 2, 6);
+    ctx.fillRect(w/2, -h/2 + 9, 2, 6);
+    ctx.fillRect(-w/2 - 2, h/2 - 15, 2, 6);
+    ctx.fillRect(w/2, h/2 - 15, 2, 6);
+
+    // Headlights
+    ctx.fillStyle = '#fef08a';
+    ctx.beginPath();
+    ctx.arc(-w/2 + 6, -h/2 + 2, 4, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(w/2 - 6, -h/2 + 2, 4, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Taillights
+    ctx.fillStyle = '#ef4444';
+    ctx.fillRect(-w/2 + 3, h/2 - 5, 8, 5);
+    ctx.fillRect(w/2 - 11, h/2 - 5, 8, 5);
+
+    // Direction arrow
+    ctx.fillStyle = '#fff';
+    ctx.beginPath();
+    ctx.moveTo(0, -h/2 - 10);
+    ctx.lineTo(-7, -h/2 - 3);
+    ctx.lineTo(7, -h/2 - 3);
+    ctx.closePath();
+    ctx.fill();
+
+    ctx.restore();
+}
+
+function drawMinimap() {
+    const mw = 140;
+    const mh = 140;
+    const mx = canvas.width - mw - 15;
+    const my = 15;
+    const ts = mw / MAP_W;
+
+    // Background
+    ctx.fillStyle = 'rgba(0,0,0,0.75)';
+    ctx.fillRect(mx - 5, my - 5, mw + 10, mh + 10);
+
+    // Roads
+    for (let ty = 0; ty < MAP_H; ty++) {
+        for (let tx = 0; tx < MAP_W; tx++) {
+            const tile = MAP[ty][tx];
             if (tile > 0) {
-                miniCtx.fillStyle = tile >= 3 ? '#555' : '#444';
-                miniCtx.fillRect(tx * tileSize, ty * tileSize, tileSize, tileSize);
+                ctx.fillStyle = tile >= 3 ? '#666' : '#555';
+                ctx.fillRect(mx + tx * ts, my + ty * ts, ts, ts);
 
-                // Stop sign indicator
+                // Stop sign / light indicators
                 if (tile === 4) {
-                    miniCtx.fillStyle = '#dc2626';
-                    miniCtx.beginPath();
-                    miniCtx.arc(tx * tileSize + tileSize/2, ty * tileSize + tileSize/2, 3, 0, Math.PI * 2);
-                    miniCtx.fill();
-                }
-
-                // Traffic light indicator
-                if (tile === 5) {
-                    const key = `${tx},${ty}`;
-                    const state = game.trafficLights[key];
-                    miniCtx.fillStyle = state === 'red' ? '#ff0000' : state === 'yellow' ? '#ffff00' : '#00ff00';
-                    miniCtx.beginPath();
-                    miniCtx.arc(tx * tileSize + tileSize/2, ty * tileSize + tileSize/2, 3, 0, Math.PI * 2);
-                    miniCtx.fill();
+                    ctx.fillStyle = '#ff0000';
+                    ctx.beginPath();
+                    ctx.arc(mx + tx * ts + ts/2, my + ty * ts + ts/2, 2, 0, Math.PI * 2);
+                    ctx.fill();
+                } else if (tile === 5) {
+                    const light = trafficLights.find(l => l.tx === tx && l.ty === ty);
+                    ctx.fillStyle = light?.state === 'red' ? '#ff0000' : light?.state === 'yellow' ? '#ffff00' : '#00ff00';
+                    ctx.beginPath();
+                    ctx.arc(mx + tx * ts + ts/2, my + ty * ts + ts/2, 2, 0, Math.PI * 2);
+                    ctx.fill();
                 }
             }
         }
     }
 
-    // Draw player
-    const playerTileX = wrapCoord(game.x, MAP_WIDTH * TILE_SIZE) / TILE_SIZE;
-    const playerTileY = wrapCoord(game.y, MAP_HEIGHT * TILE_SIZE) / TILE_SIZE;
+    // Player
+    const px = (player.x / WORLD_W) * mw;
+    const py = (player.y / WORLD_H) * mh;
 
-    miniCtx.fillStyle = '#22c55e';
-    miniCtx.beginPath();
-    miniCtx.arc(playerTileX * tileSize, playerTileY * tileSize, 4, 0, Math.PI * 2);
-    miniCtx.fill();
+    ctx.fillStyle = '#3b82f6';
+    ctx.beginPath();
+    ctx.arc(mx + px, my + py, 4, 0, Math.PI * 2);
+    ctx.fill();
 
-    // Direction indicator
-    const dir = HEADINGS[game.heading];
-    miniCtx.strokeStyle = '#22c55e';
-    miniCtx.lineWidth = 2;
-    miniCtx.beginPath();
-    miniCtx.moveTo(playerTileX * tileSize, playerTileY * tileSize);
-    miniCtx.lineTo(
-        playerTileX * tileSize + dir.dx * 8,
-        playerTileY * tileSize + dir.dy * 8
+    // Direction
+    ctx.strokeStyle = '#fff';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(mx + px, my + py);
+    ctx.lineTo(
+        mx + px + Math.sin(player.angle) * 8,
+        my + py - Math.cos(player.angle) * 8
     );
-    miniCtx.stroke();
+    ctx.stroke();
 
-    // Draw pedestrians on mini-map
-    for (const ped of game.pedestrians) {
-        const pedTileX = wrapCoord(ped.x, MAP_WIDTH * TILE_SIZE) / TILE_SIZE;
-        const pedTileY = wrapCoord(ped.y, MAP_HEIGHT * TILE_SIZE) / TILE_SIZE;
-        miniCtx.fillStyle = '#FFB6C1';
-        miniCtx.beginPath();
-        miniCtx.arc(pedTileX * tileSize, pedTileY * tileSize, 2, 0, Math.PI * 2);
-        miniCtx.fill();
-    }
-
-    // Draw school bus on mini-map
-    if (game.schoolBus) {
-        const busTileX = wrapCoord(game.schoolBus.x, MAP_WIDTH * TILE_SIZE) / TILE_SIZE;
-        const busTileY = wrapCoord(game.schoolBus.y, MAP_HEIGHT * TILE_SIZE) / TILE_SIZE;
-        miniCtx.fillStyle = '#fbbf24';
-        miniCtx.fillRect(busTileX * tileSize - 3, busTileY * tileSize - 2, 6, 4);
-    }
+    // Border
+    ctx.strokeStyle = '#fff';
+    ctx.lineWidth = 2;
+    ctx.strokeRect(mx - 5, my - 5, mw + 10, mh + 10);
 }
 
 // ============================================
@@ -1087,6 +1093,7 @@ function gameLoop() {
     requestAnimationFrame(gameLoop);
 }
 
+init();
 gameLoop();
 </script>
 </body>
