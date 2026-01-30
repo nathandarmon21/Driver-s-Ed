@@ -196,11 +196,31 @@
         .menuBtn.drive { background: linear-gradient(135deg, #22c55e, #16a34a); }
         .menuBtn.signs { background: linear-gradient(135deg, #f59e0b, #d97706); }
 
-        /* Intersection Decision UI */
+        /* Audio Toggle */
+        #audioToggle {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: rgba(0,0,0,0.8);
+            padding: 12px 20px;
+            border-radius: 25px;
+            cursor: pointer;
+            z-index: 10000;
+            color: white;
+            font-size: 1rem;
+            border: 2px solid #444;
+            transition: all 0.3s;
+        }
+        #audioToggle:hover {
+            background: rgba(0,0,0,0.95);
+            transform: scale(1.05);
+        }
+
+        /* Intersection Decision UI - VISUAL FOCUSED */
         #intersectionUI {
             position: absolute;
             top: 0; left: 0; right: 0; bottom: 0;
-            background: rgba(0,0,0,0.9);
+            background: rgba(0,0,0,0.95);
             display: none;
             flex-direction: column;
             align-items: center;
@@ -209,16 +229,21 @@
         }
         #intersectionUI.show { display: flex; }
         #intersectionTitle {
-            font-size: 2rem;
+            font-size: 1.4rem;
             color: #fbbf24;
-            margin-bottom: 20px;
+            margin-bottom: 10px;
         }
         #intersectionQuestion {
-            font-size: 1.4rem;
-            margin: 20px 0;
+            font-size: 1.2rem;
+            margin: 10px 0;
             text-align: center;
-            max-width: 600px;
-            line-height: 1.5;
+            max-width: 700px;
+            line-height: 1.4;
+            color: #ccc;
+        }
+        #intersectionDiagram {
+            border: 3px solid #fbbf24;
+            border-radius: 10px;
         }
         .choiceBtn {
             padding: 20px 50px;
@@ -235,9 +260,9 @@
         .choiceBtn.wait { background: #ef4444; }
         .choiceBtn:hover { filter: brightness(1.1); transform: scale(1.05); }
         #intersectionHint {
-            color: #888;
-            margin-top: 20px;
-            font-size: 1rem;
+            color: #666;
+            margin-top: 10px;
+            font-size: 0.9rem;
             max-width: 500px;
             text-align: center;
         }
@@ -246,6 +271,11 @@
 <body>
 <div id="gameContainer">
     <canvas id="gameCanvas"></canvas>
+
+    <!-- Audio Toggle -->
+    <div id="audioToggle" onclick="toggleAudioUI()">
+        <span id="audioIcon">🔊</span> Sound ON
+    </div>
 
     <div id="hud">
         <div id="speedBox" class="hud-box">
@@ -286,8 +316,8 @@
     </div>
 
     <div id="intersectionUI">
-        <div id="intersectionTitle">INTERSECTION</div>
-        <canvas id="intersectionDiagram" width="350" height="350"></canvas>
+        <div id="intersectionTitle">DECISION TIME</div>
+        <canvas id="intersectionDiagram" width="700" height="450"></canvas>
         <div id="intersectionQuestion">What should you do?</div>
         <div>
             <button class="choiceBtn go" onclick="makeChoice('go')">GO - I Have Right of Way</button>
@@ -526,119 +556,677 @@ const SIGNS = {
 };
 
 // =====================
-// INTERSECTION SCENARIOS - Right of Way Practice
+// VISUAL INTERSECTION SCENARIOS - Shows actual situations, minimal text
 // =====================
 const INTERSECTIONS = [
     {
-        type: '4way',
-        title: '4-WAY STOP INTERSECTION',
-        question: 'You and another car arrived at the SAME TIME.\nThe other car is on your RIGHT.\nWho has the right-of-way?',
+        type: '4way_same_time_right',
+        title: '4-WAY STOP',
+        question: 'Both cars stopped at the same time. What do you do?',
         correctAnswer: 'wait',
-        cars: [{dir: 'right', label: 'Same time', color: '#3b82f6'}],
         rule: 'At a 4-way stop when arriving at the same time, yield to the vehicle on your RIGHT.',
+        draw: function(ctx, w, h) {
+            drawIntersectionBase(ctx, w, h);
+            drawStopSigns(ctx, w, h);
+            // YOUR car (green) - at bottom
+            drawCarTopDown(ctx, w/2 + 30, h - 80, 0, '#22c55e', 'YOU');
+            // Blue car on your RIGHT - arrived same time
+            drawCarTopDown(ctx, w - 100, h/2 + 30, -Math.PI/2, '#3b82f6', '');
+            // "Same time" labels
+            ctx.fillStyle = '#fbbf24';
+            ctx.font = 'bold 14px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText('SAME TIME', w/2 + 30, h - 25);
+            ctx.fillText('SAME TIME', w - 55, h/2 + 80);
+        }
     },
     {
-        type: '4way',
-        title: '4-WAY STOP INTERSECTION',
-        question: 'You arrived at the intersection FIRST.\nAnother car arrived after you.\nWho should go first?',
+        type: '4way_you_first',
+        title: '4-WAY STOP',
+        question: 'You arrived first. What do you do?',
         correctAnswer: 'go',
-        cars: [{dir: 'left', label: '2nd', color: '#3b82f6'}],
         rule: 'First to arrive = first to go. You have the right-of-way.',
+        draw: function(ctx, w, h) {
+            drawIntersectionBase(ctx, w, h);
+            drawStopSigns(ctx, w, h);
+            // YOUR car - arrived 1st
+            drawCarTopDown(ctx, w/2 + 30, h - 80, 0, '#22c55e', 'YOU');
+            // Blue car on left - arrived 2nd
+            drawCarTopDown(ctx, 80, h/2 - 30, Math.PI/2, '#3b82f6', '');
+            // Arrival order
+            ctx.fillStyle = '#fbbf24';
+            ctx.font = 'bold 16px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText('1st', w/2 + 30, h - 25);
+            ctx.fillText('2nd', 130, h/2 - 30);
+        }
     },
     {
-        type: '4way',
-        title: '4-WAY STOP INTERSECTION',
-        question: 'Another car arrived BEFORE you did.\nThey are waiting at the intersection.\nWho goes first?',
+        type: '4way_they_first',
+        title: '4-WAY STOP',
+        question: 'The other car arrived first. What do you do?',
         correctAnswer: 'wait',
-        cars: [{dir: 'ahead', label: '1st', color: '#3b82f6'}],
         rule: 'The vehicle that arrived first has right-of-way. Wait your turn.',
+        draw: function(ctx, w, h) {
+            drawIntersectionBase(ctx, w, h);
+            drawStopSigns(ctx, w, h);
+            // YOUR car - arrived 2nd
+            drawCarTopDown(ctx, w/2 + 30, h - 80, 0, '#22c55e', 'YOU');
+            // Blue car ahead - arrived 1st
+            drawCarTopDown(ctx, w/2 - 30, 80, Math.PI, '#3b82f6', '');
+            // Arrival order
+            ctx.fillStyle = '#fbbf24';
+            ctx.font = 'bold 16px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText('2nd', w/2 + 30, h - 25);
+            ctx.fillText('1st', w/2 - 30, 135);
+        }
     },
     {
-        type: '4way',
-        title: '4-WAY STOP INTERSECTION',
-        question: 'Three cars arrived before you.\nYou are the last one to arrive.\nWhat should you do?',
+        type: '4way_three_cars',
+        title: '4-WAY STOP',
+        question: 'Three cars arrived before you. What do you do?',
         correctAnswer: 'wait',
-        cars: [
-            {dir: 'left', label: '1st', color: '#3b82f6'},
-            {dir: 'right', label: '2nd', color: '#22c55e'},
-            {dir: 'ahead', label: '3rd', color: '#f59e0b'}
-        ],
         rule: 'Wait for all vehicles that arrived before you to proceed.',
+        draw: function(ctx, w, h) {
+            drawIntersectionBase(ctx, w, h);
+            drawStopSigns(ctx, w, h);
+            // YOUR car - arrived 4th
+            drawCarTopDown(ctx, w/2 + 30, h - 80, 0, '#22c55e', 'YOU');
+            // Three other cars
+            drawCarTopDown(ctx, 80, h/2 - 30, Math.PI/2, '#3b82f6', '');
+            drawCarTopDown(ctx, w - 100, h/2 + 30, -Math.PI/2, '#f59e0b', '');
+            drawCarTopDown(ctx, w/2 - 30, 80, Math.PI, '#a855f7', '');
+            // Labels
+            ctx.fillStyle = '#fbbf24';
+            ctx.font = 'bold 14px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText('4th', w/2 + 30, h - 25);
+            ctx.fillText('1st', 130, h/2 - 30);
+            ctx.fillText('2nd', w - 55, h/2 + 80);
+            ctx.fillText('3rd', w/2 - 30, 135);
+        }
     },
     {
-        type: 'yield',
-        title: 'YIELD SIGN - YOU MUST YIELD',
-        question: 'You have a YIELD sign.\nCars are approaching on the cross street.\nWhat do you do?',
+        type: 'yield_traffic',
+        title: 'YIELD SIGN',
+        question: 'You have a yield sign. Cross traffic is coming. What do you do?',
         correctAnswer: 'wait',
-        cars: [{dir: 'left', label: '', color: '#3b82f6'}, {dir: 'right', label: '', color: '#22c55e'}],
         rule: 'YIELD sign means you must give right-of-way to ALL cross traffic.',
+        draw: function(ctx, w, h) {
+            drawIntersectionBase(ctx, w, h);
+            // Yield sign for you
+            drawYieldSignTopDown(ctx, w/2 + 80, h - 140);
+            // YOUR car
+            drawCarTopDown(ctx, w/2 + 30, h - 80, 0, '#22c55e', 'YOU');
+            // Cross traffic
+            drawCarTopDown(ctx, 100, h/2 - 30, Math.PI/2, '#3b82f6', '');
+            drawCarTopDown(ctx, w - 120, h/2 + 30, -Math.PI/2, '#ef4444', '');
+            // Movement arrows for cross traffic
+            ctx.strokeStyle = '#3b82f6';
+            ctx.lineWidth = 3;
+            ctx.setLineDash([5, 5]);
+            ctx.beginPath();
+            ctx.moveTo(130, h/2 - 30);
+            ctx.lineTo(w - 130, h/2 - 30);
+            ctx.stroke();
+            ctx.setLineDash([]);
+        }
     },
     {
-        type: 'yield',
-        title: 'YIELD SIGN - YOU MUST YIELD',
-        question: 'You have a YIELD sign.\nThe cross street is COMPLETELY CLEAR.\nWhat do you do?',
+        type: 'yield_clear',
+        title: 'YIELD SIGN',
+        question: 'You have a yield sign. The road is completely clear. What do you do?',
         correctAnswer: 'go',
-        cars: [],
         rule: 'If the way is clear and safe, you may proceed after yielding.',
+        draw: function(ctx, w, h) {
+            drawIntersectionBase(ctx, w, h);
+            // Yield sign for you
+            drawYieldSignTopDown(ctx, w/2 + 80, h - 140);
+            // YOUR car only - road is clear
+            drawCarTopDown(ctx, w/2 + 30, h - 80, 0, '#22c55e', 'YOU');
+            // "CLEAR" labels
+            ctx.fillStyle = '#22c55e';
+            ctx.font = 'bold 18px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText('CLEAR', 150, h/2);
+            ctx.fillText('CLEAR', w - 150, h/2);
+        }
     },
     {
-        type: 'uncontrolled',
-        title: 'UNCONTROLLED INTERSECTION (No Signs)',
-        question: 'There are NO stop signs or signals.\nA car is approaching from your RIGHT.\nWho has right-of-way?',
+        type: 'uncontrolled_right',
+        title: 'NO SIGNS OR SIGNALS',
+        question: 'No traffic controls. Car approaching from your right. What do you do?',
         correctAnswer: 'wait',
-        cars: [{dir: 'right', label: '', color: '#3b82f6'}],
         rule: 'At uncontrolled intersections: YIELD to vehicles on your RIGHT.',
+        draw: function(ctx, w, h) {
+            drawIntersectionBase(ctx, w, h);
+            // No signs - uncontrolled
+            ctx.fillStyle = '#888';
+            ctx.font = '12px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText('(No signs)', w/2, 30);
+            // YOUR car
+            drawCarTopDown(ctx, w/2 + 30, h - 80, 0, '#22c55e', 'YOU');
+            // Car from right
+            drawCarTopDown(ctx, w - 100, h/2 + 30, -Math.PI/2, '#3b82f6', '');
+            // Arrow showing they're approaching
+            ctx.strokeStyle = '#3b82f6';
+            ctx.lineWidth = 3;
+            ctx.setLineDash([5, 5]);
+            ctx.beginPath();
+            ctx.moveTo(w - 130, h/2 + 30);
+            ctx.lineTo(w/2 + 70, h/2 + 30);
+            ctx.stroke();
+            ctx.setLineDash([]);
+        }
     },
     {
-        type: 'uncontrolled',
-        title: 'UNCONTROLLED INTERSECTION (No Signs)',
-        question: 'No signs or signals present.\nA car approaches from your LEFT.\nWho should go first?',
+        type: 'uncontrolled_left',
+        title: 'NO SIGNS OR SIGNALS',
+        question: 'No traffic controls. Car approaching from your left. What do you do?',
         correctAnswer: 'go',
-        cars: [{dir: 'left', label: '', color: '#3b82f6'}],
         rule: 'You are on their right, so YOU have the right-of-way.',
+        draw: function(ctx, w, h) {
+            drawIntersectionBase(ctx, w, h);
+            // No signs
+            ctx.fillStyle = '#888';
+            ctx.font = '12px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText('(No signs)', w/2, 30);
+            // YOUR car
+            drawCarTopDown(ctx, w/2 + 30, h - 80, 0, '#22c55e', 'YOU');
+            // Car from left
+            drawCarTopDown(ctx, 80, h/2 - 30, Math.PI/2, '#3b82f6', '');
+        }
     },
     {
-        type: 'schoolBus',
-        title: 'SCHOOL BUS - RED LIGHTS FLASHING',
-        question: 'A school bus ahead has STOPPED.\nIts RED lights are FLASHING.\nThe STOP arm is extended.\nWhat must you do?',
+        type: 'school_bus',
+        title: 'SCHOOL BUS',
+        question: 'School bus with flashing red lights and stop arm. What do you do?',
         correctAnswer: 'wait',
-        cars: [{dir: 'ahead', label: 'STOP', color: '#fbbf24', type: 'bus'}],
-        rule: 'You MUST STOP for a school bus with flashing red lights! $250 fine and possible license suspension for violations!',
+        rule: 'You MUST STOP for a school bus with flashing red lights! $250 fine for violations!',
+        draw: function(ctx, w, h) {
+            // Straight road scene
+            ctx.fillStyle = '#228b22';
+            ctx.fillRect(0, 0, w, h);
+            ctx.fillStyle = '#444';
+            ctx.fillRect(w/2 - 100, 0, 200, h);
+            // Lane marking
+            ctx.strokeStyle = '#fbbf24';
+            ctx.lineWidth = 4;
+            ctx.setLineDash([20, 15]);
+            ctx.beginPath();
+            ctx.moveTo(w/2, 0);
+            ctx.lineTo(w/2, h);
+            ctx.stroke();
+            ctx.setLineDash([]);
+            // School bus ahead
+            ctx.fillStyle = '#fbbf24';
+            ctx.fillRect(w/2 - 40, 100, 80, 50);
+            ctx.fillStyle = '#000';
+            ctx.font = 'bold 12px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText('SCHOOL BUS', w/2, 130);
+            // Flashing red lights
+            ctx.fillStyle = '#ff0000';
+            ctx.beginPath();
+            ctx.arc(w/2 - 30, 95, 8, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.beginPath();
+            ctx.arc(w/2 + 30, 95, 8, 0, Math.PI * 2);
+            ctx.fill();
+            // Stop arm extended
+            ctx.fillStyle = '#ff0000';
+            ctx.fillRect(w/2 - 70, 115, 30, 20);
+            ctx.fillStyle = '#fff';
+            ctx.font = 'bold 10px Arial';
+            ctx.fillText('STOP', w/2 - 55, 128);
+            // Children
+            drawPedestrian(ctx, w/2 - 20, 170, '#FFB6C1');
+            drawPedestrian(ctx, w/2 + 10, 175, '#87CEEB');
+            // YOUR car
+            drawCarTopDown(ctx, w/2 + 30, h - 100, 0, '#22c55e', 'YOU');
+        }
     },
     {
         type: 'emergency',
-        title: 'EMERGENCY VEHICLE APPROACHING',
-        question: 'An ambulance with SIRENS and LIGHTS\nis approaching from BEHIND you.\nWhat must you do?',
+        title: 'EMERGENCY VEHICLE',
+        question: 'Ambulance with sirens approaching from behind. What do you do?',
         correctAnswer: 'wait',
-        cars: [{dir: 'behind', label: '🚨', color: '#dc2626', type: 'emergency'}],
-        rule: 'Pull to the RIGHT and STOP for emergency vehicles. It is the law in Massachusetts!',
+        rule: 'Pull to the RIGHT and STOP for emergency vehicles. It\'s the law!',
+        draw: function(ctx, w, h) {
+            // Road scene
+            ctx.fillStyle = '#228b22';
+            ctx.fillRect(0, 0, w, h);
+            ctx.fillStyle = '#444';
+            ctx.fillRect(w/2 - 100, 0, 200, h);
+            // Lane marking
+            ctx.strokeStyle = '#fbbf24';
+            ctx.lineWidth = 4;
+            ctx.setLineDash([20, 15]);
+            ctx.beginPath();
+            ctx.moveTo(w/2, 0);
+            ctx.lineTo(w/2, h);
+            ctx.stroke();
+            ctx.setLineDash([]);
+            // YOUR car
+            drawCarTopDown(ctx, w/2 + 30, h/2, 0, '#22c55e', 'YOU');
+            // Ambulance behind you
+            ctx.fillStyle = '#fff';
+            ctx.fillRect(w/2 + 10, h - 100, 40, 60);
+            ctx.fillStyle = '#ff0000';
+            ctx.fillRect(w/2 + 20, h - 95, 20, 20);
+            // Flashing lights
+            ctx.fillStyle = '#ff0000';
+            ctx.beginPath();
+            ctx.arc(w/2 + 15, h - 105, 8, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.fillStyle = '#0000ff';
+            ctx.beginPath();
+            ctx.arc(w/2 + 45, h - 105, 8, 0, Math.PI * 2);
+            ctx.fill();
+            // Sound waves
+            ctx.strokeStyle = '#ff0000';
+            ctx.lineWidth = 2;
+            for (let i = 1; i <= 3; i++) {
+                ctx.beginPath();
+                ctx.arc(w/2 + 30, h - 70, 20 + i * 15, -0.5, 0.5);
+                ctx.stroke();
+            }
+            // Arrow showing where to go
+            ctx.strokeStyle = '#22c55e';
+            ctx.lineWidth = 3;
+            ctx.setLineDash([5, 5]);
+            ctx.beginPath();
+            ctx.moveTo(w/2 + 30, h/2 - 30);
+            ctx.lineTo(w/2 + 70, h/2 - 50);
+            ctx.stroke();
+            ctx.setLineDash([]);
+            ctx.fillStyle = '#22c55e';
+            ctx.font = '12px Arial';
+            ctx.fillText('Pull right & stop', w/2 + 100, h/2 - 40);
+        }
     },
     {
-        type: 'pedestrian',
-        title: 'PEDESTRIAN IN CROSSWALK',
-        question: 'A pedestrian is CROSSING in the crosswalk.\nThey are walking across your path.\nWhat must you do?',
+        type: 'pedestrian_crosswalk',
+        title: 'CROSSWALK',
+        question: 'Pedestrians are crossing. What do you do?',
         correctAnswer: 'wait',
-        cars: [{dir: 'crossing', label: '🚶', color: '#fff', type: 'pedestrian'}],
         rule: 'Pedestrians in crosswalks ALWAYS have right-of-way. You MUST stop and wait.',
+        draw: function(ctx, w, h) {
+            // Road scene
+            ctx.fillStyle = '#228b22';
+            ctx.fillRect(0, 0, w, h);
+            ctx.fillStyle = '#444';
+            ctx.fillRect(w/2 - 100, 0, 200, h);
+            // Crosswalk stripes
+            ctx.fillStyle = '#fff';
+            for (let x = w/2 - 90; x < w/2 + 90; x += 25) {
+                ctx.fillRect(x, h/2 - 50, 15, 100);
+            }
+            // Pedestrians crossing
+            drawPedestrian(ctx, w/2 - 30, h/2, '#FFB6C1');
+            drawPedestrian(ctx, w/2, h/2 - 20, '#87CEEB');
+            drawPedestrian(ctx, w/2 + 20, h/2 + 15, '#98FB98');
+            // Walking direction
+            ctx.strokeStyle = '#fff';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(w/2 - 50, h/2);
+            ctx.lineTo(w/2 + 50, h/2);
+            ctx.stroke();
+            // YOUR car approaching
+            drawCarTopDown(ctx, w/2 + 30, h - 80, 0, '#22c55e', 'YOU');
+        }
     },
     {
-        type: 'turning',
-        title: 'LEFT TURN AT INTERSECTION',
-        question: 'You want to turn LEFT.\nOncoming traffic is approaching.\nWhat should you do?',
+        type: 'left_turn_oncoming',
+        title: 'LEFT TURN',
+        question: 'You want to turn left. Oncoming traffic is approaching. What do you do?',
         correctAnswer: 'wait',
-        cars: [{dir: 'ahead', label: '', color: '#3b82f6'}],
         rule: 'When turning left, you must YIELD to all oncoming traffic.',
+        draw: function(ctx, w, h) {
+            drawIntersectionBase(ctx, w, h);
+            // Traffic light - green
+            drawTrafficLightTopDown(ctx, w/2 + 80, h - 160, 'green');
+            // YOUR car wanting to turn left
+            drawCarTopDown(ctx, w/2 + 30, h - 80, 0, '#22c55e', 'YOU');
+            // Turn arrow
+            ctx.strokeStyle = '#fbbf24';
+            ctx.lineWidth = 3;
+            ctx.setLineDash([5, 5]);
+            ctx.beginPath();
+            ctx.moveTo(w/2 + 30, h - 110);
+            ctx.quadraticCurveTo(w/2 + 30, h/2, w/2 - 100, h/2 - 30);
+            ctx.stroke();
+            ctx.setLineDash([]);
+            // Oncoming car
+            drawCarTopDown(ctx, w/2 - 30, 100, Math.PI, '#3b82f6', '');
+            // Oncoming arrow
+            ctx.strokeStyle = '#3b82f6';
+            ctx.lineWidth = 3;
+            ctx.setLineDash([5, 5]);
+            ctx.beginPath();
+            ctx.moveTo(w/2 - 30, 130);
+            ctx.lineTo(w/2 - 30, h - 100);
+            ctx.stroke();
+            ctx.setLineDash([]);
+        }
     },
     {
-        type: 'turning',
-        title: 'RIGHT TURN ON RED',
-        question: 'The light is RED.\nYou want to turn RIGHT.\nThere is NO "No Turn on Red" sign.\nWhat should you do?',
+        type: 'right_on_red',
+        title: 'RED LIGHT - RIGHT TURN',
+        question: 'Red light, you want to turn right. No sign prohibits it. What do you do?',
         correctAnswer: 'wait',
-        cars: [],
-        hint: 'Think about what you must do FIRST...',
-        rule: 'Right on red is allowed ONLY after coming to a COMPLETE STOP and yielding to traffic and pedestrians.',
+        hint: 'You must STOP FIRST before turning right on red',
+        rule: 'Right on red is allowed ONLY after coming to a COMPLETE STOP and checking traffic.',
+        draw: function(ctx, w, h) {
+            drawIntersectionBase(ctx, w, h);
+            // Traffic light - RED
+            drawTrafficLightTopDown(ctx, w/2 + 80, h - 160, 'red');
+            // YOUR car
+            drawCarTopDown(ctx, w/2 + 30, h - 80, 0, '#22c55e', 'YOU');
+            // Turn arrow (right)
+            ctx.strokeStyle = '#fbbf24';
+            ctx.lineWidth = 3;
+            ctx.setLineDash([5, 5]);
+            ctx.beginPath();
+            ctx.moveTo(w/2 + 30, h - 110);
+            ctx.quadraticCurveTo(w/2 + 30, h/2, w - 100, h/2 + 30);
+            ctx.stroke();
+            ctx.setLineDash([]);
+            // "Must stop first" hint
+            ctx.fillStyle = '#ff6b6b';
+            ctx.font = 'bold 14px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText('STOP FIRST!', w/2 + 30, h - 15);
+        }
     },
+    {
+        type: 'green_light_clear',
+        title: 'GREEN LIGHT',
+        question: 'Green light, road is clear. What do you do?',
+        correctAnswer: 'go',
+        rule: 'Green light means GO if the intersection is clear.',
+        draw: function(ctx, w, h) {
+            drawIntersectionBase(ctx, w, h);
+            // Traffic light - GREEN
+            drawTrafficLightTopDown(ctx, w/2 + 80, h - 160, 'green');
+            // YOUR car
+            drawCarTopDown(ctx, w/2 + 30, h - 80, 0, '#22c55e', 'YOU');
+            // Clear signs
+            ctx.fillStyle = '#22c55e';
+            ctx.font = 'bold 16px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText('CLEAR', w/2, h/2 - 80);
+            ctx.fillText('CLEAR', w/2 - 100, h/2);
+            ctx.fillText('CLEAR', w/2 + 100, h/2);
+        }
+    },
+    {
+        type: 'fire_hydrant_parking',
+        title: 'PARKING',
+        question: 'Can you park 8 feet from this fire hydrant?',
+        correctAnswer: 'wait',
+        rule: 'Must park at least 10 feet from fire hydrants in Massachusetts.',
+        draw: function(ctx, w, h) {
+            // Street scene
+            ctx.fillStyle = '#228b22';
+            ctx.fillRect(0, 0, w, h);
+            ctx.fillStyle = '#444';
+            ctx.fillRect(0, h/2 - 50, w, 100);
+            // Sidewalk
+            ctx.fillStyle = '#999';
+            ctx.fillRect(0, h/2 - 80, w, 30);
+            // Fire hydrant
+            ctx.fillStyle = '#ff0000';
+            ctx.beginPath();
+            ctx.arc(w/2, h/2 - 95, 15, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.fillStyle = '#cc0000';
+            ctx.beginPath();
+            ctx.arc(w/2, h/2 - 95, 8, 0, Math.PI * 2);
+            ctx.fill();
+            // Distance marker - 8 feet
+            ctx.strokeStyle = '#fbbf24';
+            ctx.lineWidth = 2;
+            ctx.setLineDash([5, 5]);
+            ctx.beginPath();
+            ctx.moveTo(w/2, h/2 - 80);
+            ctx.lineTo(w/2 + 60, h/2 - 80);
+            ctx.stroke();
+            ctx.setLineDash([]);
+            ctx.fillStyle = '#fbbf24';
+            ctx.font = 'bold 14px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText('8 ft', w/2 + 30, h/2 - 90);
+            // YOUR car wanting to park
+            drawCarTopDown(ctx, w/2 + 80, h/2, Math.PI/2, '#22c55e', 'YOU');
+            // 10 ft zone marked
+            ctx.fillStyle = 'rgba(255, 0, 0, 0.2)';
+            ctx.fillRect(w/2 - 75, h/2 - 80, 150, 30);
+            ctx.fillStyle = '#ff0000';
+            ctx.font = '12px Arial';
+            ctx.fillText('10 ft NO PARKING ZONE', w/2, h/2 - 55);
+        }
+    },
+    {
+        type: 'railroad_crossing',
+        title: 'RAILROAD CROSSING',
+        question: 'Lights are flashing at railroad crossing. What do you do?',
+        correctAnswer: 'wait',
+        rule: 'When railroad crossing lights flash, STOP and wait. Never try to beat a train!',
+        draw: function(ctx, w, h) {
+            // Road
+            ctx.fillStyle = '#228b22';
+            ctx.fillRect(0, 0, w, h);
+            ctx.fillStyle = '#444';
+            ctx.fillRect(w/2 - 80, 0, 160, h);
+            // Railroad tracks
+            ctx.strokeStyle = '#888';
+            ctx.lineWidth = 8;
+            ctx.beginPath();
+            ctx.moveTo(0, h/2 - 10);
+            ctx.lineTo(w, h/2 - 10);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(0, h/2 + 10);
+            ctx.lineTo(w, h/2 + 10);
+            ctx.stroke();
+            // Ties
+            ctx.fillStyle = '#654321';
+            for (let x = 0; x < w; x += 40) {
+                ctx.fillRect(x, h/2 - 20, 12, 40);
+            }
+            // Crossing signal
+            ctx.fillStyle = '#333';
+            ctx.fillRect(w/2 + 100, h/2 - 80, 15, 100);
+            // Flashing red lights
+            ctx.fillStyle = '#ff0000';
+            ctx.beginPath();
+            ctx.arc(w/2 + 85, h/2 - 70, 12, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.beginPath();
+            ctx.arc(w/2 + 130, h/2 - 70, 12, 0, Math.PI * 2);
+            ctx.fill();
+            // X sign
+            ctx.strokeStyle = '#fbbf24';
+            ctx.lineWidth = 6;
+            ctx.beginPath();
+            ctx.moveTo(w/2 + 90, h/2 - 50);
+            ctx.lineTo(w/2 + 125, h/2 - 20);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(w/2 + 125, h/2 - 50);
+            ctx.lineTo(w/2 + 90, h/2 - 20);
+            ctx.stroke();
+            // YOUR car
+            drawCarTopDown(ctx, w/2 + 30, h - 100, 0, '#22c55e', 'YOU');
+            // Stop line
+            ctx.strokeStyle = '#fff';
+            ctx.lineWidth = 6;
+            ctx.beginPath();
+            ctx.moveTo(w/2 - 70, h/2 + 60);
+            ctx.lineTo(w/2 + 70, h/2 + 60);
+            ctx.stroke();
+        }
+    }
 ];
+
+// =====================
+// VISUAL DRAWING HELPERS
+// =====================
+function drawIntersectionBase(ctx, w, h) {
+    // Grass background
+    ctx.fillStyle = '#228b22';
+    ctx.fillRect(0, 0, w, h);
+
+    // Roads
+    ctx.fillStyle = '#444';
+    ctx.fillRect(w/2 - 70, 0, 140, h);  // Vertical
+    ctx.fillRect(0, h/2 - 70, w, 140);  // Horizontal
+
+    // Lane markings - vertical
+    ctx.strokeStyle = '#fbbf24';
+    ctx.lineWidth = 3;
+    ctx.setLineDash([15, 12]);
+    ctx.beginPath();
+    ctx.moveTo(w/2, 0);
+    ctx.lineTo(w/2, h/2 - 70);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(w/2, h/2 + 70);
+    ctx.lineTo(w/2, h);
+    ctx.stroke();
+
+    // Lane markings - horizontal
+    ctx.beginPath();
+    ctx.moveTo(0, h/2);
+    ctx.lineTo(w/2 - 70, h/2);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(w/2 + 70, h/2);
+    ctx.lineTo(w, h/2);
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    // Stop lines
+    ctx.strokeStyle = '#fff';
+    ctx.lineWidth = 4;
+    ctx.beginPath();
+    ctx.moveTo(w/2 - 65, h/2 + 65);
+    ctx.lineTo(w/2 + 65, h/2 + 65);
+    ctx.stroke();
+}
+
+function drawCarTopDown(ctx, x, y, angle, color, label) {
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.rotate(angle);
+
+    // Car body
+    ctx.fillStyle = color;
+    ctx.fillRect(-18, -30, 36, 60);
+
+    // Windshield
+    ctx.fillStyle = label === 'YOU' ? '#87CEEB' : '#333';
+    ctx.fillRect(-12, -25, 24, 15);
+
+    // Rear window
+    ctx.fillStyle = label === 'YOU' ? '#87CEEB' : '#333';
+    ctx.fillRect(-12, 12, 24, 10);
+
+    // Wheels
+    ctx.fillStyle = '#111';
+    ctx.fillRect(-22, -22, 6, 14);
+    ctx.fillRect(16, -22, 6, 14);
+    ctx.fillRect(-22, 10, 6, 14);
+    ctx.fillRect(16, 10, 6, 14);
+
+    // Label
+    if (label) {
+        ctx.fillStyle = '#fff';
+        ctx.font = 'bold 11px Arial';
+        ctx.textAlign = 'center';
+        ctx.fillText(label, 0, 3);
+    }
+
+    ctx.restore();
+}
+
+function drawPedestrian(ctx, x, y, color) {
+    ctx.fillStyle = color;
+    ctx.beginPath();
+    ctx.arc(x, y, 10, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = '#333';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+}
+
+function drawStopSigns(ctx, w, h) {
+    // Draw stop signs at each corner
+    const positions = [
+        {x: w/2 + 75, y: h/2 + 75},
+        {x: w/2 - 75, y: h/2 + 75},
+        {x: w/2 + 75, y: h/2 - 75},
+        {x: w/2 - 75, y: h/2 - 75}
+    ];
+
+    positions.forEach(pos => {
+        ctx.fillStyle = '#dc2626';
+        ctx.beginPath();
+        for (let i = 0; i < 8; i++) {
+            const angle = (i * Math.PI / 4) - Math.PI / 8;
+            const px = pos.x + 12 * Math.cos(angle);
+            const py = pos.y + 12 * Math.sin(angle);
+            if (i === 0) ctx.moveTo(px, py);
+            else ctx.lineTo(px, py);
+        }
+        ctx.closePath();
+        ctx.fill();
+        ctx.strokeStyle = '#fff';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+    });
+}
+
+function drawYieldSignTopDown(ctx, x, y) {
+    ctx.fillStyle = '#fff';
+    ctx.strokeStyle = '#dc2626';
+    ctx.lineWidth = 4;
+    ctx.beginPath();
+    ctx.moveTo(x, y - 15);
+    ctx.lineTo(x - 15, y + 10);
+    ctx.lineTo(x + 15, y + 10);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+}
+
+function drawTrafficLightTopDown(ctx, x, y, state) {
+    ctx.fillStyle = '#333';
+    ctx.fillRect(x - 12, y - 30, 24, 60);
+
+    // Red
+    ctx.fillStyle = state === 'red' ? '#ff0000' : '#440000';
+    ctx.beginPath();
+    ctx.arc(x, y - 18, 7, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Yellow
+    ctx.fillStyle = state === 'yellow' ? '#ffff00' : '#444400';
+    ctx.beginPath();
+    ctx.arc(x, y, 7, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Green
+    ctx.fillStyle = state === 'green' ? '#00ff00' : '#004400';
+    ctx.beginPath();
+    ctx.arc(x, y + 18, 7, 0, Math.PI * 2);
+    ctx.fill();
+}
 
 // =====================
 // INPUT HANDLING
@@ -686,6 +1274,11 @@ document.addEventListener('keyup', e => {
 function startGame(mode) {
     document.getElementById('menu').classList.add('hidden');
 
+    // Resume audio context on user interaction
+    if (audioCtx && audioCtx.state === 'suspended') {
+        audioCtx.resume();
+    }
+
     game.score = 0;
     game.streak = 0;
     game.speed = 0;
@@ -706,10 +1299,13 @@ function startGame(mode) {
             spawnTraffic(300 + i * 200);
         }
         document.getElementById('messageText').textContent = 'Use W/S to control speed. A/D to change lanes. Watch for signs!';
+        // Start background music
+        startBackgroundMusic();
     } else {
         startSignQuiz();
     }
 
+    playClickSound();
     updateHUD();
 }
 
@@ -779,154 +1375,19 @@ function drawIntersectionDiagram() {
     ctx.fillStyle = '#1a1a2e';
     ctx.fillRect(0, 0, w, h);
 
-    // Grass
-    ctx.fillStyle = '#228b22';
-    ctx.fillRect(0, 0, w, h);
-
-    // Roads
-    ctx.fillStyle = '#444';
-    // Vertical road
-    ctx.fillRect(w/2 - 50, 0, 100, h);
-    // Horizontal road
-    ctx.fillRect(0, h/2 - 50, w, 100);
-
-    // Lane markings
-    ctx.strokeStyle = '#fbbf24';
-    ctx.lineWidth = 3;
-    ctx.setLineDash([15, 15]);
-
-    // Vertical center line
-    ctx.beginPath();
-    ctx.moveTo(w/2, 0);
-    ctx.lineTo(w/2, h/2 - 50);
-    ctx.moveTo(w/2, h/2 + 50);
-    ctx.lineTo(w/2, h);
-    ctx.stroke();
-
-    // Horizontal center line
-    ctx.beginPath();
-    ctx.moveTo(0, h/2);
-    ctx.lineTo(w/2 - 50, h/2);
-    ctx.moveTo(w/2 + 50, h/2);
-    ctx.lineTo(w, h/2);
-    ctx.stroke();
-
-    ctx.setLineDash([]);
-
-    // Edge lines
-    ctx.strokeStyle = '#fff';
-    ctx.lineWidth = 2;
-    ctx.strokeRect(w/2 - 50, 0, 100, h/2 - 50);
-    ctx.strokeRect(w/2 - 50, h/2 + 50, 100, h/2 - 50);
-    ctx.strokeRect(0, h/2 - 50, w/2 - 50, 100);
-    ctx.strokeRect(w/2 + 50, h/2 - 50, w/2 - 50, 100);
-
-    // YOUR CAR (green, at bottom)
-    ctx.fillStyle = '#22c55e';
-    ctx.fillRect(w/2 + 5, h - 70, 35, 55);
-    ctx.fillStyle = '#fff';
-    ctx.font = 'bold 12px Arial';
-    ctx.textAlign = 'center';
-    ctx.fillText('YOU', w/2 + 22, h - 38);
-
-    // Arrow showing your direction
-    ctx.fillStyle = '#22c55e';
-    ctx.beginPath();
-    ctx.moveTo(w/2 + 22, h - 85);
-    ctx.lineTo(w/2 + 12, h - 75);
-    ctx.lineTo(w/2 + 32, h - 75);
-    ctx.closePath();
-    ctx.fill();
-
-    // Other cars
-    if (game.intersection && game.intersection.cars) {
-        for (const car of game.intersection.cars) {
-            let x, y, cw, ch;
-
-            // Determine position based on direction
-            switch(car.dir) {
-                case 'right':
-                    x = w - 70;
-                    y = h/2 - 45;
-                    cw = 55;
-                    ch = 35;
-                    break;
-                case 'left':
-                    x = 15;
-                    y = h/2 + 10;
-                    cw = 55;
-                    ch = 35;
-                    break;
-                case 'ahead':
-                    x = w/2 - 40;
-                    y = 15;
-                    cw = 35;
-                    ch = 55;
-                    break;
-                case 'behind':
-                    x = w/2 + 5;
-                    y = h - 130;
-                    cw = 35;
-                    ch = 55;
-                    break;
-                case 'crossing':
-                    // Pedestrian
-                    ctx.fillStyle = '#fff';
-                    ctx.beginPath();
-                    ctx.arc(w/2 - 25, h/2, 12, 0, Math.PI * 2);
-                    ctx.fill();
-                    ctx.fillRect(w/2 - 30, h/2 + 12, 10, 25);
-                    ctx.font = '16px Arial';
-                    ctx.fillText('🚶', w/2 - 25, h/2 + 5);
-                    continue;
-            }
-
-            // Draw vehicle
-            if (car.type === 'bus') {
-                ctx.fillStyle = '#fbbf24';
-                ctx.fillRect(x, y, cw * 1.3, ch * 1.2);
-                ctx.fillStyle = '#000';
-                ctx.font = 'bold 10px Arial';
-                ctx.textAlign = 'center';
-                ctx.fillText('SCHOOL', x + cw * 0.65, y + ch * 0.5);
-                ctx.fillText('BUS', x + cw * 0.65, y + ch * 0.8);
-                // Flashing lights
-                ctx.fillStyle = '#dc2626';
-                ctx.beginPath();
-                ctx.arc(x + 8, y - 5, 6, 0, Math.PI * 2);
-                ctx.arc(x + cw * 1.3 - 8, y - 5, 6, 0, Math.PI * 2);
-                ctx.fill();
-            } else if (car.type === 'emergency') {
-                ctx.fillStyle = '#dc2626';
-                ctx.fillRect(x, y, cw, ch);
-                ctx.fillStyle = '#fff';
-                ctx.font = '14px Arial';
-                ctx.textAlign = 'center';
-                ctx.fillText('🚨', x + cw/2, y + ch/2 + 5);
-            } else {
-                ctx.fillStyle = car.color;
-                ctx.fillRect(x, y, cw, ch);
-            }
-
-            // Label
-            if (car.label) {
-                ctx.fillStyle = '#fff';
-                ctx.font = 'bold 11px Arial';
-                ctx.textAlign = 'center';
-                ctx.fillText(car.label, x + cw/2, y + ch/2 + 4);
-            }
-        }
+    // Use the scenario's custom draw function if available
+    if (game.intersection && game.intersection.draw) {
+        game.intersection.draw(ctx, w, h);
     }
-
-    // Add context label
-    ctx.fillStyle = '#fff';
-    ctx.font = '14px Arial';
-    ctx.textAlign = 'center';
-    ctx.fillText('Intersection View (from above)', w/2, h - 10);
 }
 
 function makeChoice(choice) {
     if (!game.intersection) return;
+
+    // Resume audio if needed
+    if (audioCtx && audioCtx.state === 'suspended') {
+        audioCtx.resume();
+    }
 
     const correct = choice === game.intersection.correctAnswer;
 
@@ -962,31 +1423,178 @@ function showPopup(correct, title, text, points) {
     setTimeout(() => popup.classList.remove('show'), 3000);
 }
 
+// =====================
+// ENHANCED AUDIO SYSTEM
+// =====================
+let audioEnabled = true;
+let musicPlaying = false;
+let musicInterval = null;
+let audioCtx = null;
+
+function getAudioContext() {
+    if (!audioCtx) {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    }
+    return audioCtx;
+}
+
 function playSound(success) {
+    if (!audioEnabled) return;
     try {
-        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        const osc = audioCtx.createOscillator();
-        const gain = audioCtx.createGain();
-        osc.connect(gain);
-        gain.connect(audioCtx.destination);
+        const ctx = getAudioContext();
 
         if (success) {
-            osc.frequency.value = 523;
-            osc.type = 'sine';
-            gain.gain.value = 0.15;
-            osc.start();
-            setTimeout(() => osc.frequency.value = 659, 100);
-            setTimeout(() => osc.frequency.value = 784, 200);
+            // Triumphant 3-note success sound
+            const notes = [880, 1108.73, 1318.5]; // A5, C#6, E6
+            notes.forEach((freq, i) => {
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+                osc.frequency.value = freq;
+                osc.type = 'sine';
+                gain.gain.setValueAtTime(0.25, ctx.currentTime + i * 0.1);
+                gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + i * 0.1 + 0.3);
+                osc.start(ctx.currentTime + i * 0.1);
+                osc.stop(ctx.currentTime + i * 0.1 + 0.3);
+            });
         } else {
-            osc.frequency.value = 200;
-            osc.type = 'sawtooth';
-            gain.gain.value = 0.15;
-            osc.start();
-        }
+            // Low buzz failure sound
+            const osc1 = ctx.createOscillator();
+            const gain1 = ctx.createGain();
+            osc1.connect(gain1);
+            gain1.connect(ctx.destination);
+            osc1.frequency.value = 150;
+            osc1.type = 'sawtooth';
+            gain1.gain.setValueAtTime(0.2, ctx.currentTime);
+            gain1.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.25);
+            osc1.start(ctx.currentTime);
+            osc1.stop(ctx.currentTime + 0.25);
 
-        gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.4);
-        osc.stop(audioCtx.currentTime + 0.4);
+            // Second lower buzz
+            const osc2 = ctx.createOscillator();
+            const gain2 = ctx.createGain();
+            osc2.connect(gain2);
+            gain2.connect(ctx.destination);
+            osc2.frequency.value = 110;
+            osc2.type = 'sawtooth';
+            gain2.gain.setValueAtTime(0.15, ctx.currentTime + 0.15);
+            gain2.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.4);
+            osc2.start(ctx.currentTime + 0.15);
+            osc2.stop(ctx.currentTime + 0.4);
+        }
     } catch(e) {}
+}
+
+function playClickSound() {
+    if (!audioEnabled) return;
+    try {
+        const ctx = getAudioContext();
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.frequency.value = 1000;
+        osc.type = 'sine';
+        gain.gain.setValueAtTime(0.1, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.05);
+        osc.start(ctx.currentTime);
+        osc.stop(ctx.currentTime + 0.05);
+    } catch(e) {}
+}
+
+function playEngineSound() {
+    if (!audioEnabled) return;
+    try {
+        const ctx = getAudioContext();
+        const baseFreq = 80 + game.speed * 2;
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.frequency.value = baseFreq;
+        osc.type = 'sawtooth';
+        gain.gain.setValueAtTime(0.02, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.1);
+        osc.start(ctx.currentTime);
+        osc.stop(ctx.currentTime + 0.1);
+    } catch(e) {}
+}
+
+function startBackgroundMusic() {
+    if (!audioEnabled || musicPlaying) return;
+    musicPlaying = true;
+
+    const notes = [
+        { freq: 196.00, dur: 0.4 },  // G3
+        { freq: 220.00, dur: 0.4 },  // A3
+        { freq: 246.94, dur: 0.4 },  // B3
+        { freq: 261.63, dur: 0.6 },  // C4
+        { freq: 246.94, dur: 0.4 },  // B3
+        { freq: 220.00, dur: 0.4 },  // A3
+        { freq: 196.00, dur: 0.6 },  // G3
+    ];
+
+    let noteIndex = 0;
+
+    function playNote() {
+        if (!musicPlaying || !audioEnabled) return;
+        try {
+            const ctx = getAudioContext();
+            const note = notes[noteIndex];
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+
+            osc.frequency.value = note.freq;
+            osc.type = 'sine';
+            gain.gain.setValueAtTime(0.03, ctx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + note.dur * 0.8);
+
+            osc.start(ctx.currentTime);
+            osc.stop(ctx.currentTime + note.dur);
+
+            noteIndex = (noteIndex + 1) % notes.length;
+        } catch(e) {}
+    }
+
+    playNote();
+    musicInterval = setInterval(() => {
+        if (musicPlaying && audioEnabled) {
+            playNote();
+        }
+    }, 500);
+}
+
+function stopBackgroundMusic() {
+    musicPlaying = false;
+    if (musicInterval) {
+        clearInterval(musicInterval);
+        musicInterval = null;
+    }
+}
+
+function toggleAudio() {
+    audioEnabled = !audioEnabled;
+    if (!audioEnabled) {
+        stopBackgroundMusic();
+    }
+}
+
+function toggleAudioUI() {
+    toggleAudio();
+    const toggle = document.getElementById('audioToggle');
+    const icon = document.getElementById('audioIcon');
+    if (audioEnabled) {
+        icon.textContent = '🔊';
+        toggle.innerHTML = '<span id="audioIcon">🔊</span> Sound ON';
+        playClickSound();
+    } else {
+        icon.textContent = '🔇';
+        toggle.innerHTML = '<span id="audioIcon">🔇</span> Sound OFF';
+    }
 }
 
 function drawSign(sign) {
@@ -1303,40 +1911,31 @@ function update() {
 function render() {
     const w = canvas.width, h = canvas.height;
 
-    // Sky gradient
-    const skyGrad = ctx.createLinearGradient(0, 0, 0, h * 0.45);
-    skyGrad.addColorStop(0, '#1e3a5f');
-    skyGrad.addColorStop(1, '#87ceeb');
-    ctx.fillStyle = skyGrad;
-    ctx.fillRect(0, 0, w, h * 0.45);
+    // Dark background - no sky, focus on road
+    ctx.fillStyle = '#1a1a2e';
+    ctx.fillRect(0, 0, w, h);
 
-    // Sun
-    ctx.fillStyle = '#fbbf24';
-    ctx.beginPath();
-    ctx.arc(w * 0.8, h * 0.15, 40, 0, Math.PI * 2);
-    ctx.fill();
-
-    // Grass
-    ctx.fillStyle = '#228b22';
-    ctx.fillRect(0, h * 0.45, w, h * 0.55);
+    // Grass on sides
+    ctx.fillStyle = '#1a4a1a';
+    ctx.fillRect(0, h * 0.35, w, h * 0.65);
 
     // Road
     const roadWidth = w * 0.45;
     const roadLeft = (w - roadWidth) / 2;
 
     // Road surface
-    ctx.fillStyle = '#444';
-    ctx.fillRect(roadLeft, h * 0.45, roadWidth, h * 0.55);
+    ctx.fillStyle = '#333';
+    ctx.fillRect(roadLeft, h * 0.35, roadWidth, h * 0.65);
 
     // Road edges (white lines)
     ctx.strokeStyle = '#fff';
     ctx.lineWidth = 6;
     ctx.beginPath();
-    ctx.moveTo(roadLeft, h * 0.45);
+    ctx.moveTo(roadLeft, h * 0.35);
     ctx.lineTo(roadLeft, h);
     ctx.stroke();
     ctx.beginPath();
-    ctx.moveTo(roadLeft + roadWidth, h * 0.45);
+    ctx.moveTo(roadLeft + roadWidth, h * 0.35);
     ctx.lineTo(roadLeft + roadWidth, h);
     ctx.stroke();
 
@@ -1348,7 +1947,7 @@ function render() {
     ctx.lineWidth = 4;
     ctx.setLineDash([40, 30]);
     ctx.beginPath();
-    ctx.moveTo(w/2, h * 0.45);
+    ctx.moveTo(w/2, h * 0.35);
     ctx.lineTo(w/2, h);
     ctx.stroke();
 
@@ -1358,12 +1957,12 @@ function render() {
     ctx.setLineDash([25, 35]);
 
     ctx.beginPath();
-    ctx.moveTo(roadLeft + laneWidth, h * 0.45);
+    ctx.moveTo(roadLeft + laneWidth, h * 0.35);
     ctx.lineTo(roadLeft + laneWidth, h);
     ctx.stroke();
 
     ctx.beginPath();
-    ctx.moveTo(roadLeft + laneWidth * 2, h * 0.45);
+    ctx.moveTo(roadLeft + laneWidth * 2, h * 0.35);
     ctx.lineTo(roadLeft + laneWidth * 2, h);
     ctx.stroke();
 
@@ -1380,7 +1979,7 @@ function render() {
 
         const laneOffset = car.lane * laneWidth;
         const carX = w/2 + laneOffset - carW/2;
-        const carY = h * 0.5 + (h * 0.35 * (1 - scale));
+        const carY = h * 0.4 + (h * 0.45 * (1 - scale));
 
         // Shadow
         ctx.fillStyle = 'rgba(0,0,0,0.3)';
