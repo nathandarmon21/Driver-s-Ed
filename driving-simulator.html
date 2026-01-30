@@ -13,7 +13,6 @@
         }
         #gameCanvas { display: block; }
 
-        /* HUD */
         #hud {
             position: fixed;
             bottom: 15px;
@@ -38,7 +37,6 @@
         .hud-item .value.warning { color: #fbbf24; }
         .hud-item .value.danger { color: #ef4444; }
 
-        /* Mission panel */
         #missionPanel {
             position: fixed;
             top: 15px;
@@ -52,33 +50,29 @@
             z-index: 100;
             border: 2px solid #3b82f6;
         }
-        #missionPanel h3 {
-            color: #3b82f6;
-            margin-bottom: 8px;
-            font-size: 14px;
-        }
-        #missionPanel .mission-text {
-            margin-bottom: 8px;
-            line-height: 1.4;
-        }
-        #missionPanel .mission-reward {
-            color: #fbbf24;
-            font-size: 12px;
-        }
-        #missionPanel .mission-progress {
-            background: #333;
-            height: 6px;
-            border-radius: 3px;
-            margin-top: 8px;
-            overflow: hidden;
-        }
-        #missionPanel .mission-progress-bar {
-            background: linear-gradient(90deg, #3b82f6, #60a5fa);
-            height: 100%;
-            transition: width 0.3s;
-        }
+        #missionPanel h3 { color: #3b82f6; margin-bottom: 8px; font-size: 14px; }
+        #missionPanel .mission-text { margin-bottom: 8px; line-height: 1.4; }
+        #missionPanel .mission-reward { color: #fbbf24; font-size: 12px; }
+        #missionPanel .mission-progress { background: #333; height: 6px; border-radius: 3px; margin-top: 8px; overflow: hidden; }
+        #missionPanel .mission-progress-bar { background: linear-gradient(90deg, #3b82f6, #60a5fa); height: 100%; transition: width 0.3s; }
 
-        /* Feedback notification */
+        #laneIndicator {
+            position: fixed;
+            bottom: 70px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0,0,0,0.8);
+            padding: 8px 16px;
+            border-radius: 8px;
+            color: #fff;
+            font-size: 12px;
+            z-index: 100;
+            text-align: center;
+        }
+        #laneIndicator .lane { display: inline-block; width: 30px; height: 8px; margin: 0 3px; background: #444; border-radius: 2px; }
+        #laneIndicator .lane.active { background: #3b82f6; }
+        #laneIndicator .lane.wrong { background: #ef4444; }
+
         #feedback {
             position: fixed;
             top: 50%;
@@ -99,14 +93,8 @@
         #feedback.show { opacity: 1; }
         #feedback.good { border-color: #4ade80; color: #4ade80; }
         #feedback.bad { border-color: #ef4444; color: #ef4444; }
-        #feedback .penalty {
-            display: block;
-            font-size: 13px;
-            margin-top: 5px;
-            opacity: 0.8;
-        }
+        #feedback .penalty { display: block; font-size: 13px; margin-top: 5px; opacity: 0.8; }
 
-        /* Damage indicator */
         #damageOverlay {
             position: fixed;
             top: 0; left: 0; right: 0; bottom: 0;
@@ -120,7 +108,6 @@
             background: radial-gradient(ellipse at center, transparent 40%, rgba(255,0,0,0.4) 100%);
         }
 
-        /* Controls hint */
         #controls {
             position: fixed;
             bottom: 15px;
@@ -132,14 +119,8 @@
             font-size: 11px;
             z-index: 100;
         }
-        #controls kbd {
-            background: #444;
-            padding: 2px 6px;
-            border-radius: 3px;
-            margin: 0 2px;
-        }
+        #controls kbd { background: #444; padding: 2px 6px; border-radius: 3px; margin: 0 2px; }
 
-        /* Lives/damage display */
         #livesDisplay {
             position: fixed;
             top: 15px;
@@ -153,6 +134,24 @@
         }
         .heart { color: #ef4444; font-size: 16px; }
         .heart.lost { opacity: 0.3; }
+
+        #turnPrompt {
+            position: fixed;
+            top: 40%;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0,0,0,0.9);
+            padding: 15px 25px;
+            border-radius: 10px;
+            color: #fbbf24;
+            font-size: 18px;
+            font-weight: bold;
+            z-index: 180;
+            text-align: center;
+            display: none;
+            border: 2px solid #fbbf24;
+        }
+        #turnPrompt.show { display: block; }
     </style>
 </head>
 <body>
@@ -160,21 +159,16 @@
     <div id="damageOverlay"></div>
 
     <div id="hud">
-        <div class="hud-item">
-            <span class="value" id="speedVal">0</span> mph
-        </div>
-        <div class="hud-item">
-            Score: <span class="value" id="scoreVal">1000</span>
-        </div>
+        <div class="hud-item"><span class="value" id="speedVal">0</span> mph</div>
+        <div class="hud-item">Score: <span class="value" id="scoreVal">1000</span></div>
+        <div class="hud-item">Lane: <span id="currentLane">Right</span></div>
     </div>
 
     <div id="missionPanel">
         <h3>📋 CURRENT MISSION</h3>
         <div class="mission-text" id="missionText">Drive to the checkpoint!</div>
         <div class="mission-reward" id="missionReward">Reward: +100 points</div>
-        <div class="mission-progress">
-            <div class="mission-progress-bar" id="missionProgress" style="width: 0%"></div>
-        </div>
+        <div class="mission-progress"><div class="mission-progress-bar" id="missionProgress" style="width: 0%"></div></div>
     </div>
 
     <div id="livesDisplay">
@@ -183,16 +177,29 @@
         <span class="heart" id="heart3">❤</span>
     </div>
 
+    <div id="laneIndicator">
+        <div>Your Lane</div>
+        <div style="margin-top:5px">
+            <span class="lane" id="lane0"></span>
+            <span style="color:#f4d03f">|</span>
+            <span class="lane" id="lane1"></span>
+        </div>
+        <div style="font-size:10px;margin-top:3px;color:#888">← → to change lanes</div>
+    </div>
+
+    <div id="turnPrompt">
+        INTERSECTION<br>
+        <span style="font-size:24px">← ↑ →</span><br>
+        <span style="font-size:12px">Press arrow to choose direction</span>
+    </div>
+
     <div id="feedback"></div>
 
     <div id="controls">
-        <kbd>↑</kbd> Gas <kbd>↓</kbd> Brake <kbd>←</kbd><kbd>→</kbd> Steer
+        <kbd>↑</kbd> Gas <kbd>↓</kbd> Brake <kbd>←</kbd><kbd>→</kbd> Change Lane / Turn
     </div>
 
 <script>
-// ============================================
-// SETUP
-// ============================================
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
 
@@ -210,7 +217,7 @@ const TILE = 160;
 const ROAD_W = 100;
 const LANE_W = ROAD_W / 2;
 
-// Map: 0=grass, 1=road_V, 2=road_H, 3=intersection, 4=stop_intersection, 5=light_intersection
+// 0=grass, 1=road_V, 2=road_H, 3=intersection, 4=stop_intersection, 5=light_intersection
 const MAP = [
     [0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,0],
     [0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,0],
@@ -235,6 +242,14 @@ const MAP_H = MAP.length;
 const WORLD_W = MAP_W * TILE;
 const WORLD_H = MAP_H * TILE;
 
+// Directions: 0=North, 1=East, 2=South, 3=West
+const DIR = [
+    { dx: 0, dy: -1, angle: 0 },
+    { dx: 1, dy: 0, angle: Math.PI/2 },
+    { dx: 0, dy: 1, angle: Math.PI },
+    { dx: -1, dy: 0, angle: -Math.PI/2 }
+];
+
 // ============================================
 // GAME STATE
 // ============================================
@@ -247,62 +262,65 @@ const game = {
     invincibleTimer: 0
 };
 
-// Player car
+// Player - now with lane-based movement
 const player = {
-    x: 3 * TILE + TILE/2,
+    x: 3 * TILE + TILE/2 + LANE_W/2,  // Start in right lane
     y: 3 * TILE + TILE/2,
-    angle: Math.PI,
+    dir: 2,  // Facing South
     speed: 0,
-    maxSpeed: 4,
-    accel: 0.06,
-    brake: 0.12,
-    friction: 0.02,
-    turnSpeed: 0.025,
-    width: 30,
-    height: 52
+    maxSpeed: 3.5,
+    accel: 0.05,
+    brake: 0.1,
+    friction: 0.015,
+    lane: 1,  // 0 = left lane, 1 = right lane
+    targetLaneOffset: LANE_W/2,  // Offset from center of road
+    laneOffset: LANE_W/2,
+    width: 28,
+    height: 50,
+    changingLane: false,
+    laneChangeCooldown: 0,
+    atIntersection: false,
+    waitingForTurn: false,
+    turnMade: false
 };
 
-// Camera
 const cam = { x: 0, y: 0 };
 
-// Input
+// Input - track press events for lane changes
 const keys = { up: false, down: false, left: false, right: false };
+const keyPressed = { left: false, right: false };
 
-// World elements
 let trafficLights = [];
 let stopSigns = [];
 let pedestrians = [];
 let otherCars = [];
 let buildings = [];
 let trees = [];
-let roadSigns = [];
 
-// Track violations
 let stoppedSigns = new Set();
 let ranSigns = new Set();
 let ranLights = new Set();
 let recentCollisions = new Set();
 
-// Mission system
 const missions = {
     current: null,
     checkpoint: null,
     completed: 0,
     types: [
         { text: "Drive to the GREEN checkpoint", reward: 100 },
-        { text: "Reach the destination without any violations", reward: 200 },
         { text: "Stop at 3 stop signs correctly", reward: 150, type: 'stopSigns', target: 3 },
+        { text: "Complete 2 safe lane changes", reward: 100, type: 'laneChanges', target: 2 },
         { text: "Drive through 3 green lights", reward: 120, type: 'greenLights', target: 3 },
     ],
     stopSignsCompleted: 0,
-    greenLightsCompleted: 0
+    greenLightsCompleted: 0,
+    laneChangesCompleted: 0
 };
 
 // ============================================
 // INITIALIZATION
 // ============================================
 function init() {
-    // Find all intersections
     for (let ty = 0; ty < MAP_H; ty++) {
         for (let tx = 0; tx < MAP_W; tx++) {
             const tile = MAP[ty][tx];
@@ -311,20 +329,14 @@ function init() {
 
             if (tile === 4) {
                 stopSigns.push({ x: cx, y: cy, tx, ty });
-                // Add warning signs before intersection
-                addRoadSigns(tx, ty, 'STOP AHEAD');
             } else if (tile === 5) {
                 trafficLights.push({
                     x: cx, y: cy, tx, ty,
                     state: Math.random() < 0.5 ? 'green' : 'red',
                     timer: 240 + Math.random() * 120
                 });
-                addRoadSigns(tx, ty, 'SIGNAL AHEAD');
-            } else if (tile === 3) {
-                addRoadSigns(tx, ty, 'INTERSECTION');
             }
 
-            // Add decorations to grass
             if (tile === 0) {
                 if (Math.random() < 0.35) {
                     buildings.push({
@@ -332,13 +344,12 @@ function init() {
                         y: cy - 30 + Math.random() * 20,
                         w: 55 + Math.random() * 35,
                         h: 55 + Math.random() * 35,
-                        color: ['#8B7355', '#A0522D', '#CD853F', '#D2691E', '#BC8F8F', '#b8860b'][Math.floor(Math.random()*6)],
-                        roofColor: ['#654321', '#8B4513', '#A0522D', '#4a3728'][Math.floor(Math.random()*4)]
+                        color: ['#8B7355', '#A0522D', '#CD853F', '#D2691E', '#BC8F8F'][Math.floor(Math.random()*5)],
+                        roofColor: ['#654321', '#8B4513', '#A0522D'][Math.floor(Math.random()*3)]
                     });
                 }
-                if (Math.random() < 0.6) {
-                    const numTrees = 1 + Math.floor(Math.random() * 4);
-                    for (let i = 0; i < numTrees; i++) {
+                if (Math.random() < 0.5) {
+                    for (let i = 0; i < 1 + Math.floor(Math.random() * 3); i++) {
                         trees.push({
                             x: tx * TILE + 15 + Math.random() * (TILE - 30),
                             y: ty * TILE + 15 + Math.random() * (TILE - 30),
@@ -350,35 +361,9 @@ function init() {
         }
     }
 
-    spawnPedestrians(12);
-    spawnOtherCars(5);
+    spawnPedestrians(10);
+    spawnOtherCars(4);
     startNewMission();
-}
-
-function addRoadSigns(tx, ty, text) {
-    // Add signs on approaches to intersection
-    const positions = [
-        { dx: 0, dy: -1, facing: 'south' },
-        { dx: 0, dy: 1, facing: 'north' },
-        { dx: -1, dy: 0, facing: 'east' },
-        { dx: 1, dy: 0, facing: 'west' }
-    ];
-
-    positions.forEach(pos => {
-        const ntx = ty + pos.dy;
-        const nty = tx + pos.dx;
-        if (ntx >= 0 && ntx < MAP_H && nty >= 0 && nty < MAP_W) {
-            const neighborTile = MAP[ntx][nty];
-            if (neighborTile === 1 || neighborTile === 2) {
-                roadSigns.push({
-                    x: tx * TILE + TILE/2 + pos.dx * (TILE/2 + 20),
-                    y: ty * TILE + TILE/2 + pos.dy * (TILE/2 + 20),
-                    text: text,
-                    facing: pos.facing
-                });
-            }
-        }
-    });
 }
 
 function spawnPedestrians(count) {
@@ -391,28 +376,19 @@ function spawnPedestrians(count) {
         } while (MAP[ty][tx] < 3 && attempts < 50);
         if (attempts >= 50) continue;
 
-        const side = Math.floor(Math.random() * 4);
-        const offset = (Math.random() - 0.5) * 40;
-        let px, py;
-        switch(side) {
-            case 0: px = tx * TILE + TILE/2 + offset; py = ty * TILE + 15; break;
-            case 1: px = tx * TILE + TILE - 15; py = ty * TILE + TILE/2 + offset; break;
-            case 2: px = tx * TILE + TILE/2 + offset; py = ty * TILE + TILE - 15; break;
-            case 3: px = tx * TILE + 15; py = ty * TILE + TILE/2 + offset; break;
-        }
-
         pedestrians.push({
-            x: px, y: py,
+            x: tx * TILE + TILE/2 + (Math.random() - 0.5) * 60,
+            y: ty * TILE + TILE/2 + (Math.random() - 0.5) * 60,
             vx: (Math.random() - 0.5) * 0.3,
             vy: (Math.random() - 0.5) * 0.3,
-            color: ['#e74c3c', '#3498db', '#9b59b6', '#f39c12', '#1abc9c', '#e91e63', '#00bcd4'][Math.floor(Math.random()*7)],
+            color: ['#e74c3c', '#3498db', '#9b59b6', '#f39c12', '#1abc9c'][Math.floor(Math.random()*5)],
             walkTimer: Math.floor(Math.random() * 100)
         });
     }
 }
 
 function spawnOtherCars(count) {
-    const colors = ['#c0392b', '#2980b9', '#27ae60', '#e67e22', '#8e44ad', '#16a085'];
+    const colors = ['#c0392b', '#2980b9', '#27ae60', '#e67e22', '#8e44ad'];
     for (let i = 0; i < count; i++) {
         let tx, ty, attempts = 0;
         do {
@@ -423,15 +399,17 @@ function spawnOtherCars(count) {
         if (attempts >= 50) continue;
 
         const isVertical = MAP[ty][tx] === 1;
-        const angle = isVertical ? (Math.random() < 0.5 ? 0 : Math.PI) : (Math.random() < 0.5 ? Math.PI/2 : -Math.PI/2);
+        const dir = isVertical ? (Math.random() < 0.5 ? 0 : 2) : (Math.random() < 0.5 ? 1 : 3);
+        const lane = Math.random() < 0.5 ? 0 : 1;
+        const laneOffset = (lane === 0 ? -1 : 1) * LANE_W / 2;
 
         otherCars.push({
-            x: tx * TILE + TILE/2,
-            y: ty * TILE + TILE/2,
-            angle: angle,
-            speed: 0.6 + Math.random() * 0.6,  // Much slower!
+            x: tx * TILE + TILE/2 + (isVertical ? laneOffset : 0),
+            y: ty * TILE + TILE/2 + (isVertical ? 0 : laneOffset),
+            dir: dir,
+            speed: 0.8 + Math.random() * 0.6,
             color: colors[Math.floor(Math.random() * colors.length)],
-            turnCooldown: 0,
+            lane: lane,
             stoppedAt: null,
             waitTimer: 0
         });
@@ -439,18 +417,16 @@ function spawnOtherCars(count) {
 }
 
 // ============================================
-// MISSION SYSTEM
+// MISSIONS
 // ============================================
 function startNewMission() {
     const missionType = missions.types[missions.completed % missions.types.length];
     missions.current = { ...missionType };
 
-    if (missionType.type === 'stopSigns') {
-        missions.stopSignsCompleted = 0;
-    } else if (missionType.type === 'greenLights') {
-        missions.greenLightsCompleted = 0;
-    } else {
-        // Place checkpoint at random intersection
+    if (missionType.type === 'stopSigns') missions.stopSignsCompleted = 0;
+    else if (missionType.type === 'greenLights') missions.greenLightsCompleted = 0;
+    else if (missionType.type === 'laneChanges') missions.laneChangesCompleted = 0;
+    else {
         let attempts = 0;
         do {
             const tx = Math.floor(Math.random() * MAP_W);
@@ -458,18 +434,13 @@ function startNewMission() {
             if (MAP[ty][tx] >= 3) {
                 const d = dist(player.x, player.y, tx * TILE + TILE/2, ty * TILE + TILE/2);
                 if (d > TILE * 4) {
-                    missions.checkpoint = {
-                        x: tx * TILE + TILE/2,
-                        y: ty * TILE + TILE/2,
-                        tx, ty
-                    };
+                    missions.checkpoint = { x: tx * TILE + TILE/2, y: ty * TILE + TILE/2, tx, ty };
                     break;
                 }
             }
             attempts++;
         } while (attempts < 100);
     }
-
     updateMissionUI();
 }
 
@@ -478,14 +449,12 @@ function updateMissionUI() {
     document.getElementById('missionReward').textContent = `Reward: +${missions.current.reward} points`;
 
     let progress = 0;
-    if (missions.current.type === 'stopSigns') {
-        progress = (missions.stopSignsCompleted / missions.current.target) * 100;
-    } else if (missions.current.type === 'greenLights') {
-        progress = (missions.greenLightsCompleted / missions.current.target) * 100;
-    } else if (missions.checkpoint) {
-        const maxDist = TILE * 8;
+    if (missions.current.type === 'stopSigns') progress = (missions.stopSignsCompleted / missions.current.target) * 100;
+    else if (missions.current.type === 'greenLights') progress = (missions.greenLightsCompleted / missions.current.target) * 100;
+    else if (missions.current.type === 'laneChanges') progress = (missions.laneChangesCompleted / missions.current.target) * 100;
+    else if (missions.checkpoint) {
         const d = dist(player.x, player.y, missions.checkpoint.x, missions.checkpoint.y);
-        progress = Math.max(0, Math.min(100, (1 - d / maxDist) * 100));
+        progress = Math.max(0, Math.min(100, (1 - d / (TILE * 8)) * 100));
     }
     document.getElementById('missionProgress').style.width = progress + '%';
 }
@@ -505,8 +474,14 @@ document.addEventListener('keydown', e => {
     switch(e.key) {
         case 'ArrowUp': case 'w': case 'W': keys.up = true; break;
         case 'ArrowDown': case 's': case 'S': keys.down = true; break;
-        case 'ArrowLeft': case 'a': case 'A': keys.left = true; break;
-        case 'ArrowRight': case 'd': case 'D': keys.right = true; break;
+        case 'ArrowLeft': case 'a': case 'A':
+            if (!keys.left) keyPressed.left = true;
+            keys.left = true;
+            break;
+        case 'ArrowRight': case 'd': case 'D':
+            if (!keys.right) keyPressed.right = true;
+            keys.right = true;
+            break;
     }
     if (['ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.key)) e.preventDefault();
 });
@@ -523,9 +498,7 @@ document.addEventListener('keyup', e => {
 // ============================================
 // UTILITY
 // ============================================
-function wrap(val, max) {
-    return ((val % max) + max) % max;
-}
+function wrap(val, max) { return ((val % max) + max) % max; }
 
 function getTile(x, y) {
     const tx = Math.floor(wrap(x, WORLD_W) / TILE);
@@ -533,31 +506,8 @@ function getTile(x, y) {
     return { tile: MAP[ty][tx], tx, ty };
 }
 
-function isOnRoad(x, y) {
-    const tx = Math.floor(wrap(x, WORLD_W) / TILE);
-    const ty = Math.floor(wrap(y, WORLD_H) / TILE);
-    const tile = MAP[ty][tx];
-
-    if (tile === 0) return false;
-    if (tile >= 3) return true; // Intersection - all good
-
-    // Check if within road bounds
-    const localX = wrap(x, WORLD_W) % TILE;
-    const localY = wrap(y, WORLD_H) % TILE;
-    const roadStart = (TILE - ROAD_W) / 2;
-    const roadEnd = roadStart + ROAD_W;
-
-    if (tile === 1) { // Vertical road
-        return localX >= roadStart && localX <= roadEnd;
-    } else if (tile === 2) { // Horizontal road
-        return localY >= roadStart && localY <= roadEnd;
-    }
-    return true;
-}
-
 function dist(x1, y1, x2, y2) {
-    let dx = Math.abs(x1 - x2);
-    let dy = Math.abs(y1 - y2);
+    let dx = Math.abs(x1 - x2), dy = Math.abs(y1 - y2);
     if (dx > WORLD_W / 2) dx = WORLD_W - dx;
     if (dy > WORLD_H / 2) dy = WORLD_H - dy;
     return Math.sqrt(dx * dx + dy * dy);
@@ -572,25 +522,19 @@ function showFeedback(msg, good, penalty = null) {
 
 function takeDamage(reason) {
     if (game.invincibleTimer > 0) return;
-
     game.lives--;
     game.score = Math.max(0, game.score - 100);
     game.damageFlashTimer = 30;
     game.invincibleTimer = 90;
     player.speed *= 0.3;
 
-    // Update hearts display
     for (let i = 1; i <= 3; i++) {
         document.getElementById('heart' + i).className = i <= game.lives ? 'heart' : 'heart lost';
     }
-
     showFeedback(reason, false, '-100 points, -1 life');
 
     if (game.lives <= 0) {
-        setTimeout(() => {
-            alert('Game Over! Final Score: ' + game.score);
-            location.reload();
-        }, 500);
+        setTimeout(() => { alert('Game Over! Final Score: ' + game.score); location.reload(); }, 500);
     }
 }
 
@@ -600,20 +544,18 @@ function takeDamage(reason) {
 function update() {
     game.time++;
 
-    // Timers
     if (game.feedbackTimer > 0) {
         game.feedbackTimer--;
-        if (game.feedbackTimer === 0) {
-            document.getElementById('feedback').classList.remove('show');
-        }
+        if (game.feedbackTimer === 0) document.getElementById('feedback').classList.remove('show');
     }
     if (game.damageFlashTimer > 0) {
         game.damageFlashTimer--;
         document.getElementById('damageOverlay').className = game.damageFlashTimer > 0 ? 'flash' : '';
     }
     if (game.invincibleTimer > 0) game.invincibleTimer--;
+    if (player.laneChangeCooldown > 0) player.laneChangeCooldown--;
 
-    // Player acceleration/braking
+    // Speed control
     if (keys.up) {
         player.speed = Math.min(player.speed + player.accel, player.maxSpeed);
     } else if (keys.down) {
@@ -623,44 +565,136 @@ function update() {
         else if (player.speed < 0) player.speed = Math.min(0, player.speed + player.friction);
     }
 
-    // Steering (reduced sensitivity, only when moving)
-    if (Math.abs(player.speed) > 0.1) {
-        const turnMult = Math.min(1, Math.abs(player.speed) / 2);
-        if (keys.left) player.angle -= player.turnSpeed * turnMult * Math.sign(player.speed);
-        if (keys.right) player.angle += player.turnSpeed * turnMult * Math.sign(player.speed);
+    // Get current tile info
+    const { tile, tx, ty } = getTile(player.x, player.y);
+    const wasAtIntersection = player.atIntersection;
+    player.atIntersection = tile >= 3;
+
+    // Entering intersection
+    if (player.atIntersection && !wasAtIntersection) {
+        player.waitingForTurn = true;
+        player.turnMade = false;
     }
 
-    // Calculate new position
-    const newX = player.x + Math.sin(player.angle) * player.speed;
-    const newY = player.y - Math.cos(player.angle) * player.speed;
+    // Show/hide turn prompt
+    document.getElementById('turnPrompt').className = (player.atIntersection && player.waitingForTurn && player.speed < 1.5) ? 'show' : '';
 
-    // Check if new position is on road
-    if (isOnRoad(newX, newY)) {
-        player.x = newX;
-        player.y = newY;
-    } else {
-        // Try to slide along the road edge
-        if (isOnRoad(newX, player.y)) {
-            player.x = newX;
-            player.speed *= 0.8;
-        } else if (isOnRoad(player.x, newY)) {
-            player.y = newY;
-            player.speed *= 0.8;
-        } else {
-            // Can't move - stop
-            player.speed *= 0.5;
+    // Handle lane changes and turns
+    if (keyPressed.left) {
+        keyPressed.left = false;
+        if (player.atIntersection && player.waitingForTurn) {
+            // Turn left at intersection
+            player.dir = (player.dir + 3) % 4;
+            player.waitingForTurn = false;
+            player.turnMade = true;
+            player.lane = 1; // After turning, be in right lane of new road
+            player.targetLaneOffset = LANE_W / 2;
+            showFeedback('Turned left', true, '+10 points');
+            game.score += 10;
+        } else if (!player.atIntersection && player.laneChangeCooldown <= 0) {
+            // Change to left lane
+            if (player.lane === 1) {
+                // Crossing center line - this is risky!
+                player.lane = 0;
+                player.targetLaneOffset = -LANE_W / 2;
+                player.laneChangeCooldown = 30;
+                // Check if safe (no oncoming traffic nearby)
+                const safe = checkLaneChangeSafe(-1);
+                if (safe) {
+                    missions.laneChangesCompleted++;
+                    if (missions.current?.type === 'laneChanges' && missions.laneChangesCompleted >= missions.current.target) {
+                        completeMission();
+                    }
+                    showFeedback('Safe lane change!', true, '+15 points');
+                    game.score += 15;
+                } else {
+                    showFeedback('Unsafe lane change!', false, '-30 points');
+                    game.score = Math.max(0, game.score - 30);
+                }
+            } else {
+                showFeedback('Already in left lane', false);
+            }
         }
     }
 
-    // Wrap world
-    player.x = wrap(player.x, WORLD_W);
-    player.y = wrap(player.y, WORLD_H);
+    if (keyPressed.right) {
+        keyPressed.right = false;
+        if (player.atIntersection && player.waitingForTurn) {
+            // Turn right at intersection
+            player.dir = (player.dir + 1) % 4;
+            player.waitingForTurn = false;
+            player.turnMade = true;
+            player.lane = 1;
+            player.targetLaneOffset = LANE_W / 2;
+            showFeedback('Turned right', true, '+10 points');
+            game.score += 10;
+        } else if (!player.atIntersection && player.laneChangeCooldown <= 0) {
+            // Change to right lane
+            if (player.lane === 0) {
+                player.lane = 1;
+                player.targetLaneOffset = LANE_W / 2;
+                player.laneChangeCooldown = 30;
+                missions.laneChangesCompleted++;
+                if (missions.current?.type === 'laneChanges' && missions.laneChangesCompleted >= missions.current.target) {
+                    completeMission();
+                }
+                showFeedback('Returned to right lane', true, '+10 points');
+                game.score += 10;
+            } else {
+                showFeedback('Already in right lane', false);
+            }
+        }
+    }
+
+    // Go straight at intersection (press up while waiting)
+    if (keys.up && player.atIntersection && player.waitingForTurn && player.speed > 0.5) {
+        player.waitingForTurn = false;
+        player.turnMade = true;
+    }
+
+    // Leaving intersection - reset
+    if (!player.atIntersection && wasAtIntersection) {
+        player.waitingForTurn = false;
+    }
+
+    // Smooth lane offset transition
+    const laneSpeed = 2;
+    if (player.laneOffset < player.targetLaneOffset) {
+        player.laneOffset = Math.min(player.laneOffset + laneSpeed, player.targetLaneOffset);
+    } else if (player.laneOffset > player.targetLaneOffset) {
+        player.laneOffset = Math.max(player.laneOffset - laneSpeed, player.targetLaneOffset);
+    }
+
+    // Move player
+    const d = DIR[player.dir];
+    const roadCenterX = Math.floor(player.x / TILE) * TILE + TILE / 2;
+    const roadCenterY = Math.floor(player.y / TILE) * TILE + TILE / 2;
+
+    // Calculate position based on direction and lane
+    let targetX = player.x + d.dx * player.speed;
+    let targetY = player.y + d.dy * player.speed;
+
+    // Snap to lane (perpendicular to travel direction)
+    if (d.dx !== 0) { // Moving horizontally
+        targetY = roadCenterY + player.laneOffset * d.dx;
+    } else { // Moving vertically
+        targetX = roadCenterX - player.laneOffset * d.dy;
+    }
+
+    // Apply movement
+    player.x = wrap(targetX, WORLD_W);
+    player.y = wrap(targetY, WORLD_H);
 
     // Camera
     cam.x = player.x - canvas.width / 2;
     cam.y = player.y - canvas.height / 2;
 
-    // Update traffic lights (slower cycle)
+    // Update lane indicator
+    document.getElementById('lane0').className = 'lane' + (player.lane === 0 ? ' active' : '');
+    document.getElementById('lane1').className = 'lane' + (player.lane === 1 ? ' active' : '');
+    document.getElementById('currentLane').textContent = player.lane === 0 ? 'Left (Passing)' : 'Right';
+
+    // Traffic lights
     trafficLights.forEach(light => {
         light.timer--;
         if (light.timer <= 0) {
@@ -674,16 +708,13 @@ function update() {
     stopSigns.forEach(sign => {
         const d = dist(player.x, player.y, sign.x, sign.y);
         const key = `${sign.tx},${sign.ty}`;
-
         if (d < 60) {
             if (player.speed < 0.3 && !stoppedSigns.has(key)) {
                 stoppedSigns.add(key);
                 game.score += 25;
                 showFeedback('Good stop!', true, '+25 points');
                 missions.stopSignsCompleted++;
-                if (missions.current?.type === 'stopSigns' && missions.stopSignsCompleted >= missions.current.target) {
-                    completeMission();
-                }
+                if (missions.current?.type === 'stopSigns' && missions.stopSignsCompleted >= missions.current.target) completeMission();
             } else if (player.speed > 2 && !stoppedSigns.has(key) && !ranSigns.has(key)) {
                 ranSigns.add(key);
                 takeDamage('Ran stop sign!');
@@ -698,7 +729,6 @@ function update() {
     trafficLights.forEach(light => {
         const d = dist(player.x, player.y, light.x, light.y);
         const key = `${light.tx},${light.ty}`;
-
         if (d < 55) {
             if (light.state === 'red' && player.speed > 1.5 && !ranLights.has(key)) {
                 ranLights.add(key);
@@ -706,37 +736,31 @@ function update() {
             } else if (light.state === 'green' && player.speed > 0.5 && !ranLights.has(key)) {
                 ranLights.add(key);
                 missions.greenLightsCompleted++;
-                if (missions.current?.type === 'greenLights' && missions.greenLightsCompleted >= missions.current.target) {
-                    completeMission();
-                }
+                if (missions.current?.type === 'greenLights' && missions.greenLightsCompleted >= missions.current.target) completeMission();
             }
         } else if (d > 120) {
             ranLights.delete(key);
         }
     });
 
-    // Check checkpoint
+    // Checkpoint
     if (missions.checkpoint) {
         const d = dist(player.x, player.y, missions.checkpoint.x, missions.checkpoint.y);
-        if (d < 50) {
-            completeMission();
-        }
+        if (d < 50) completeMission();
     }
 
-    // Update pedestrians
+    // Pedestrians
     pedestrians.forEach(ped => {
         ped.walkTimer++;
         if (ped.walkTimer % 150 === 0) {
             ped.vx = (Math.random() - 0.5) * 0.4;
             ped.vy = (Math.random() - 0.5) * 0.4;
         }
-        ped.x += ped.vx;
-        ped.y += ped.vy;
-        ped.x = wrap(ped.x, WORLD_W);
-        ped.y = wrap(ped.y, WORLD_H);
+        ped.x = wrap(ped.x + ped.vx, WORLD_W);
+        ped.y = wrap(ped.y + ped.vy, WORLD_H);
 
-        const d = dist(player.x, player.y, ped.x, ped.y);
-        if (d < 30 && player.speed > 1) {
+        const pd = dist(player.x, player.y, ped.x, ped.y);
+        if (pd < 30 && player.speed > 1) {
             takeDamage('Hit pedestrian!');
             const ang = Math.atan2(ped.y - player.y, ped.x - player.x);
             ped.x += Math.cos(ang) * 60;
@@ -744,19 +768,17 @@ function update() {
         }
     });
 
-    // Update other cars (slower, smarter)
+    // Other cars
     otherCars.forEach(car => {
-        // Check if should stop at intersection
-        const { tile, tx, ty } = getTile(car.x + Math.sin(car.angle) * 40, car.y - Math.cos(car.angle) * 40);
+        const { tile: carTile, tx: carTx, ty: carTy } = getTile(car.x + DIR[car.dir].dx * 50, car.y + DIR[car.dir].dy * 50);
 
-        if (tile >= 4 && !car.stoppedAt) {
-            // Approaching stop sign or light
-            const light = trafficLights.find(l => l.tx === tx && l.ty === ty);
-            if (tile === 4 || (light && light.state === 'red')) {
-                car.speed = Math.max(0, car.speed - 0.05);
+        if (carTile >= 4 && !car.stoppedAt) {
+            const light = trafficLights.find(l => l.tx === carTx && l.ty === carTy);
+            if (carTile === 4 || (light && light.state === 'red')) {
+                car.speed = Math.max(0, car.speed - 0.03);
                 if (car.speed < 0.1) {
-                    car.stoppedAt = `${tx},${ty}`;
-                    car.waitTimer = 90 + Math.random() * 60;
+                    car.stoppedAt = `${carTx},${carTy}`;
+                    car.waitTimer = 120 + Math.random() * 60;
                 }
             }
         }
@@ -765,51 +787,51 @@ function update() {
             car.waitTimer--;
             if (car.waitTimer <= 0) {
                 car.stoppedAt = null;
-                car.speed = 0.6 + Math.random() * 0.4;
+                car.speed = 0.8 + Math.random() * 0.4;
             }
         } else {
-            car.x += Math.sin(car.angle) * car.speed;
-            car.y -= Math.cos(car.angle) * car.speed;
+            car.x = wrap(car.x + DIR[car.dir].dx * car.speed, WORLD_W);
+            car.y = wrap(car.y + DIR[car.dir].dy * car.speed, WORLD_H);
         }
 
-        car.x = wrap(car.x, WORLD_W);
-        car.y = wrap(car.y, WORLD_H);
-
-        // Turn at intersections
-        const currentTile = getTile(car.x, car.y);
-        if (currentTile.tile >= 3 && car.turnCooldown <= 0 && Math.random() < 0.015) {
-            car.angle += (Math.random() < 0.5 ? 1 : -1) * Math.PI / 2;
-            car.turnCooldown = 80;
-        }
-        if (car.turnCooldown > 0) car.turnCooldown--;
-
-        // Collision with player
-        const d = dist(player.x, player.y, car.x, car.y);
+        const cd = dist(player.x, player.y, car.x, car.y);
         const collKey = `car_${otherCars.indexOf(car)}`;
-        if (d < 45 && !recentCollisions.has(collKey)) {
+        if (cd < 40 && !recentCollisions.has(collKey)) {
             recentCollisions.add(collKey);
-            takeDamage('Collision with vehicle!');
+            takeDamage('Collision!');
             setTimeout(() => recentCollisions.delete(collKey), 2000);
         }
     });
 
-    // Update mission UI
     updateMissionUI();
 
-    // Update HUD
+    // HUD
     const speedEl = document.getElementById('speedVal');
-    const displaySpeed = Math.abs(Math.round(player.speed * 15));
+    const displaySpeed = Math.abs(Math.round(player.speed * 18));
     speedEl.textContent = displaySpeed;
-    speedEl.className = 'value' + (displaySpeed > 45 ? ' danger' : displaySpeed > 30 ? ' warning' : '');
+    speedEl.className = 'value' + (displaySpeed > 50 ? ' danger' : displaySpeed > 35 ? ' warning' : '');
     document.getElementById('scoreVal').textContent = game.score;
+}
+
+function checkLaneChangeSafe(direction) {
+    // Check if there are cars in the target lane nearby
+    for (const car of otherCars) {
+        const d = dist(player.x, player.y, car.x, car.y);
+        if (d < 150) {
+            // Check if car is in opposing direction (oncoming)
+            if ((player.dir + 2) % 4 === car.dir) {
+                return false; // Oncoming traffic!
+            }
+        }
+    }
+    return true;
 }
 
 // ============================================
 // RENDER
 // ============================================
 function render() {
-    const W = canvas.width;
-    const H = canvas.height;
+    const W = canvas.width, H = canvas.height;
 
     ctx.fillStyle = '#87CEEB';
     ctx.fillRect(0, 0, W, H);
@@ -819,81 +841,58 @@ function render() {
     const endTX = startTX + Math.ceil(W / TILE) + 3;
     const endTY = startTY + Math.ceil(H / TILE) + 3;
 
-    // Draw tiles
     for (let ty = startTY; ty < endTY; ty++) {
         for (let tx = startTX; tx < endTX; tx++) {
             const wtx = ((tx % MAP_W) + MAP_W) % MAP_W;
             const wty = ((ty % MAP_H) + MAP_H) % MAP_H;
-            const tile = MAP[wty][wtx];
-            drawTile(tx * TILE - cam.x, ty * TILE - cam.y, tile, wtx, wty);
+            drawTile(tx * TILE - cam.x, ty * TILE - cam.y, MAP[wty][wtx]);
         }
     }
 
-    // Draw buildings
     buildings.forEach(b => {
         const sx = getScreenX(b.x), sy = getScreenY(b.y);
         if (sx > -100 && sx < W + 100 && sy > -100 && sy < H + 100) drawBuilding(sx, sy, b);
     });
 
-    // Draw trees
     trees.forEach(t => {
         const sx = getScreenX(t.x), sy = getScreenY(t.y);
         if (sx > -50 && sx < W + 50 && sy > -50 && sy < H + 50) drawTree(sx, sy, t.size);
     });
 
-    // Draw road signs
-    roadSigns.forEach(s => {
-        const sx = getScreenX(s.x), sy = getScreenY(s.y);
-        if (sx > -80 && sx < W + 80 && sy > -80 && sy < H + 80) drawRoadSign(sx, sy, s.text);
-    });
-
-    // Draw checkpoint
     if (missions.checkpoint) {
         const sx = getScreenX(missions.checkpoint.x), sy = getScreenY(missions.checkpoint.y);
         if (sx > -100 && sx < W + 100 && sy > -100 && sy < H + 100) {
-            // Pulsing green checkpoint
             const pulse = Math.sin(game.time * 0.1) * 0.3 + 0.7;
             ctx.fillStyle = `rgba(74, 222, 128, ${pulse * 0.5})`;
-            ctx.beginPath();
-            ctx.arc(sx, sy, 50, 0, Math.PI * 2);
-            ctx.fill();
-            ctx.strokeStyle = '#4ade80';
-            ctx.lineWidth = 4;
-            ctx.stroke();
-            ctx.fillStyle = '#fff';
-            ctx.font = 'bold 16px Arial';
-            ctx.textAlign = 'center';
+            ctx.beginPath(); ctx.arc(sx, sy, 50, 0, Math.PI * 2); ctx.fill();
+            ctx.strokeStyle = '#4ade80'; ctx.lineWidth = 4; ctx.stroke();
+            ctx.fillStyle = '#fff'; ctx.font = 'bold 16px Arial'; ctx.textAlign = 'center';
             ctx.fillText('🏁', sx, sy + 6);
         }
     }
 
-    // Draw stop signs
     stopSigns.forEach(s => {
         const sx = getScreenX(s.x), sy = getScreenY(s.y);
         if (sx > -60 && sx < W + 60 && sy > -60 && sy < H + 60) drawStopSign(sx, sy);
     });
 
-    // Draw traffic lights
     trafficLights.forEach(l => {
         const sx = getScreenX(l.x), sy = getScreenY(l.y);
         if (sx > -60 && sx < W + 60 && sy > -60 && sy < H + 60) drawTrafficLight(sx, sy, l.state);
     });
 
-    // Draw pedestrians
     pedestrians.forEach(p => {
         const sx = getScreenX(p.x), sy = getScreenY(p.y);
         if (sx > -30 && sx < W + 30 && sy > -30 && sy < H + 30) drawPedestrian(sx, sy, p.color);
     });
 
-    // Draw other cars
     otherCars.forEach(c => {
         const sx = getScreenX(c.x), sy = getScreenY(c.y);
-        if (sx > -60 && sx < W + 60 && sy > -60 && sy < H + 60) drawCar(sx, sy, c.angle, c.color, 26, 46);
+        if (sx > -60 && sx < W + 60 && sy > -60 && sy < H + 60) drawCar(sx, sy, DIR[c.dir].angle, c.color, 26, 46);
     });
 
-    // Draw player (with flash effect if damaged)
     if (game.invincibleTimer === 0 || Math.floor(game.time / 4) % 2 === 0) {
-        drawPlayerCar(W/2, H/2, player.angle);
+        drawPlayerCar(W/2, H/2, DIR[player.dir].angle);
     }
 
     drawMinimap();
@@ -913,14 +912,13 @@ function getScreenY(wy) {
     return y;
 }
 
-function drawTile(x, y, tile, wtx, wty) {
-    // Grass
+function drawTile(x, y, tile) {
     ctx.fillStyle = '#4a9c4a';
     ctx.fillRect(x, y, TILE, TILE);
     ctx.fillStyle = '#3d8a3d';
-    for (let i = 0; i < 6; i++) {
+    for (let i = 0; i < 5; i++) {
         ctx.beginPath();
-        ctx.arc(x + 20 + (i * 25) % TILE, y + 15 + (i * 31) % TILE, 3, 0, Math.PI * 2);
+        ctx.arc(x + 20 + (i * 30) % TILE, y + 15 + (i * 35) % TILE, 3, 0, Math.PI * 2);
         ctx.fill();
     }
 
@@ -942,7 +940,6 @@ function drawRoadSegment(x, y, w, h, dir) {
     ctx.fillStyle = '#3a3a3a';
     ctx.fillRect(x, y, w, h);
 
-    // Curbs
     ctx.fillStyle = '#888';
     if (dir === 'v') {
         ctx.fillRect(x, y, 5, h);
@@ -952,18 +949,17 @@ function drawRoadSegment(x, y, w, h, dir) {
         ctx.fillRect(x, y + h - 5, w, 5);
     }
 
-    // Yellow center line
+    // Solid yellow center line (do not cross!)
     ctx.strokeStyle = '#f4d03f';
-    ctx.lineWidth = 5;
-    ctx.setLineDash([25, 15]);
+    ctx.lineWidth = 6;
+    ctx.setLineDash([]);
     ctx.beginPath();
     if (dir === 'v') { ctx.moveTo(x + w/2, y); ctx.lineTo(x + w/2, y + h); }
     else { ctx.moveTo(x, y + h/2); ctx.lineTo(x + w, y + h/2); }
     ctx.stroke();
-    ctx.setLineDash([]);
 
-    // White lane markers
-    ctx.strokeStyle = 'rgba(255,255,255,0.6)';
+    // Dashed white lane markers
+    ctx.strokeStyle = 'rgba(255,255,255,0.7)';
     ctx.lineWidth = 3;
     ctx.setLineDash([20, 25]);
     if (dir === 'v') {
@@ -987,194 +983,105 @@ function drawCrosswalk(cx, cy) {
 }
 
 function drawBuilding(x, y, b) {
-    ctx.fillStyle = 'rgba(0,0,0,0.3)';
-    ctx.fillRect(x + 5, y + 5, b.w, b.h);
-    ctx.fillStyle = b.color;
-    ctx.fillRect(x, y, b.w, b.h);
-    ctx.strokeStyle = '#333';
-    ctx.lineWidth = 2;
-    ctx.strokeRect(x, y, b.w, b.h);
-    ctx.fillStyle = b.roofColor;
-    ctx.fillRect(x - 4, y - 8, b.w + 8, 12);
+    ctx.fillStyle = 'rgba(0,0,0,0.3)'; ctx.fillRect(x + 5, y + 5, b.w, b.h);
+    ctx.fillStyle = b.color; ctx.fillRect(x, y, b.w, b.h);
+    ctx.strokeStyle = '#333'; ctx.lineWidth = 2; ctx.strokeRect(x, y, b.w, b.h);
+    ctx.fillStyle = b.roofColor; ctx.fillRect(x - 4, y - 8, b.w + 8, 12);
     ctx.fillStyle = '#87CEEB';
     for (let wy = y + 14; wy < y + b.h - 18; wy += 18) {
-        for (let wx = x + 10; wx < x + b.w - 14; wx += 18) {
-            ctx.fillRect(wx, wy, 12, 12);
-        }
+        for (let wx = x + 10; wx < x + b.w - 14; wx += 18) ctx.fillRect(wx, wy, 12, 12);
     }
-    ctx.fillStyle = '#654321';
-    ctx.fillRect(x + b.w/2 - 10, y + b.h - 24, 20, 24);
+    ctx.fillStyle = '#654321'; ctx.fillRect(x + b.w/2 - 10, y + b.h - 24, 20, 24);
 }
 
 function drawTree(x, y, size) {
-    ctx.fillStyle = '#8B4513';
-    ctx.fillRect(x - 5, y, 10, size);
-    ctx.fillStyle = '#228B22';
-    ctx.beginPath(); ctx.arc(x, y - size * 0.3, size * 1.3, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#8B4513'; ctx.fillRect(x - 5, y, 10, size);
+    ctx.fillStyle = '#228B22'; ctx.beginPath(); ctx.arc(x, y - size * 0.3, size * 1.3, 0, Math.PI * 2); ctx.fill();
     ctx.fillStyle = '#2d9f2d';
     ctx.beginPath(); ctx.arc(x - size * 0.6, y, size, 0, Math.PI * 2); ctx.fill();
     ctx.beginPath(); ctx.arc(x + size * 0.6, y, size, 0, Math.PI * 2); ctx.fill();
-    ctx.fillStyle = '#34b534';
-    ctx.beginPath(); ctx.arc(x, y - size * 0.8, size * 0.9, 0, Math.PI * 2); ctx.fill();
-}
-
-function drawRoadSign(x, y, text) {
-    // Yellow warning sign
-    ctx.fillStyle = '#333';
-    ctx.fillRect(x - 2, y + 15, 4, 30);
-
-    ctx.fillStyle = '#ffd700';
-    ctx.fillRect(x - 28, y - 20, 56, 35);
-    ctx.strokeStyle = '#333';
-    ctx.lineWidth = 2;
-    ctx.strokeRect(x - 28, y - 20, 56, 35);
-
-    ctx.fillStyle = '#000';
-    ctx.font = 'bold 9px Arial';
-    ctx.textAlign = 'center';
-    ctx.fillText(text, x, y);
+    ctx.fillStyle = '#34b534'; ctx.beginPath(); ctx.arc(x, y - size * 0.8, size * 0.9, 0, Math.PI * 2); ctx.fill();
 }
 
 function drawStopSign(x, y) {
-    ctx.fillStyle = '#555';
-    ctx.fillRect(x - 4, y + 5, 8, 45);
-
-    ctx.save();
-    ctx.translate(x, y - 18);
-    ctx.fillStyle = '#cc0000';
-    ctx.beginPath();
-    const r = 28;
+    ctx.fillStyle = '#555'; ctx.fillRect(x - 4, y + 5, 8, 45);
+    ctx.save(); ctx.translate(x, y - 18);
+    ctx.fillStyle = '#cc0000'; ctx.beginPath();
     for (let i = 0; i < 8; i++) {
         const ang = (i * Math.PI / 4) - Math.PI / 8;
-        if (i === 0) ctx.moveTo(Math.cos(ang) * r, Math.sin(ang) * r);
-        else ctx.lineTo(Math.cos(ang) * r, Math.sin(ang) * r);
+        if (i === 0) ctx.moveTo(Math.cos(ang) * 28, Math.sin(ang) * 28);
+        else ctx.lineTo(Math.cos(ang) * 28, Math.sin(ang) * 28);
     }
-    ctx.closePath();
-    ctx.fill();
-    ctx.strokeStyle = '#fff';
-    ctx.lineWidth = 4;
-    ctx.stroke();
-    ctx.fillStyle = '#fff';
-    ctx.font = 'bold 14px Arial';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
+    ctx.closePath(); ctx.fill();
+    ctx.strokeStyle = '#fff'; ctx.lineWidth = 4; ctx.stroke();
+    ctx.fillStyle = '#fff'; ctx.font = 'bold 14px Arial'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
     ctx.fillText('STOP', 0, 1);
     ctx.restore();
 }
 
 function drawTrafficLight(x, y, state) {
-    ctx.fillStyle = '#333';
-    ctx.fillRect(x - 5, y + 10, 10, 55);
-    ctx.fillStyle = '#1a1a1a';
-    ctx.fillRect(x - 18, y - 50, 36, 62);
-    ctx.strokeStyle = '#444';
-    ctx.lineWidth = 3;
-    ctx.strokeRect(x - 18, y - 50, 36, 62);
+    ctx.fillStyle = '#333'; ctx.fillRect(x - 5, y + 10, 10, 55);
+    ctx.fillStyle = '#1a1a1a'; ctx.fillRect(x - 18, y - 50, 36, 62);
+    ctx.strokeStyle = '#444'; ctx.lineWidth = 3; ctx.strokeRect(x - 18, y - 50, 36, 62);
 
-    const colors = {
-        red: state === 'red' ? '#ff0000' : '#330000',
-        yellow: state === 'yellow' ? '#ffff00' : '#333300',
-        green: state === 'green' ? '#00ff00' : '#003300'
-    };
-
-    ctx.fillStyle = colors.red;
+    ctx.fillStyle = state === 'red' ? '#ff0000' : '#330000';
     ctx.beginPath(); ctx.arc(x, y - 35, 10, 0, Math.PI * 2); ctx.fill();
-    ctx.fillStyle = colors.yellow;
+    ctx.fillStyle = state === 'yellow' ? '#ffff00' : '#333300';
     ctx.beginPath(); ctx.arc(x, y - 12, 10, 0, Math.PI * 2); ctx.fill();
-    ctx.fillStyle = colors.green;
+    ctx.fillStyle = state === 'green' ? '#00ff00' : '#003300';
     ctx.beginPath(); ctx.arc(x, y + 11, 10, 0, Math.PI * 2); ctx.fill();
 
     if (state !== 'yellow') {
         ctx.shadowColor = state === 'red' ? '#ff0000' : '#00ff00';
         ctx.shadowBlur = 20;
-        ctx.beginPath();
-        ctx.arc(x, state === 'red' ? y - 35 : y + 11, 8, 0, Math.PI * 2);
-        ctx.fill();
+        ctx.beginPath(); ctx.arc(x, state === 'red' ? y - 35 : y + 11, 8, 0, Math.PI * 2); ctx.fill();
         ctx.shadowBlur = 0;
     }
 }
 
 function drawPedestrian(x, y, color) {
-    ctx.fillStyle = 'rgba(0,0,0,0.3)';
-    ctx.beginPath(); ctx.ellipse(x, y + 12, 10, 5, 0, 0, Math.PI * 2); ctx.fill();
-    ctx.fillStyle = color;
-    ctx.fillRect(x - 7, y - 6, 14, 20);
-    ctx.fillStyle = '#ffd5b4';
-    ctx.beginPath(); ctx.arc(x, y - 14, 10, 0, Math.PI * 2); ctx.fill();
-    ctx.fillStyle = '#333';
-    ctx.beginPath(); ctx.arc(x, y - 16, 8, Math.PI, Math.PI * 2); ctx.fill();
-    ctx.fillStyle = '#444';
-    ctx.fillRect(x - 6, y + 14, 5, 10);
-    ctx.fillRect(x + 1, y + 14, 5, 10);
+    ctx.fillStyle = 'rgba(0,0,0,0.3)'; ctx.beginPath(); ctx.ellipse(x, y + 12, 10, 5, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = color; ctx.fillRect(x - 7, y - 6, 14, 20);
+    ctx.fillStyle = '#ffd5b4'; ctx.beginPath(); ctx.arc(x, y - 14, 10, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#333'; ctx.beginPath(); ctx.arc(x, y - 16, 8, Math.PI, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#444'; ctx.fillRect(x - 6, y + 14, 5, 10); ctx.fillRect(x + 1, y + 14, 5, 10);
 }
 
 function drawCar(x, y, angle, color, w, h) {
-    ctx.save();
-    ctx.translate(x, y);
-    ctx.rotate(angle);
-    ctx.fillStyle = 'rgba(0,0,0,0.35)';
-    ctx.fillRect(-w/2 + 4, -h/2 + 4, w, h);
-    ctx.fillStyle = color;
-    ctx.fillRect(-w/2, -h/2, w, h);
-    ctx.strokeStyle = '#111';
-    ctx.lineWidth = 2;
-    ctx.strokeRect(-w/2, -h/2, w, h);
-    ctx.fillStyle = '#7ec8e3';
-    ctx.fillRect(-w/2 + 4, -h/2 + 6, w - 8, 12);
+    ctx.save(); ctx.translate(x, y); ctx.rotate(angle);
+    ctx.fillStyle = 'rgba(0,0,0,0.35)'; ctx.fillRect(-w/2 + 4, -h/2 + 4, w, h);
+    ctx.fillStyle = color; ctx.fillRect(-w/2, -h/2, w, h);
+    ctx.strokeStyle = '#111'; ctx.lineWidth = 2; ctx.strokeRect(-w/2, -h/2, w, h);
+    ctx.fillStyle = '#7ec8e3'; ctx.fillRect(-w/2 + 4, -h/2 + 6, w - 8, 12);
     ctx.fillRect(-w/2 + 4, h/2 - 14, w - 8, 10);
     ctx.fillStyle = '#111';
-    ctx.fillRect(-w/2 - 4, -h/2 + 6, 6, 12);
-    ctx.fillRect(w/2 - 2, -h/2 + 6, 6, 12);
-    ctx.fillRect(-w/2 - 4, h/2 - 18, 6, 12);
-    ctx.fillRect(w/2 - 2, h/2 - 18, 6, 12);
-    ctx.fillStyle = '#ffffaa';
-    ctx.fillRect(-w/2 + 3, -h/2, 7, 5);
-    ctx.fillRect(w/2 - 10, -h/2, 7, 5);
-    ctx.fillStyle = '#ff4444';
-    ctx.fillRect(-w/2 + 3, h/2 - 5, 7, 5);
-    ctx.fillRect(w/2 - 10, h/2 - 5, 7, 5);
+    ctx.fillRect(-w/2 - 4, -h/2 + 6, 6, 12); ctx.fillRect(w/2 - 2, -h/2 + 6, 6, 12);
+    ctx.fillRect(-w/2 - 4, h/2 - 18, 6, 12); ctx.fillRect(w/2 - 2, h/2 - 18, 6, 12);
+    ctx.fillStyle = '#ffffaa'; ctx.fillRect(-w/2 + 3, -h/2, 7, 5); ctx.fillRect(w/2 - 10, -h/2, 7, 5);
+    ctx.fillStyle = '#ff4444'; ctx.fillRect(-w/2 + 3, h/2 - 5, 7, 5); ctx.fillRect(w/2 - 10, h/2 - 5, 7, 5);
     ctx.restore();
 }
 
 function drawPlayerCar(x, y, angle) {
-    ctx.save();
-    ctx.translate(x, y);
-    ctx.rotate(angle);
+    ctx.save(); ctx.translate(x, y); ctx.rotate(angle);
     const w = player.width, h = player.height;
-    ctx.fillStyle = 'rgba(0,0,0,0.45)';
-    ctx.fillRect(-w/2 + 5, -h/2 + 5, w, h);
+    ctx.fillStyle = 'rgba(0,0,0,0.45)'; ctx.fillRect(-w/2 + 5, -h/2 + 5, w, h);
     const grad = ctx.createLinearGradient(-w/2, 0, w/2, 0);
-    grad.addColorStop(0, '#1e40af');
-    grad.addColorStop(0.5, '#3b82f6');
-    grad.addColorStop(1, '#1e40af');
-    ctx.fillStyle = grad;
-    ctx.fillRect(-w/2, -h/2, w, h);
-    ctx.fillStyle = '#60a5fa';
-    ctx.fillRect(-3, -h/2, 6, h);
-    ctx.strokeStyle = '#1e3a8a';
-    ctx.lineWidth = 3;
-    ctx.strokeRect(-w/2, -h/2, w, h);
-    ctx.fillStyle = '#93c5fd';
-    ctx.fillRect(-w/2 + 5, -h/2 + 7, w - 10, 14);
-    ctx.fillRect(-w/2 + 5, h/2 - 16, w - 10, 12);
+    grad.addColorStop(0, '#1e40af'); grad.addColorStop(0.5, '#3b82f6'); grad.addColorStop(1, '#1e40af');
+    ctx.fillStyle = grad; ctx.fillRect(-w/2, -h/2, w, h);
+    ctx.fillStyle = '#60a5fa'; ctx.fillRect(-3, -h/2, 6, h);
+    ctx.strokeStyle = '#1e3a8a'; ctx.lineWidth = 3; ctx.strokeRect(-w/2, -h/2, w, h);
+    ctx.fillStyle = '#93c5fd'; ctx.fillRect(-w/2 + 5, -h/2 + 7, w - 10, 14); ctx.fillRect(-w/2 + 5, h/2 - 16, w - 10, 12);
     ctx.fillStyle = '#111';
-    ctx.fillRect(-w/2 - 5, -h/2 + 7, 7, 14);
-    ctx.fillRect(w/2 - 2, -h/2 + 7, 7, 14);
-    ctx.fillRect(-w/2 - 5, h/2 - 21, 7, 14);
-    ctx.fillRect(w/2 - 2, h/2 - 21, 7, 14);
+    ctx.fillRect(-w/2 - 5, -h/2 + 7, 7, 14); ctx.fillRect(w/2 - 2, -h/2 + 7, 7, 14);
+    ctx.fillRect(-w/2 - 5, h/2 - 21, 7, 14); ctx.fillRect(w/2 - 2, h/2 - 21, 7, 14);
     ctx.fillStyle = '#fef08a';
     ctx.beginPath(); ctx.arc(-w/2 + 7, -h/2 + 3, 5, 0, Math.PI * 2); ctx.fill();
     ctx.beginPath(); ctx.arc(w/2 - 7, -h/2 + 3, 5, 0, Math.PI * 2); ctx.fill();
-    ctx.fillStyle = '#ef4444';
-    ctx.fillRect(-w/2 + 4, h/2 - 6, 10, 6);
-    ctx.fillRect(w/2 - 14, h/2 - 6, 10, 6);
-    ctx.fillStyle = '#fff';
-    ctx.beginPath();
-    ctx.moveTo(0, -h/2 - 12);
-    ctx.lineTo(-8, -h/2 - 4);
-    ctx.lineTo(8, -h/2 - 4);
-    ctx.closePath();
-    ctx.fill();
+    ctx.fillStyle = '#ef4444'; ctx.fillRect(-w/2 + 4, h/2 - 6, 10, 6); ctx.fillRect(w/2 - 14, h/2 - 6, 10, 6);
+    ctx.fillStyle = '#fff'; ctx.beginPath();
+    ctx.moveTo(0, -h/2 - 12); ctx.lineTo(-8, -h/2 - 4); ctx.lineTo(8, -h/2 - 4);
+    ctx.closePath(); ctx.fill();
     ctx.restore();
 }
 
@@ -1183,8 +1090,7 @@ function drawMinimap() {
     const mx = canvas.width - mw - 15, my = 15;
     const ts = mw / MAP_W;
 
-    ctx.fillStyle = 'rgba(0,0,0,0.8)';
-    ctx.fillRect(mx - 5, my - 5, mw + 10, mh + 10);
+    ctx.fillStyle = 'rgba(0,0,0,0.8)'; ctx.fillRect(mx - 5, my - 5, mw + 10, mh + 10);
 
     for (let ty = 0; ty < MAP_H; ty++) {
         for (let tx = 0; tx < MAP_W; tx++) {
@@ -1193,8 +1099,8 @@ function drawMinimap() {
                 ctx.fillStyle = tile >= 3 ? '#666' : '#555';
                 ctx.fillRect(mx + tx * ts, my + ty * ts, ts, ts);
                 if (tile === 4) {
-                    ctx.fillStyle = '#ff0000';
-                    ctx.beginPath(); ctx.arc(mx + tx * ts + ts/2, my + ty * ts + ts/2, 3, 0, Math.PI * 2); ctx.fill();
+                    ctx.fillStyle = '#ff0000'; ctx.beginPath();
+                    ctx.arc(mx + tx * ts + ts/2, my + ty * ts + ts/2, 3, 0, Math.PI * 2); ctx.fill();
                 } else if (tile === 5) {
                     const light = trafficLights.find(l => l.tx === tx && l.ty === ty);
                     ctx.fillStyle = light?.state === 'red' ? '#ff0000' : light?.state === 'yellow' ? '#ffff00' : '#00ff00';
@@ -1204,33 +1110,22 @@ function drawMinimap() {
         }
     }
 
-    // Checkpoint on minimap
     if (missions.checkpoint) {
-        ctx.fillStyle = '#4ade80';
-        ctx.beginPath();
+        ctx.fillStyle = '#4ade80'; ctx.beginPath();
         ctx.arc(mx + (missions.checkpoint.x / WORLD_W) * mw, my + (missions.checkpoint.y / WORLD_H) * mh, 5, 0, Math.PI * 2);
         ctx.fill();
     }
 
-    // Player on minimap
     const px = (player.x / WORLD_W) * mw, py = (player.y / WORLD_H) * mh;
-    ctx.fillStyle = '#3b82f6';
-    ctx.beginPath(); ctx.arc(mx + px, my + py, 5, 0, Math.PI * 2); ctx.fill();
-    ctx.strokeStyle = '#fff';
-    ctx.lineWidth = 2;
-    ctx.beginPath();
+    ctx.fillStyle = '#3b82f6'; ctx.beginPath(); ctx.arc(mx + px, my + py, 5, 0, Math.PI * 2); ctx.fill();
+    ctx.strokeStyle = '#fff'; ctx.lineWidth = 2; ctx.beginPath();
     ctx.moveTo(mx + px, my + py);
-    ctx.lineTo(mx + px + Math.sin(player.angle) * 10, my + py - Math.cos(player.angle) * 10);
+    ctx.lineTo(mx + px + DIR[player.dir].dx * 10, my + py + DIR[player.dir].dy * 10);
     ctx.stroke();
 
-    ctx.strokeStyle = '#fff';
-    ctx.lineWidth = 2;
-    ctx.strokeRect(mx - 5, my - 5, mw + 10, mh + 10);
+    ctx.strokeStyle = '#fff'; ctx.lineWidth = 2; ctx.strokeRect(mx - 5, my - 5, mw + 10, mh + 10);
 }
 
-// ============================================
-// GAME LOOP
-// ============================================
 function gameLoop() {
     update();
     render();
